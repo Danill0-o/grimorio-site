@@ -1,0 +1,60 @@
+/* Cards e faixa compartilham uma única rolagem e a mesma escala espacial. */
+#jornada-viewport {
+    --carta-largura: clamp(250px, calc((100cqw - 56px) / 3), 340px);
+    --carta-gap: 24px;
+    --passo-carta: calc(var(--carta-largura) + var(--carta-gap));
+    --margem-carta: max(18px, calc((100cqw - var(--carta-largura)) / 2));
+    position: relative;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-color: #896835 #bca07644;
+    scrollbar-width: thin;
+}
+.jornada-trilha { width: max-content; padding-bottom: 22px; }
+#jornada-cards {
+    position: static;
+    width: max-content;
+    overflow: visible;
+    gap: var(--carta-gap);
+    padding: 40px calc(var(--margem-carta) + var(--passo-carta)) 34px var(--margem-carta);
+    perspective: none;
+}
+#jornada-cards .dia-card {
+    box-sizing: border-box;
+    width: var(--carta-largura);
+    flex-basis: var(--carta-largura);
+    scroll-snap-align: center;
+    margin-top: 0;
+    transform: translateY(20px) scale(.95);
+    opacity: .72;
+    filter: saturate(.6) drop-shadow(0 8px 8px #37240e55);
+    animation: none;
+    transition: transform .25s ease, opacity .25s ease, filter .25s ease;
+    cursor: pointer;
+}
+#jornada-cards .dia-card-selecionado {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+    filter: drop-shadow(0 16px 10px #37240e66);
+    animation: carta-levitando 5s ease-in-out infinite;
+    z-index: 2;
+}
+#jornada-faixa {
+    margin-left: calc(var(--margem-carta) + var(--carta-largura) / 2);
+    width: calc(var(--total-dias) * var(--passo-carta));
+}
+#jornada-faixa .progresso-trilho { position: relative; height: 24px; box-sizing: border-box; }
+#progresso-atual { position: absolute; inset: 4px 0; display: flex; }
+.jornada-preenchimento { display: block; height: 100%; background: linear-gradient(#7bd6b8, #327c69); }
+#jornada-marcos { display: grid; grid-template-columns: repeat(var(--total-dias), 1fr); position: relative; }
+#jornada-marcos button { justify-self: start; background: transparent; border: 0; border-left: 1px solid #775526; color: #49331c; padding: 10px 8px; font: bold .85rem Georgia, serif; cursor: pointer; }
+#jornada-marcos::after { content: 'Fim'; position: absolute; right: 0; top: 10px; color: #49331c; }
+#painel-progresso { margin-top: 18px; }
+@media (max-width: 575px) {
+    #jornada-viewport { --carta-largura: min(300px, calc(90vw - 26px)); --carta-gap: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #jornada-cards .dia-card { animation: none !important; transition: none !important; }
+    #jornada-cards .dia-card:not(.dia-card-selecionado) { transform: translateY(20px) scale(.95) !important; }
+    #jornada-cards .dia-card-selecionado { transform: none !important; }
+}

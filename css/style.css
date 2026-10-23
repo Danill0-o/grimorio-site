@@ -1,0 +1,467 @@
+@media (max-width: 767px) {
+    #table-materias, .td, .th, .table>:not(caption)>*>* {
+      font-size: 14px;
+      padding: 0.2rem 0.2rem;
+    }
+  }
+@media (max-width: 993px) {
+    #btn-dom-css, #btn-seg-css,#btn-ter-css,#btn-qua-css,#btn-qui-css,#btn-sex-css,#btn-sab-css {
+      font-size: 16px;
+      width: 50px;
+      padding: 0.4rem 0.2rem;
+
+    }
+  }
+@media (max-width: 374px) {
+    #btn-dom-css, #btn-seg-css,#btn-ter-css,#btn-qua-css,#btn-qui-css,#btn-sex-css,#btn-sab-css {
+      font-size: 14px;
+      width: 48px;
+    }
+  }
+#table-materias-div {
+    overflow-y:auto;
+}
+
+.cronometro-section {
+    background: linear-gradient(135deg, #f8fbff 0%, #ffffff 55%);
+}
+
+.cronometro-display {
+    padding: 1rem;
+    border: 1px solid #cfe2ff;
+    border-radius: 0.75rem;
+    background-color: #fff;
+    color: #0d6efd;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: clamp(2.25rem, 8vw, 4.25rem);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+    text-align: center;
+}
+
+.cronometro-status {
+    min-height: 1.5rem;
+}
+
+#tabela-sessoes-estudo th,
+#tabela-tempo-acumulado th {
+    white-space: nowrap;
+}
+
+.grafico-planejamento {
+    position: relative;
+    width: 100%;
+    max-width: 30rem;
+    min-height: 20rem;
+    margin-inline: auto;
+}
+
+.jornada-page {
+    --jornada-ink: #182230;
+    --jornada-muted: #667085;
+    --jornada-surface: #ffffff;
+    --jornada-line: #d0d5dd;
+    --jornada-primary: #6d5dfc;
+    color: var(--jornada-ink);
+    background: radial-gradient(circle at 10% 0%, rgba(109, 93, 252, 0.13), transparent 28rem), #f6f7fb;
+    min-height: 100vh;
+}
+
+.jornada-hero,
+.jornada-panel {
+    border: 1px solid rgba(208, 213, 221, 0.75);
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 1rem 2.5rem rgba(16, 24, 40, 0.07);
+}
+
+.jornada-kicker {
+    color: var(--jornada-primary, #6d5dfc);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.jornada-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+}
+
+.jornada-stat {
+    padding: 0.9rem;
+    border: 1px solid #eaecf0;
+    border-radius: 1rem;
+    background: #fff;
+}
+
+.jornada-stat span {
+    display: block;
+    color: var(--jornada-muted);
+    font-size: 0.78rem;
+}
+
+.jornada-stat strong {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 1.2rem;
+}
+
+.progresso-comparativo {
+    display: grid;
+    gap: 1rem;
+}
+
+.progresso-trilho {
+    height: 0.85rem;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eaecf0;
+}
+
+.progresso-barra {
+    width: 0;
+    height: 100%;
+    border-radius: inherit;
+    transition: width 500ms ease;
+}
+
+.progresso-barra-atual {
+    background: linear-gradient(90deg, #6d5dfc, #9b8afb);
+}
+
+.progresso-barra-ideal {
+    background: linear-gradient(90deg, #12b76a, #6ce9a6);
+}
+
+.progresso-trilho-sobreposto {
+    position: relative;
+    height: 1rem;
+    overflow: hidden;
+}
+
+.progresso-trilho-sobreposto .progresso-barra {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.progresso-trilho-sobreposto .progresso-barra-ideal {
+    height: 100%;
+    opacity: 0.72;
+}
+
+.progresso-trilho-sobreposto .progresso-barra-atual {
+    top: 0.25rem;
+    height: 0.5rem;
+    box-shadow: 0 0 0 1px rgba(66, 48, 125, 0.22);
+}
+
+.progresso-legenda::before {
+    content: "";
+    display: inline-block;
+    width: 0.65rem;
+    height: 0.65rem;
+    margin-right: 0.35rem;
+    border-radius: 50%;
+}
+
+.progresso-legenda-atual::before {
+    background: #6d5dfc;
+}
+
+.progresso-legenda-ideal::before {
+    background: #12b76a;
+}
+
+.jornada-cards {
+    display: flex;
+    gap: 1.25rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.25rem 1.5rem;
+    scroll-snap-type: x proximity;
+}
+
+.dia-card {
+    position: relative;
+    flex: 0 0 min(23rem, 86vw);
+    min-height: 28rem;
+    padding: 1.25rem;
+    border: 2px solid #eaecf0;
+    border-radius: 1.25rem;
+    background: var(--jornada-surface);
+    scroll-snap-align: start;
+    transition: transform 180ms ease, border-color 180ms ease, opacity 180ms ease;
+}
+
+.dia-card:not(:last-child)::after {
+    content: "";
+    position: absolute;
+    top: 3rem;
+    right: -1.4rem;
+    width: 1.3rem;
+    height: 0.25rem;
+    background: var(--jornada-line);
+}
+
+.dia-card-atual {
+    border-color: var(--jornada-primary);
+    box-shadow: 0 0 0 0.25rem rgba(109, 93, 252, 0.1);
+    transform: translateY(-0.2rem);
+}
+
+.dia-card-concluido {
+    border-color: #75e0a7;
+    background: #f0fdf6;
+}
+
+.dia-card-bloqueado {
+    opacity: 0.58;
+    background: #f2f4f7;
+}
+
+.dia-card-badge {
+    display: inline-flex;
+    padding: 0.35rem 0.65rem;
+    border-radius: 999px;
+    background: #f0eefe;
+    color: #5145cd;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.dia-lista {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0;
+    list-style: none;
+}
+
+.dia-lista li {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid #eaecf0;
+    border-radius: 0.8rem;
+    background: #fff;
+}
+
+.dia-materia-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.dia-materia-identificacao {
+    display: grid;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.dia-materia-identificacao small {
+    color: #667085;
+}
+
+.dia-materia-concluida {
+    border-color: #a6f4c5 !important;
+    background: #ecfdf3 !important;
+}
+
+.materia-cronometro-acoes {
+    display: inline-flex;
+    flex: 0 0 auto;
+    gap: 0.35rem;
+}
+
+.materia-cronometro-botao {
+    display: inline-grid;
+    place-items: center;
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    border-radius: 50%;
+    line-height: 1;
+}
+
+.registro-manual {
+    padding-top: 0.8rem;
+    border-top: 1px solid #eaecf0;
+}
+
+.registro-manual summary {
+    color: #5145cd;
+    cursor: pointer;
+    font-size: 0.86rem;
+}
+
+.dia-revisoes li {
+    border-color: #fedf89;
+    background: #fffaeb;
+}
+
+.revisoes-grupos {
+    display: grid;
+    gap: 0.6rem;
+}
+
+.revisao-grupo {
+    overflow: hidden;
+    border: 1px solid #fedf89;
+    border-radius: 0.8rem;
+    background: #fffaeb;
+}
+
+.revisao-grupo summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 0.85rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.revisao-grupo summary::-webkit-details-marker {
+    display: none;
+}
+
+.revisao-grupo summary::after {
+    content: '▾';
+    color: #b54708;
+    transition: transform 0.2s ease;
+}
+
+.revisao-grupo[open] summary::after {
+    transform: rotate(180deg);
+}
+
+.revisao-grupo summary span {
+    margin-left: auto;
+    color: #93370d;
+    font-size: 0.78rem;
+}
+
+.revisao-grupo-lista {
+    margin: 0;
+    padding: 0 0.75rem 0.75rem 1.35rem;
+}
+
+.historico-dia-resumo > * {
+    background: #f8f9fc !important;
+}
+
+.historico-dia-resumo th {
+    white-space: nowrap;
+}
+
+.historico-dia-detalhe td:first-child {
+    position: relative;
+}
+
+.historico-dia-detalhe td:first-child::after {
+    content: '↳';
+    position: absolute;
+    right: 0.75rem;
+    color: #98a2b3;
+}
+
+
+.materia-level-card {
+    padding: 1rem;
+    border: 1px solid #eaecf0;
+    border-radius: 1rem;
+    background: #fff;
+}
+
+
+.jornada-layout,
+.planejamento-layout {
+    display: grid;
+    grid-template-columns: minmax(16rem, 19rem) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.jornada-sidebar,
+.planejamento-sidebar {
+    position: sticky;
+    top: 1rem;
+    display: grid;
+    gap: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+}
+
+.jornada-sidebar .cronometro-card {
+    order: -1;
+}
+
+.projeto-resumo-card,
+.cronometro-card {
+    padding: 1.15rem;
+    border: 1px solid rgba(208, 213, 221, 0.8);
+    border-radius: 1.1rem;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 0.75rem 2rem rgba(16, 24, 40, 0.06);
+}
+
+.projeto-resumo-lista {
+    display: grid;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+}
+
+.projeto-resumo-lista div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid #eaecf0;
+}
+
+.projeto-resumo-lista dt {
+    color: #667085;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.projeto-resumo-lista dd {
+    margin: 0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: right;
+}
+
+.cronometro-display-compacto {
+    padding: 0.85rem 0.5rem;
+    font-size: clamp(1.8rem, 3vw, 2.7rem);
+}
+
+.jornada-conteudo,
+.planejamento-conteudo {
+    min-width: 0;
+}
+
+@media (max-width: 991px) {
+    .jornada-layout,
+    .planejamento-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .jornada-sidebar,
+    .planejamento-sidebar {
+        position: static;
+        grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr));
+        max-height: none;
+        overflow: visible;
+    }
+}
+
+@media (max-width: 767px) {
+    .jornada-stats {
+        grid-template-columns: 1fr;
+    }
+}

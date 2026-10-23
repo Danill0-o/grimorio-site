@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+  <!-- Outer Shield Border (Dark Obsidian & Gold) -->
+  <path fill="#1a110b" d="M6 2h20v2h2v2h2v12h-2v4h-2v4h-4v2h-4v2h-4v-2H8v-2H4v-4H2v-4H0V6h2V4h2V2h2z"/>
+  <path fill="#d4a24c" d="M6 4h20v2h2v12h-2v4h-2v2h-4v2h-4v2h-4v-2H8v-2H6v-4H4V6h2V4z"/>
+  <path fill="#f7d87c" d="M6 4h20v2H6V4zm-2 2h2v12H4V6zm22 0h2v12h-2V6z"/>
+  <!-- Inner Arcane Field -->
+  <path fill="#142b29" d="M6 6h20v12h-2v4h-2v2h-4v2h-4v-2H8v-2H6v-4H6V6z"/>
+  <!-- Pixel Grimoire Book -->
+  <path fill="#5c281b" d="M7 9h18v12H7V9z"/>
+  <path fill="#f4e3b2" d="M8 10h7v9H8v-9zm9 0h7v9h-7v-9z"/>
+  <path fill="#d9c087" d="M15 10h2v9h-2v-9z"/>
+  <!-- Emerald Rune Gem in Center -->
+  <path fill="#0f382a" d="M13 11h6v6h-6v-6z"/>
+  <path fill="#2de091" d="M14 12h4v4h-4v-4z"/>
+  <path fill="#a8ffdb" d="M14 12h2v2h-2v-2z"/>
+  <!-- Pixel Text Lines on Pages -->
+  <path fill="#7a542e" d="M9 12h3v1H9v-1zm0 2h4v1H9v-1zm0 2h3v1H9v-1zm11-4h3v1h-3v-1zm-1 2h4v1h-4v-1zm1 2h3v1h-3v-1z"/>
+  <!-- Golden Sparkles -->
+  <path fill="#ffe885" d="M9 7h2v1H9V7zm12 0h2v1h-2V7zM15 6h2v2h-2V6zm0 16h2v2h-2v-2z"/>
+</svg>

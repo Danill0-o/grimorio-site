@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="backup-local.js?v=estavel-20261023"></script>
+    <script src="acessibilidade.js?v=estavel-20261023"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Seu Grimório — Perfil</title>
+    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/perfil.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
+    <script src="projetos-store.js?v=estavel-20261023"></script>
+    <script src="materias-store.js?v=nomes60-20261022"></script>
+    <script src="identidade-store.js?v=2"></script>
+    <script src="historico-repository.js"></script>
+    <script src="calendario-jornada.js?v=2"></script><script src="estudo-extra.js?v=2"></script>
+    <script src="estudo-store.js?v=7"></script>
+    <link rel="stylesheet" href="css/relatorios.css?v=temas3-20261022">
+    <script src="relatorios-store.js"></script>
+    <script src="relatorios-ui.js"></script>
+    <script src="perfil.js" defer></script>
+    <script src="perfil-historico.js?v=2" defer></script>
+
+</head>
+<body class="perfil-page">
+    <header class="container">
+        <nav class="grimorio-nav" aria-label="Navegação principal">
+            <a class="grimorio-marca" href="home.html"><span>GRIMÓRIO<small>SUA JORNADA DE CONHECIMENTO</small></span></a>
+            <a class="btn" href="home.html">Meus projetos</a>
+            <a class="btn" href="perfil.html" aria-current="page">Perfil</a>
+        </nav>
+        <section class="jornada-hero perfil-hero" aria-labelledby="perfil-titulo">
+            <p class="jornada-kicker">CONHECIMENTO ACUMULADO</p>
+            <h1 id="perfil-titulo">Seu Grimório</h1>
+            <p>Cada sessão escreve um novo capítulo, em qualquer projeto.</p>
+            <dl class="perfil-stats">
+                <div class="jornada-stat"><dt>Tempo total registrado</dt><dd id="perfil-tempo">—</dd></div>
+                <div class="jornada-stat"><dt>Matérias estudadas</dt><dd id="perfil-materias">—</dd></div>
+                <div class="jornada-stat"><dt>Projetos ativos e arquivados</dt><dd id="perfil-projetos">—</dd></div>
+            </dl>
+        </section>
+    </header>
+    <main class="container">
+        <section class="jornada-panel perfil-progressao" aria-labelledby="progressao-titulo">
+            <p class="jornada-kicker">CADA MINUTO CONTA</p>
+            <h2 id="progressao-titulo">Sua dedicação</h2>
+            <p id="perfil-global-nivel" class="perfil-nivel">—</p>
+            <p id="perfil-global-xp">—</p>
+            <progress id="perfil-global-barra" max="100" value="0" aria-label="Avanço para o próximo nível global"></progress>
+            <p id="perfil-global-avanco">—</p>
+            <p>Estudo e revisão valem o mesmo XP. Zerar domínio preserva sua dedicação global.</p>
+        </section>
+        <section aria-labelledby="dominio-titulo">
+            <p class="jornada-kicker">SUAS MATÉRIAS, ALÉM DE UMA JORNADA</p>
+            <h2 id="dominio-titulo">Domínio</h2>
+            <p>Níveis e títulos representam dedicação registrada, sem avaliar conhecimento ou competência.</p>
+            <p>Do maior tempo de domínio ao menor, com nome como desempate.</p>
+            <div class="perfil-backup-acoes">
+                <a class="btn btn-outline-secondary" href="materias.html">Gerenciar matérias e vínculos</a>
+                <button type="button" class="btn" id="reiniciar-dominio">Zerar todo o domínio</button>
+            </div>
+            <p id="dominio-status" role="status"></p>
+            <p id="perfil-status" role="status">Carregando seu domínio...</p>
+            <div id="perfil-dominio" class="perfil-grid"></div>
+        </section>
+        <section class="jornada-panel perfil-historico" aria-labelledby="historico-titulo">
+            <p class="jornada-kicker">SUA TRAJETÓRIA NO GRIMÓRIO</p>
+            <h2 id="historico-titulo">Histórico global</h2>
+            <p>Todos os seus projetos, inclusive os excluídos. Reiniciar domínio preserva este histórico.</p>
+            <p id="historico-global-status" role="status">Carregando seu histórico...</p>
+            <dl class="perfil-stats">
+                <div class="jornada-stat"><dt>Tempo de estudo</dt><dd id="historico-estudo">—</dd></div>
+                <div class="jornada-stat"><dt>Tempo de revisão</dt><dd id="historico-revisao">—</dd></div>
+                <div class="jornada-stat"><dt>Sessões registradas</dt><dd id="historico-sessoes">—</dd></div>
+                <div class="jornada-stat" id="historico-outros-item" hidden><dt>Tempo de outros registros</dt><dd id="historico-outros">—</dd></div>
+                <div class="jornada-stat"><dt>Primeira sessão</dt><dd><time id="historico-primeira">—</time></dd></div>
+                <div class="jornada-stat"><dt>Sessão mais recente</dt><dd><time id="historico-recente">—</time></dd></div>
+            </dl>
+            <p class="perfil-datas-ajuda">As datas indicam o início das sessões, no horário local.</p>
+            <h3 class="historico-consulta-titulo">Suas sessões</h3>
+            <form id="historico-filtros" class="historico-filtros" aria-label="Filtrar histórico global">
+                <label>De<input type="date" id="historico-de"></label>
+                <label>Até<input type="date" id="historico-ate"></label>
+                <label>Matéria<select id="historico-materia"><option value="">Todas as matérias</option></select></label>
+                <label>Projeto<select id="historico-projeto"><option value="">Todos os projetos</option></select></label>
+                <label>Tipo<select id="historico-tipo"><option value="">Todos os registros</option><option value="estudo">Estudo</option><option value="revisao">Revisão</option><option value="outros">Outros registros</option></select></label>
+                <label>Agrupar gráficos<select id="historico-agrupamento"><option value="semana">Por semana</option><option value="mes">Por mês</option></select></label>
+                <button type="button" class="btn" id="historico-limpar">Limpar filtros</button>
+            </form>
+            <p>O período inclui as duas datas. Os filtros afetam a lista e os gráficos; os totais do perfil continuam globais.</p>
+            <section class="relatorios" aria-labelledby="relatorios-global-titulo">
+                <h3 id="relatorios-global-titulo">Dedicação por período</h3>
+                <p>Tempo registrado, separado em estudo e revisão. Semanas começam na segunda-feira. Datas consideram o início da sessão, no horário local.</p>
+                <div id="relatorios-global" tabindex="-1"></div>
+            </section>
+            <p id="historico-consulta-status" role="status">Carregando sessões...</p>
+            <div class="historico-tabela-regiao" id="historico-tabela-regiao" role="region" aria-label="Sessões do histórico global; role horizontalmente para ver todas as colunas" tabindex="0">
+                <table class="historico-tabela"><caption>Sessões registradas, da mais recente à mais antiga</caption>
+                    <thead><tr><th scope="col">Data e hora</th><th scope="col">Matéria</th><th scope="col">Projeto</th><th scope="col">Tipo</th><th scope="col">Duração</th></tr></thead>
+                    <tbody id="historico-global-body"></tbody>
+                </table>
+            </div>
+            <nav class="historico-paginacao" aria-label="Páginas do histórico">
+                <button type="button" class="btn" id="historico-anterior" disabled>Anterior</button>
+                <span id="historico-pagina">—</span>
+                <button type="button" class="btn" id="historico-proximo" disabled>Próxima</button>
+            </nav>
+        </section>
+        <section class="jornada-panel perfil-backup" id="backup" aria-labelledby="backup-titulo">
+            <h2 id="backup-titulo">Guarde seu Grimório</h2>
+            <p>Baixe uma cópia completa dos dados salvos neste navegador (projetos, matérias, sessões, notas e preferências), salve diretamente em uma pasta fixa do computador ou restaure um arquivo de backup. Inclui o último checkpoint salvo de cronômetros pendentes.</p>
+            <div class="perfil-backup-acoes">
+                <button type="button" class="btn" data-backup-exportar data-backup-status="backup-status">Baixar backup completo</button>
+                <button type="button" class="btn" data-backup-pasta data-backup-status="backup-status">Salvar na pasta fixa</button>
+                <button type="button" class="btn" data-backup-trocar-pasta data-backup-status="backup-status">Escolher pasta fixa</button>
+                <button type="button" class="btn" data-backup-restaurar data-backup-status="backup-status">Restaurar backup</button>
+            </div>
+            <p id="backup-status" role="status"></p>
+            <p>O backup é local e não envia dados para a nuvem.</p>
+        </section>
+        <footer>Seu histórico fica salvo neste navegador. Estudo e revisão contam no tempo total; reiniciar domínio preserva esse histórico.</footer>
+    </main>
+    <dialog class="reset-dialogo" id="reset-dominio-dialogo" aria-labelledby="reset-dominio-alvo" aria-describedby="reset-dominio-descricao">
+        <form id="reset-dominio-form">
+            <p class="jornada-kicker">Um novo começo</p>
+            <h2 id="reset-dominio-alvo">Zerar domínio?</h2>
+            <p id="reset-dominio-descricao">Os pontos de conhecimento serão zerados e os níveis e títulos voltarão ao início. O histórico de estudos e as metas dos projetos serão preservados. Esta ação não pode ser desfeita pela interface.</p>
+            <label for="reset-dominio-confirmacao">Digite <strong>ZERAR</strong> para confirmar.</label>
+            <input id="reset-dominio-confirmacao" autocomplete="off" spellcheck="false" required>
+            <div class="dialogo-acoes">
+                <button type="button" class="btn" id="reset-dominio-cancelar">Cancelar</button>
+                <button type="submit" class="btn" id="reset-dominio-executar" disabled>Zerar domínio</button>
+            </div>
+        </form>
+    </dialog>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="backup-local.js?v=estavel-20261023"></script>
+    <script src="acessibilidade.js?v=estavel-20261023"></script>
+    <link rel="stylesheet" href="css/relatorios.css?v=temas3-20261022">
+    <script src="projetos-store.js?v=estavel-20261023"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jornada de estudos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/jornada-carrossel.css?v=temas3-20261022">
+    <link rel="stylesheet" href="notas-blocos.css">
+    <link rel="stylesheet" href="css/revisoes.css?v=temas3-20261022">
+<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/jornada-cards.css?v=estavel-20261023">
+</head>
+<body class="jornada-page">
+    <header class="container py-4">
+        <nav class="grimorio-nav" aria-label="Navegação principal">
+            <a class="grimorio-marca" href="home.html"><span>GRIMÓRIO<small>SUA JORNADA DE CONHECIMENTO</small></span></a>
+            <a href="perfil.html" class="btn btn-outline-secondary">Perfil</a>
+            <a href="pesomateria.html" class="btn btn-outline-primary">Ver planejamento</a>
+            <a href="calendario.html" class="btn btn-outline-secondary">Calendário</a>
+            <a href="index.html?editar=1" class="btn btn-outline-secondary">Editar projeto</a>
+        <a href="home.html" class="btn btn-outline-secondary">Meus projetos</a></nav>
+        <section class="jornada-hero p-4 p-lg-5">
+            <div class="row g-4 align-items-center">
+                <div class="col-lg-7">
+                    <p class="jornada-kicker mb-2">Jornada ativa</p>
+                    <h1 class="display-6 fw-bold mb-2" id="jornada-titulo">Sua campanha de estudos</h1>
+                    <p class="text-secondary mb-0" id="jornada-status">Carregando seu plano...</p>
+                </div>
+                <div class="col-lg-5">
+                    <div class="jornada-stats">
+                        <div class="jornada-stat"><span>Dia atual</span><strong id="stat-dia">--</strong></div>
+                        <div class="jornada-stat"><span>Conhecimento</span><strong id="stat-xp">0</strong></div>
+                        <div class="jornada-stat"><span>Estudado hoje</span><strong id="stat-hoje">00:00</strong></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </header>
+
+    <main class="container pb-5">
+        <div class="site-divisor" aria-hidden="true"></div>
+        <div class="alert alert-warning d-none" id="jornada-vazia" role="alert">
+            Sua jornada ainda não foi gerada. Salve os dados do projeto e pelo menos uma matéria.
+        </div>
+
+        <div class="jornada-layout">
+            <aside class="jornada-sidebar">
+                <section class="projeto-resumo-card" data-projeto-resumo>
+                    <p class="jornada-kicker mb-2">Projeto aberto</p>
+                    <h2 class="h5 mb-3" data-projeto-nome>Carregando...</h2>
+                    <dl class="projeto-resumo-lista">
+                        <div><dt>Início</dt><dd data-projeto-inicio>--</dd></div>
+                        <div><dt>Prova</dt><dd data-projeto-fim>--</dd></div>
+                        <div><dt>Tempo restante</dt><dd data-projeto-restantes>--</dd></div>
+                        <div><dt>Carga planejada</dt><dd data-projeto-carga>--</dd></div>
+                    </dl>
+                    <div class="d-flex justify-content-between small mb-2"><strong>Progresso geral</strong><span data-projeto-progresso-label>0%</span></div>
+                    <div class="progresso-trilho mb-3"><div class="progresso-barra progresso-barra-atual" data-projeto-progresso></div></div>
+                    <div class="d-grid gap-2 mt-3 pt-3 border-top">
+                        <button type="button" class="btn btn-sm btn-outline-primary" data-backup-pasta data-backup-status="agenda-backup-status">Salvar backup do dia</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-backup-exportar data-backup-status="agenda-backup-status">Baixar backup (.json)</button>
+                        <p class="small mb-0" id="agenda-backup-status" role="status" aria-live="polite"></p>
+                    </div>
+                </section>
+
+                <section class="cronometro-card cronometro-section" id="cronometro-estudos">
+                    <p class="jornada-kicker mb-1">Sessão atual</p>
+                    <h2 class="h5 mb-3">Cronômetro</h2>
+                    <label for="cronometro-materia" class="form-label fw-semibold">Matéria</label>
+                    <select class="form-select" id="cronometro-materia" aria-describedby="cronometro-ajuda">
+                        <option value="">Selecione uma matéria</option>
+                    </select>
+                    <div class="form-text" id="cronometro-ajuda">Escolha a matéria desta sessão.</div>
+                    <div class="cronometro-display cronometro-display-compacto my-3" id="cronometro-display" role="timer" aria-live="off">00:00:00</div>
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-primary" id="cronometro-iniciar">Iniciar</button>
+                        <button type="button" class="btn btn-danger" id="cronometro-parar" disabled>Parar</button>
+                        <button type="button" class="btn btn-success" id="cronometro-registrar" disabled>Registrar</button>
+                    </div>
+                    <p class="mt-3 mb-0 small cronometro-status" id="cronometro-status" role="status" aria-live="polite">Pronto para começar.</p>
+
+                    <details class="registro-manual mt-3">
+                        <summary class="fw-semibold">Adicionar tempo manualmente</summary>
+                        <form class="pt-3" id="registro-manual-form">
+                            <label for="registro-manual-materia" class="form-label small fw-semibold">Matéria</label>
+                            <select class="form-select form-select-sm mb-2" id="registro-manual-materia" required>
+                                <option value="">Selecione uma matéria</option>
+                            </select>
+                            <label for="registro-manual-data" class="form-label small">Data do estudo</label>
+                            <input type="date" class="form-control form-control-sm mb-2" id="registro-manual-data" aria-describedby="registro-manual-data-ajuda">
+                            <div class="form-text mb-2" id="registro-manual-data-ajuda">Deixe em branco para registrar agora. Informe a data para um estudo anterior.</div>
+                            <label for="registro-manual-anotacao" class="form-label small">Anotação</label>
+                            <textarea id="registro-manual-anotacao" class="form-control form-control-sm mb-2" rows="3" maxlength="140" placeholder="Tópicos estudados (opcional)"></textarea>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <label for="registro-manual-horas" class="form-label small">Horas</label>
+                                    <input type="number" class="form-control form-control-sm" id="registro-manual-horas" min="0" value="0" required>
+                                </div>
+                                <div class="col-6">
+                                    <label for="registro-manual-minutos" class="form-label small">Minutos</label>
+                                    <input type="number" class="form-control form-control-sm" id="registro-manual-minutos" min="0" max="59" value="0" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-outline-primary btn-sm w-100 mt-3">Registrar tempo manual</button>
+                            <p class="small mt-2 mb-0" id="registro-manual-status" role="status" aria-live="polite"></p>
+                        </form>
+                    </details>
+                </section>
+            </aside>
+
+            <div class="jornada-conteudo">
+
+
+                <section class="mb-4">
+                    <div class="d-flex flex-wrap justify-content-between gap-2 align-items-end mb-3">
+                        <div><p class="jornada-kicker mb-1">Uma carta. Um novo capítulo.</p><h2 class="h3 mb-0 dias-estudo-titulo">Dias de estudo</h2></div>
+                        <p class="text-secondary small mb-0">Complete as metas de cada matéria para avançar.</p>
+                    </div>
+                    <label><input type="checkbox" id="revisoes-habilitadas" checked> Mostrar sugestões de revisão neste projeto</label>
+                    <p id="revisoes-status" role="status" class="cartas-ajuda"></p>
+                    <details id="revisoes-atrasadas" class="revisao-grupo">
+                        <summary id="revisoes-atrasadas-titulo">Revisões atrasadas</summary>
+                        <div id="revisoes-atrasadas-lista"></div>
+                    </details>
+                    <div id="jornada-viewport" role="region" aria-roledescription="carrossel" aria-label="Dias de estudo. Use as setas, Home e End para navegar" tabindex="0">
+                        <div class="jornada-trilha">
+                            <div class="jornada-cards" id="jornada-cards"></div>
+                            <div id="jornada-faixa" aria-label="Progresso geral do projeto">
+                                <div class="progresso-trilho progresso-trilho-sobreposto">
+                                    <div class="progresso-barra progresso-barra-ideal" id="progresso-ideal"></div>
+                                    <div id="progresso-atual" role="progressbar" aria-label="Tempo total registrado no projeto em relação à carga planejada, incluindo estudos e revisões" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                                <div id="jornada-marcos"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p id="carta-em-foco" class="cartas-ajuda" aria-live="polite"></p>
+                <section class="jornada-panel p-4 mb-4" id="painel-progresso">
+                    <div class="d-flex flex-wrap justify-content-between gap-2 mb-4">
+                        <div>
+                            <p class="jornada-kicker mb-1">Mapa da campanha</p>
+                            <h2 class="h4 mb-0">Progresso real × progresso ideal</h2>
+                        </div>
+                        <span class="badge rounded-pill text-bg-light align-self-center" id="comparacao-status">Calculando...</span>
+                    </div>
+                    <div class="progresso-comparativo">
+                        <div class="d-flex flex-wrap justify-content-between gap-3 small mb-2">
+                            <span class="progresso-legenda progresso-legenda-atual"><strong>Progresso real:</strong> <span id="progresso-atual-label">0%</span></span>
+                            <span class="progresso-legenda progresso-legenda-ideal"><strong>Progresso ideal:</strong> <span id="progresso-ideal-label">0%</span></span>
+                        </div>
+
+                    </div>
+                </section>
+                    <div class="cartas-navegacao" aria-label="Navegar pelos dias de estudo">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-carta-passo="-1" aria-label="Ver dia anterior">❮</button>
+                        <label for="carta-seletor" class="visually-hidden">Escolher dia de estudo</label>
+                        <select class="form-select" id="carta-seletor"></select>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" data-carta-passo="1" aria-label="Ver próximo dia">❯</button>
+                        <button type="button" class="btn btn-sm" id="carta-atual">Voltar ao dia atual</button>
+                        <button type="button" class="btn btn-sm" id="carta-proximo">Ir ao próximo dia a estudar</button>
+                    </div>
+                    <p class="cartas-ajuda">Deslize para explorar as cartas. Os próximos dias ficam disponíveis para consulta.</p>
+                </section>
+
+                <details class="jornada-panel p-4 relatorios" id="relatorio-projeto">
+                    <summary>Seu projeto em gráficos</summary>
+                    <p>Compare sua dedicação e a carga planejada já cumprida. Estudo e revisão permanecem separados.</p>
+                    <form id="relatorio-projeto-filtros" class="relatorios-filtros" aria-label="Filtrar tempo do projeto">
+                        <label>De<input type="date" id="relatorio-projeto-de"></label>
+                        <label>Até<input type="date" id="relatorio-projeto-ate"></label>
+                        <label>Agrupar<select id="relatorio-projeto-grupo"><option value="semana">Por semana</option><option value="mes">Por mês</option></select></label>
+                        <button class="btn" type="button" id="relatorio-projeto-limpar">Limpar filtros</button>
+                    </form>
+                    <p>Datas inclusivas, pelo início da sessão no horário local. Semanas começam na segunda-feira. Filtros afetam somente horas registradas; metas mostram todo o projeto.</p>
+                    <p id="relatorio-projeto-status" role="status"></p>
+                    <div id="relatorio-projeto-tempo" tabindex="-1"></div>
+                    <section aria-labelledby="relatorio-projeto-metas-titulo">
+                        <h2 id="relatorio-projeto-metas-titulo" class="h5">Carga planejada cumprida</h2>
+                        <p>Somente estudo normal cumpre metas. Revisões ficam no histórico; tempo acima da carga planejada continua registrado.</p>
+                        <p id="relatorio-projeto-metas-resumo"></p>
+                        <div id="relatorio-projeto-metas"></div>
+                    </section>
+                </details>
+                <section class="jornada-panel p-4" id="historico-estudos">
+                    <div class="row g-4">
+                        <div class="col-xl-5">
+                            <h2 class="h5">Tempo acumulado por matéria</h2>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-hover align-middle mb-0" id="tabela-tempo-acumulado">
+                                    <thead class="table-light"><tr><th scope="col">Matéria</th><th scope="col">Pontos de conhecimento</th></tr></thead>
+                                    <tbody id="tempo-acumulado-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-xl-7">
+                            <h2 class="h5">Histórico de estudos</h2>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-striped align-middle mb-0" id="tabela-sessoes-estudo">
+                                    <thead class="table-light"><tr><th scope="col">Data</th><th scope="col">Hora</th><th scope="col">Matéria</th><th scope="col">Tempo estudado</th><th scope="col">Ações</th></tr></thead>
+                                    <tbody id="sessoes-estudo-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-rodape">
+        <img class="site-rodape-borda" src="img/assets/Footer wood.png" alt="" width="1786" height="236" loading="lazy">
+        <p><strong>GRIMÓRIO</strong></p>
+        <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
+    </footer>
+    <script src="materias-store.js?v=nomes60-20261022"></script><script src="identidade-store.js?v=2"></script><script src="historico-repository.js"></script>
+<script src="calendario-jornada.js?v=2"></script><script src="estudo-extra.js?v=2"></script><script src="distribuicao.js"></script><script src="script.js?v=nomes60-20261022"></script>
+    <script src="projeto-ui.js?v=3"></script>
+
+    <script src="estudo-store.js?v=7"></script>
+    <script src="revisoes-store.js?v=2"></script>
+    <script src="cronometro.js?v=11"></script>
+    <script src="notas-blocos.js"></script>
+    <script src="agenda.js?v=14"></script>
+    <script src="relatorios-store.js"></script>
+    <script src="relatorios-ui.js"></script>
+    <script src="relatorio-projeto.js"></script>
+</body>
+</html>
+

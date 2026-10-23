@@ -1,0 +1,18 @@
+[data-revisao-id] { flex-wrap: wrap; }
+[data-revisao-id] .dia-materia-identificacao { flex: 1 1 100%; overflow-wrap: anywhere; }
+[data-revisao-id] .revisao-dispensar { white-space: normal; }
+#revisoes-atrasadas { margin: 16px 0; }
+#revisoes-atrasadas-lista { padding: 12px; }
+#revisoes-atrasadas-lista section + section { margin-top: 20px; }
+#revisoes-atrasadas-lista h3 { font-size: 1rem; }
+.jornada-page .table-responsive { max-width: 100%; overflow-x: auto; }
+
+/* Superfícies e textos usam o mesmo par de cores em todos os temas. */
+#revisoes-atrasadas { color:var(--pixel-ink); background:var(--pixel-surface); border-color:var(--pixel-bronze); }
+#revisoes-atrasadas summary, #revisoes-atrasadas h3, #revisoes-atrasadas strong { color:var(--pixel-ink); text-shadow:none; }
+#revisoes-atrasadas .dia-lista li { color:var(--pixel-ink); background:var(--pixel-surface-elevated); border-color:var(--pixel-bronze); }
+#revisoes-atrasadas small, #revisoes-atrasadas .nota-revisao { color:var(--pixel-ink-muted); }
+
+.dias-estudo-titulo { color:var(--pixel-gold-bright); text-shadow:none; }
+
+.dias-estudo-titulo { color:#fff; }

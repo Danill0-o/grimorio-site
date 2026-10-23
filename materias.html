@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="backup-local.js?v=estavel-20261023"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Matérias e Vínculos — Grimório</title>
+    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/perfil.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/wizard.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
+    <script src="projetos-store.js?v=estavel-20261023"></script>
+    <script src="materias-store.js?v=nomes60-20261022"></script>
+    <script src="identidade-store.js?v=2"></script>
+    <script src="historico-repository.js"></script>
+    <script src="calendario-jornada.js?v=2"></script>
+    <script src="estudo-extra.js?v=2"></script>
+    <script src="estudo-store.js?v=7"></script>
+    <script src="materias-busca.js"></script>
+    <script src="catalogo-ui.js?v=estavel-20261023" defer></script>
+    <script src="materias-vinculo-ui.js" defer></script>
+    <script src="acessibilidade.js?v=estavel-20261023" defer></script>
+</head>
+<body class="perfil-page materias-page">
+    <header class="container">
+        <nav class="grimorio-nav" aria-label="Navegação principal">
+            <a class="grimorio-marca" href="home.html"><span>GRIMÓRIO<small>SUA JORNADA DE CONHECIMENTO</small></span></a>
+            <a class="btn btn-outline-secondary" href="home.html">Meus projetos</a>
+            <a class="btn btn-outline-secondary" href="perfil.html">Perfil</a>
+            <a class="btn" href="materias.html" aria-current="page">Matérias e vínculos</a>
+            <a class="btn btn-outline-primary" href="index.html?editar=1" id="materias-voltar-wizard" hidden>Voltar à edição do projeto</a>
+        </nav>
+        <section class="jornada-hero perfil-hero" aria-labelledby="materias-pagina-titulo">
+            <p class="jornada-kicker">CATÁLOGO E IDENTIDADE DO GRIMÓRIO</p>
+            <h1 id="materias-pagina-titulo">Suas matérias e vínculos</h1>
+            <p>Consulte todas as matérias do seu catálogo com níveis e horas acumuladas, gerencie nomes alternativos para busca e corrija vínculos de matérias nos seus projetos.</p>
+        </section>
+    </header>
+    <main class="container">
+        <section class="jornada-panel mb-4 p-4" aria-labelledby="acervo-titulo">
+            <p class="jornada-kicker">ACERVO GLOBAL</p>
+            <h2 id="acervo-titulo">Matérias cadastradas no seu Grimório</h2>
+            <p>Estas matérias podem ser escolhidas com um clique no livro de matérias ao criar ou editar qualquer projeto, preservando seu nível e histórico acumulado.</p>
+            <form id="catalogo-nova-global-form" class="catalogo-nova-global-form" novalidate>
+                <label for="catalogo-nova-global-nome">Cadastrar nova matéria no catálogo<input id="catalogo-nova-global-nome" class="form-control" maxlength="60" placeholder="Ex.: Direito Constitucional" required></label>
+                <button type="submit" class="btn">Cadastrar matéria</button>
+            </form>
+            <p id="catalogo-nova-global-status" role="status"></p>
+            <div id="catalogo-acervo-grid" class="perfil-grid"></div>
+        </section>
+
+        <section class="jornada-panel mb-4 p-4" aria-labelledby="memorias-titulo">
+            <p class="jornada-kicker">SINÔNIMOS E BUSCAS</p>
+            <h2 id="memorias-titulo">Nomes alternativos e buscas lembradas</h2>
+            <details class="catalogo-memorias" open>
+                <summary>Gerenciar nomes alternativos e termos de pesquisa</summary>
+                <div class="catalogo-memorias-corpo">
+                    <label for="catalogo-gerenciar">Matéria do catálogo</label>
+                    <select id="catalogo-gerenciar" class="form-control"></select>
+                    <label for="catalogo-alias">Nome alternativo</label>
+                    <input id="catalogo-alias" class="form-control" maxlength="120" placeholder="Ex.: Língua Portuguesa">
+                    <p class="form-text">Confirme apenas nomes que você considera equivalentes à matéria escolhida. Buscas lembradas ajudam a encontrar a matéria e não significam equivalência.</p>
+                    <button type="button" id="catalogo-confirmar-alias" class="btn btn-outline-secondary">Confirmar nome alternativo</button>
+                    <ul id="catalogo-memorias-lista"></ul>
+                    <p id="catalogo-memorias-status" role="status"></p>
+                </div>
+            </details>
+        </section>
+
+        <section class="jornada-panel mb-4 p-4" aria-labelledby="vinculo-secao-titulo">
+            <p class="jornada-kicker">ASSOCIAÇÃO ENTRE PROJETO E CATÁLOGO</p>
+            <h2 id="vinculo-secao-titulo">Corrigir vínculo de uma matéria</h2>
+            <details id="vinculo-painel" open>
+                <summary>Associar matéria de um projeto a outra matéria do catálogo</summary>
+                <div class="vinculo-painel-corpo">
+                    <p>Use quando uma matéria de um projeto tiver sido associada por engano à matéria errada do seu catálogo global.</p>
+                    <label for="vinculo-projeto">Projeto</label>
+                    <select id="vinculo-projeto" class="form-control"></select>
+                    <label for="vinculo-origem">Matéria do projeto</label>
+                    <select id="vinculo-origem" class="form-control"></select>
+                    <label for="vinculo-destino">Matéria correta no catálogo</label>
+                    <select id="vinculo-destino" class="form-control"></select>
+                    <button type="button" id="vinculo-revisar" class="btn btn-outline-secondary">Revisar alteração</button>
+                    <p id="vinculo-status" role="status"></p>
+                </div>
+            </details>
+        </section>
+
+        <footer>Suas matérias globais pertencem ao seu Grimório neste navegador. Excluir um projeto preserva o catálogo e o histórico.</footer>
+    </main>
+
+    <dialog id="vinculo-confirmacao" aria-labelledby="vinculo-titulo">
+        <h2 id="vinculo-titulo">Confirmar correção de vínculo</h2>
+        <p id="vinculo-resumo"></p>
+        <p>Todo o histórico desta participação passará a contar para a matéria escolhida. O planejamento, as revisões e as anotações serão preservados. Nenhuma participação será mesclada.</p>
+        <div class="dialogo-acoes">
+            <button type="button" class="btn btn-outline-secondary" id="vinculo-cancelar" autofocus>Cancelar</button>
+            <button type="button" class="btn" id="vinculo-confirmar">Confirmar correção</button>
+        </div>
+    </dialog>
+</body>
+</html>

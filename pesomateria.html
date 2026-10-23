@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="backup-local.js?v=estavel-20261023"></script>
+    <script src="acessibilidade.js?v=estavel-20261023"></script>
+    <script src="projetos-store.js?v=estavel-20261023"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <title>Planejamento de estudos</title>
+<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"></head>
+<body class="bg-light planejamento-page">
+    <header class="container py-4">
+        <nav class="grimorio-nav" aria-label="Navegação principal">
+            <a class="grimorio-marca" href="home.html"><span>GRIMÓRIO<small>SUA JORNADA DE CONHECIMENTO</small></span></a>
+            <a href="perfil.html" class="btn btn-outline-secondary">Perfil</a>
+            <a href="calendario.html" class="btn btn-outline-secondary">Calendário</a>
+            <a href="index.html?editar=1" class="btn btn-outline-secondary">Editar projeto</a>
+        <a href="home.html" class="btn btn-outline-secondary">Meus projetos</a></nav>
+        <div class="planejamento-intro">
+        <div>
+        <p class="text-uppercase text-primary fw-semibold small mb-1">Seu plano</p>
+        <h1 class="h2 mb-2">Planejamento de estudos</h1>
+        <p class="text-secondary mb-0">Consulte a divisão das matérias e sua meta de carga horária sempre que precisar.</p>
+        </div>
+        <a href="agenda.html" class="btn btn-success planejamento-abrir-jornada">Abrir jornada de estudos <span aria-hidden="true">→</span></a>
+        </div>
+    </header>
+
+    <main class="container pb-5">
+        <div class="site-divisor" aria-hidden="true"></div>
+        <div class="planejamento-layout">
+            <aside class="planejamento-sidebar">
+                <section class="projeto-resumo-card" data-projeto-resumo>
+                    <p class="jornada-kicker mb-2">Projeto aberto</p>
+                    <h2 class="h5 mb-3" data-projeto-nome>Carregando...</h2>
+                    <dl class="projeto-resumo-lista">
+                        <div><dt>Início</dt><dd data-projeto-inicio>--</dd></div>
+                        <div><dt>Prova</dt><dd data-projeto-fim>--</dd></div>
+                        <div><dt>Tempo restante</dt><dd data-projeto-restantes>--</dd></div>
+                        <div><dt>Carga planejada</dt><dd data-projeto-carga>--</dd></div>
+                    </dl>
+                    <div class="d-flex justify-content-between small mb-2"><strong>Progresso geral</strong><span data-projeto-progresso-label>0%</span></div>
+                    <div class="progresso-trilho mb-3"><div class="progresso-barra progresso-barra-atual" data-projeto-progresso></div></div>
+                </section>
+            </aside>
+
+            <div class="planejamento-conteudo">
+                <div class="alert alert-warning d-none" id="planejamento-vazio" role="alert">
+                    Ainda não há matérias salvas. Edite o projeto para montar seu planejamento.
+                </div>
+
+                <section class="card border-0 shadow-sm p-3 mb-4">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-lg-7">
+                            <div class="table-responsive">
+                                <table class="table caption-top table-bordered mb-0">
+                                    <caption>Matérias adicionadas</caption>
+                                    <thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Peso personalizado</th><th scope="col">Peso em porcentagem (%)</th></tr></thead>
+                                    <tbody id="table-body-peso"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-lg-5">
+                            <div class="grafico-planejamento"><canvas id="graficoPizza"></canvas></div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="site-divisor" aria-hidden="true"></div>
+                <section class="card border-0 shadow-sm p-3">
+                    <div class="table-responsive">
+                        <table class="table caption-top table-bordered mb-0">
+                            <caption>Distribuição das matérias pela carga horária disponível</caption>
+                            <thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Meta de estudos</th></tr></thead>
+                            <tbody id="table-body-distribuicao"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="site-rodape">
+        <img class="site-rodape-borda" src="img/assets/Divider.png" alt="" width="1786" height="236" loading="lazy">
+        <p><strong>GRIMÓRIO</strong></p>
+        <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
+    </footer>
+    <script src="materias-store.js?v=nomes60-20261022"></script><script src="identidade-store.js?v=2"></script><script src="historico-repository.js"></script>
+<script src="calendario-jornada.js?v=2"></script><script src="estudo-extra.js?v=2"></script><script src="distribuicao.js"></script><script src="script.js?v=nomes60-20261022"></script>
+    <script src="dados-inicio.js?v=4"></script>
+    <script src="divisao-materia.js?v=3"></script>
+    <script src="estudo-store.js?v=7"></script>
+    <script src="projeto-ui.js?v=3"></script>
+</body>
+</html>
+

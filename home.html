@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="backup-local.js?v=estavel-20261023"></script>
+    <script src="acessibilidade.js?v=estavel-20261023"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Meus projetos — Grimório</title>
+    <script src="projetos-store.js?v=estavel-20261023"></script>
+    <script src="materias-store.js?v=nomes60-20261022"></script><script src="identidade-store.js?v=2"></script><script src="historico-repository.js"></script>
+    <script src="calendario-jornada.js?v=2"></script><script src="estudo-extra.js?v=2"></script>
+    <script src="estudo-store.js?v=7"></script>
+    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/home.css?v=temas3-20261022">
+    <script src="home.js" defer></script>
+<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"></head>
+<body>
+    <main>
+        <header><p>GRIMÓRIO</p><h1>Meus projetos</h1><p>Escolha onde continuar seus estudos ou prepare uma nova jornada.</p></header>
+        <nav aria-label="Navegação principal"><a href="perfil.html">Seu perfil — Grimório</a><a href="materias.html">Suas matérias e vínculos</a></nav>
+        <button type="button" id="novo-projeto">Criar novo projeto</button>
+        <nav class="home-filtros" aria-label="Filtrar projetos">
+            <button type="button" id="projetos-ativos" aria-pressed="true">Ativos</button>
+            <button type="button" id="projetos-arquivados" aria-pressed="false">Arquivados</button>
+        </nav>
+        <p id="home-status" role="status"></p>
+        <section id="lista-projetos" aria-label="Projetos de estudo"></section>
+        <section aria-labelledby="home-backup-titulo">
+            <h2 id="home-backup-titulo">Guarde seus dados</h2>
+            <p>Baixe uma cópia completa dos dados salvos neste navegador, salve em uma pasta fixa do computador ou restaure um backup anterior. Inclui o último checkpoint salvo do cronômetro.</p>
+            <div class="home-acoes">
+                <button type="button" data-backup-exportar data-backup-status="home-backup-status">Baixar backup completo</button>
+                <button type="button" data-backup-pasta data-backup-status="home-backup-status">Salvar na pasta fixa</button>
+                <button type="button" data-backup-trocar-pasta data-backup-status="home-backup-status">Escolher pasta fixa</button>
+                <button type="button" data-backup-restaurar data-backup-status="home-backup-status">Restaurar backup</button>
+            </div>
+            <p id="home-backup-status" role="status"></p>
+        </section>
+        <footer>Seus projetos ficam salvos neste navegador. Login e sincronização ainda não estão disponíveis.</footer>
+    </main>
+    <dialog id="excluir-dialog" aria-labelledby="excluir-titulo" aria-describedby="excluir-descricao">
+        <h2 id="excluir-titulo">Excluir projeto?</h2>
+        <p id="excluir-descricao"></p>
+        <p>O planejamento será removido. O histórico de estudo e o conhecimento acumulado serão preservados. Esta ação não pode ser desfeita. Para apenas retirar dos ativos, use Arquivar.</p>
+        <label for="excluir-confirmacao">Digite EXCLUIR para confirmar</label>
+        <input id="excluir-confirmacao" autocomplete="off" spellcheck="false">
+        <p id="excluir-erro" role="alert"></p>
+        <div class="home-acoes">
+            <button type="button" id="excluir-cancelar" autofocus>Cancelar</button>
+            <button type="button" id="excluir-confirmar" class="acao-perigosa" disabled>Excluir definitivamente</button>
+        </div>
+    </dialog>
+</body>
+</html>

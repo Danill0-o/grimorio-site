@@ -1,0 +1,647 @@
+/* ==========================================================================
+   GRIMÓRIO — IDENTIDADE VISUAL PIXEL ART & RPG 16-BIT
+   Temas correlatos:
+   1. taverna  (Taverna & Pergaminho — RPG Clássico 16-Bit)
+   2. arcano   (Santuário Arcano — Noite Astral / Dark Mage)
+   3. floresta (Bosque Élfico — Druida Esmeralda & Âmbar)
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,600;0,700;1,400&family=Press+Start+2P&family=Silkscreen:wght@400;700&family=VT323&display=swap');
+
+:root,
+[data-tema-pixel="taverna"] {
+    --pixel-bg-deep: #1b120c;
+    --pixel-bg-pattern: #241810;
+    --pixel-surface: #f3e2b8;
+    --pixel-surface-alt: #e6ce96;
+    --pixel-surface-elevated: #fbf0d4;
+    --pixel-card-bg: #f6e7c1;
+    --pixel-card-done: #d8f0dc;
+    --pixel-card-locked: #d9ccb0;
+    --pixel-nav-bg: #22160e;
+    --pixel-nav-border: #d4a24c;
+    --pixel-ink: #23150b;
+    --pixel-ink-muted: #5c4128;
+    --pixel-kicker: #8c3b16;
+    --pixel-gold: #d4a24c;
+    --pixel-gold-bright: #ffe07d;
+    --pixel-bronze: #6e4720;
+    --pixel-border-outer: #1f1209;
+    --pixel-emerald: #1e7a56;
+    --pixel-emerald-bright: #2de091;
+    --pixel-crimson: #9e2a2b;
+    --pixel-crimson-bright: #d94141;
+    --pixel-mana: #2563eb;
+    --pixel-xp: #d97706;
+    --pixel-btn-bg: #1e6b4e;
+    --pixel-btn-hover: #227a59;
+    --pixel-btn-text: #fff8dc;
+    --pixel-btn-sec-bg: #e3c888;
+    --pixel-btn-sec-hover: #efd89e;
+    --pixel-btn-sec-text: #26170a;
+    --pixel-timer-bg: #0f241f;
+    --pixel-timer-fg: #52ffa8;
+    --pixel-shadow: #120a05;
+    --tinta: var(--pixel-ink);
+    --tinta-suave: var(--pixel-ink-muted);
+    --ouro: var(--pixel-gold);
+    --bronze: var(--pixel-bronze);
+    --papel: var(--pixel-surface);
+    --pedra: var(--pixel-emerald);
+    --pergaminho: var(--pixel-surface-elevated);
+    --bs-body-color: var(--pixel-ink);
+    --bs-body-bg: var(--pixel-bg-deep);
+    --bs-border-color: var(--pixel-bronze);
+    --bs-secondary-color: var(--pixel-ink-muted);
+    --font-pixel-title: 'Press Start 2P', 'Silkscreen', monospace;
+    --font-pixel-ui: 'Silkscreen', 'Chakra Petch', monospace;
+    --font-pixel- readout: 'VT323', monospace;
+    --font-body: 'Chakra Petch', system-ui, -apple-system, sans-serif;
+}
+
+[data-tema-pixel="arcano"] {
+    --pixel-bg-deep: #0b0d19;
+    --pixel-bg-pattern: #13182d;
+    --pixel-surface: #181f36;
+    --pixel-surface-alt: #222b4a;
+    --pixel-surface-elevated: #263054;
+    --pixel-card-bg: #1d2540;
+    --pixel-card-done: #173835;
+    --pixel-card-locked: #14192b;
+    --pixel-nav-bg: #090b14;
+    --pixel-nav-border: #00e5ff;
+    --pixel-ink: #edf2ff;
+    --pixel-ink-muted: #a5b4fc;
+    --pixel-kicker: #38bdf8;
+    --pixel-gold: #f59e0b;
+    --pixel-gold-bright: #fde047;
+    --pixel-bronze: #4f46e5;
+    --pixel-border-outer: #05070d;
+    --pixel-emerald: #10b981;
+    --pixel-emerald-bright: #34d399;
+    --pixel-crimson: #be123c;
+    --pixel-crimson-bright: #fb7185;
+    --pixel-mana: #38bdf8;
+    --pixel-xp: #c084fc;
+    --pixel-btn-bg: #4338ca;
+    --pixel-btn-hover: #5b21b6;
+    --pixel-btn-text: #f8fafc;
+    --pixel-btn-sec-bg: #293456;
+    --pixel-btn-sec-hover: #36446e;
+    --pixel-btn-sec-text: #e0e7ff;
+    --pixel-timer-bg: #070a14;
+    --pixel-timer-fg: #38bdf8;
+    --pixel-shadow: #04050a;
+}
+
+[data-tema-pixel="floresta"] {
+    --pixel-bg-deep: #0d1c14;
+    --pixel-bg-pattern: #152b1f;
+    --pixel-surface: #e8f0dc;
+    --pixel-surface-alt: #d5e3c3;
+    --pixel-surface-elevated: #f3f8ec;
+    --pixel-card-bg: #ebf2e1;
+    --pixel-card-done: #c7ebd1;
+    --pixel-card-locked: #cad4c0;
+    --pixel-nav-bg: #11241a;
+    --pixel-nav-border: #94d82d;
+    --pixel-ink: #16261b;
+    --pixel-ink-muted: #3b5944;
+    --pixel-kicker: #2b7a3e;
+    --pixel-gold: #d9822b;
+    --pixel-gold-bright: #ffd166;
+    --pixel-bronze: #3b6e4c;
+    --pixel-border-outer: #09140e;
+    --pixel-emerald: #2b8a3e;
+    --pixel-emerald-bright: #51cf66;
+    --pixel-crimson: #a61e4d;
+    --pixel-crimson-bright: #d6336c;
+    --pixel-mana: #15aabf;
+    --pixel-xp: #e67700;
+    --pixel-btn-bg: #287b39;
+    --pixel-btn-hover: #2e8140;
+    --pixel-btn-text: #f8fff4;
+    --pixel-btn-sec-bg: #cfe0ba;
+    --pixel-btn-sec-hover: #deedcc;
+    --pixel-btn-sec-text: #16261b;
+    --pixel-timer-bg: #0c1f14;
+    --pixel-timer-fg: #8ce99a;
+    --pixel-shadow: #07120c;
+}
+
+
+
+/* Pixelated image rendering globally for crisp retro sprites */
+img, svg, canvas {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+}
+
+body, body.jornada-page, body.bg-light, body.criacao-page, body.calendario-page, body.perfil-page {
+    color: var(--pixel-ink);
+    background-color: var(--pixel-bg-deep) !important;
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.22) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.22) 1px, transparent 1px),
+        radial-gradient(circle at 50% 0%, var(--pixel-bg-pattern) 0%, var(--pixel-bg-deep) 85%);
+    background-size: 16px 16px, 16px 16px, 100% 100%;
+    background-attachment: fixed;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.55;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Optional CRT Scanlines Overlay when toggled */
+body[data-scanlines="on"]::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9998;
+    background: repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.14) 0px,
+        rgba(0, 0, 0, 0.14) 1px,
+        transparent 1px,
+        transparent 3px
+    );
+}
+
+/* Top Pixel Gold/Emerald RPG Border Strip */
+body::before {
+    content: '';
+    display: block;
+    height: 8px;
+    background: repeating-linear-gradient(
+        90deg,
+        var(--pixel-gold) 0px,
+        var(--pixel-gold) 16px,
+        var(--pixel-emerald) 16px,
+        var(--pixel-emerald) 32px,
+        var(--pixel-bronze) 32px,
+        var(--pixel-bronze) 48px
+    );
+    border-bottom: 4px solid var(--pixel-border-outer);
+}
+
+/* Typography Hierarchy */
+h1, h2, h3, .grimorio-marca, .wizard-chapter, .jornada-kicker {
+    font-family: var(--font-pixel-title);
+    line-height: 1.35;
+    letter-spacing: 0.02em;
+}
+
+h4, h5, .btn, button, .dia-card-badge, .jornada-stat strong, summary, caption, th {
+    font-family: var(--font-pixel-ui);
+}
+
+h1 {
+    font-size: clamp(1.2rem, 2.2vw, 1.85rem);
+    color: var(--pixel-ink);
+    text-shadow: 2px 2px 0 rgba(255, 255, 255, 0.25);
+}
+
+[data-tema-pixel="arcano"] h1,
+[data-tema-pixel="arcano"] h2,
+[data-tema-pixel="arcano"] h3 {
+    text-shadow: 2px 2px 0 #000000;
+}
+
+h2 { font-size: clamp(1rem, 1.6vw, 1.35rem); }
+h3 { font-size: clamp(0.92rem, 1.3vw, 1.15rem); }
+
+body > .container, body > header.container, body > main.container {
+    max-width: 1500px;
+    padding-inline: clamp(14px, 2.5vw, 40px);
+}
+
+.text-secondary, .form-text, caption, .projeto-resumo-lista dt, .dia-materia-identificacao small {
+    color: var(--pixel-ink-muted) !important;
+}
+
+.text-primary, .jornada-kicker, .registro-manual summary {
+    color: var(--pixel-kicker) !important;
+}
+
+.jornada-kicker {
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.jornada-kicker::before {
+    content: '❖';
+    color: var(--pixel-gold);
+}
+
+/* ==========================================================================
+   HEADER & NAVEGAÇÃO PIXEL ART RPG
+   ========================================================================== */
+.grimorio-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 1.6rem;
+    background: var(--pixel-nav-bg);
+    border: 4px solid var(--pixel-nav-border);
+    box-shadow:
+        0 0 0 4px var(--pixel-border-outer),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.12),
+        0 8px 0 var(--pixel-shadow);
+    padding: 14px 18px;
+    position: relative;
+}
+
+.grimorio-marca {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-right: auto;
+    text-decoration: none;
+    color: var(--pixel-gold-bright) !important;
+    font-family: var(--font-pixel-title);
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    text-shadow: 2px 2px 0 #000;
+}
+
+.grimorio-marca::before {
+    content: '';
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    background: url('../img/selo-conhecimento.svg') center/contain no-repeat;
+    filter: drop-shadow(2px 2px 0 #000);
+}
+
+.grimorio-marca small {
+    display: block;
+    font-family: var(--font-pixel-ui);
+    font-size: 0.58rem;
+    letter-spacing: 0.14em;
+    color: #e2d1a0;
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   PAINÉIS, CARDS & MOLDURAS CHANFRADAS EM PIXEL ART
+   ========================================================================== */
+.jornada-hero,
+.jornada-panel,
+.projeto-resumo-card,
+.cronometro-card,
+.planejamento-page .card,
+.criacao-page .container.border,
+#lista-projetos article,
+.home-card-painel {
+    position: relative;
+    border: 4px solid var(--pixel-bronze) !important;
+    border-radius: 0 !important;
+    background:
+        linear-gradient(180deg, var(--pixel-surface-elevated) 0%, var(--pixel-surface) 100%) !important;
+    color: var(--pixel-ink);
+    box-shadow:
+        0 0 0 4px var(--pixel-border-outer),
+        inset 0 0 0 3px var(--pixel-gold),
+        8px 8px 0 var(--pixel-shadow) !important;
+}
+
+.jornada-hero {
+    padding: 1.8rem !important;
+    overflow: hidden;
+    background:
+        linear-gradient(95deg, var(--pixel-surface-elevated) 0%, var(--pixel-surface) 62%, rgba(212, 162, 76, 0.25) 100%) !important;
+}
+
+.jornada-hero::after {
+    content: '';
+    position: absolute;
+    right: 16px;
+    bottom: 12px;
+    width: 72px;
+    height: 72px;
+    background: url('../img/selo-conhecimento.svg') center/contain no-repeat;
+    opacity: 0.18;
+    pointer-events: none;
+}
+
+/* Stats Boxes (HP/MP/XP RPG Counters) */
+.jornada-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.jornada-stat {
+    border: 3px solid var(--pixel-bronze);
+    border-radius: 0;
+    background: var(--pixel-surface-alt);
+    box-shadow:
+        0 0 0 2px var(--pixel-border-outer),
+        inset 0 2px 0 rgba(255, 255, 255, 0.35),
+        4px 4px 0 var(--pixel-shadow);
+    padding: 0.75rem;
+}
+
+.jornada-stat span,
+.jornada-stat dt {
+    display: block;
+    font-family: var(--font-pixel-ui);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--pixel-ink-muted);
+}
+
+.jornada-stat strong,
+.jornada-stat dd {
+    display: block;
+    font-family: 'VT323', var(--font-pixel-title);
+    font-size: 1.75rem;
+    line-height: 1.1;
+    color: var(--pixel-emerald);
+    margin-top: 4px;
+}
+
+/* ==========================================================================
+   BOTÕES PIXEL ART 16-BIT (3D STEPPED PRESS)
+   ========================================================================== */
+.btn,
+button:not(.wizard-link):not(.skip-link) {
+    --bs-btn-disabled-opacity: 0.5;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 44px;
+    font-family: var(--font-pixel-ui);
+    font-weight: 700;
+    font-size: 0.82rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--pixel-btn-text) !important;
+    background: var(--pixel-btn-bg) !important;
+    border: 3px solid var(--pixel-border-outer) !important;
+    border-radius: 0 !important;
+    border-image: none !important;
+    padding: 0.55rem 1rem;
+    box-shadow:
+        inset -3px -3px 0 rgba(0, 0, 0, 0.35),
+        inset 3px 3px 0 rgba(255, 255, 255, 0.25),
+        4px 4px 0 var(--pixel-shadow) !important;
+    text-shadow: 1px 1px 0 #000 !important;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.08s steps(2), background-color 0.08s steps(2);
+}
+
+.btn:hover:not(:disabled):not(.disabled),
+button:hover:not(:disabled):not(.wizard-link) {
+    background: var(--pixel-btn-hover) !important;
+    transform: translate(-1px, -1px);
+    box-shadow:
+        inset -3px -3px 0 rgba(0, 0, 0, 0.35),
+        inset 3px 3px 0 rgba(255, 255, 255, 0.35),
+        5px 5px 0 var(--pixel-shadow) !important;
+}
+
+.btn:active:not(:disabled):not(.disabled),
+button:active:not(:disabled):not(.wizard-link),
+.btn-check:checked + .btn {
+    transform: translate(3px, 3px);
+    box-shadow:
+        inset 3px 3px 0 rgba(0, 0, 0, 0.45),
+        1px 1px 0 var(--pixel-shadow) !important;
+}
+
+.btn.btn-outline-secondary,
+.btn.btn-outline-primary,
+.home-filtros button[aria-pressed="false"] {
+    color: var(--pixel-btn-sec-text) !important;
+    background: var(--pixel-btn-sec-bg) !important;
+    text-shadow: none !important;
+}
+
+.btn.btn-outline-secondary:hover:not(:disabled),
+.btn.btn-outline-primary:hover:not(:disabled) {
+    background: var(--pixel-btn-sec-hover) !important;
+    color: var(--pixel-btn-sec-text) !important;
+}
+
+.btn.btn-danger,
+.btn.btn-outline-danger,
+button.acao-perigosa {
+    color: #fff8e7 !important;
+    background: var(--pixel-crimson) !important;
+    text-shadow: 1px 1px 0 #000 !important;
+}
+
+.btn.btn-danger:hover:not(:disabled),
+.btn.btn-outline-danger:hover:not(:disabled),
+button.acao-perigosa:hover:not(:disabled) {
+    background: var(--pixel-crimson-bright) !important;
+}
+
+.btn:disabled,
+.btn.disabled,
+button:disabled {
+    opacity: 0.5 !important;
+    filter: grayscale(0.7);
+    cursor: not-allowed;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+/* ==========================================================================
+   CRONÔMETRO ARCANO 8-BIT / 16-BIT
+   ========================================================================== */
+.cronometro-display {
+    font-family: 'VT323', monospace !important;
+    font-size: clamp(2.4rem, 4.5vw, 3.3rem) !important;
+    letter-spacing: 0.08em;
+    color: var(--pixel-timer-fg) !important;
+    background: var(--pixel-timer-bg) !important;
+    border: 4px solid var(--pixel-gold) !important;
+    border-radius: 0 !important;
+    box-shadow:
+        0 0 0 3px var(--pixel-border-outer),
+        inset 0 0 18px rgba(0, 0, 0, 0.85) !important;
+    text-shadow: 0 0 10px var(--pixel-timer-fg);
+    padding: 0.7rem 0.5rem !important;
+    text-align: center;
+}
+
+/* ==========================================================================
+   BARRAS DE PROGRESSO ESTILO HP / MANA / XP SEGMENTADAS
+   ========================================================================== */
+.progresso-trilho,
+.relatorios-trilho {
+    height: 18px !important;
+    border: 3px solid var(--pixel-border-outer) !important;
+    border-radius: 0 !important;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.18) 0px,
+            rgba(0, 0, 0, 0.18) 2px,
+            transparent 2px,
+            transparent 16px
+        ),
+        var(--pixel-surface-alt) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+    overflow: hidden;
+}
+
+.progresso-barra-atual,
+.jornada-preenchimento,
+.relatorios-estudo,
+.relatorios-cumprido {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 12px,
+            rgba(0, 0, 0, 0.22) 12px,
+            rgba(0, 0, 0, 0.22) 14px
+        ),
+        linear-gradient(180deg, var(--pixel-emerald-bright), var(--pixel-emerald)) !important;
+    border-radius: 0 !important;
+}
+
+.progresso-barra-ideal {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 12px,
+            rgba(0, 0, 0, 0.2) 12px,
+            rgba(0, 0, 0, 0.2) 14px
+        ),
+        linear-gradient(180deg, var(--pixel-gold-bright), var(--pixel-gold)) !important;
+    border-radius: 0 !important;
+}
+
+progress {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    height: 14px;
+    border: 2px solid var(--pixel-border-outer);
+    border-radius: 0 !important;
+    background: var(--pixel-surface-alt);
+}
+
+progress::-webkit-progress-bar {
+    background: var(--pixel-surface-alt);
+}
+
+progress::-webkit-progress-value {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 8px,
+            rgba(0, 0, 0, 0.25) 8px,
+            rgba(0, 0, 0, 0.25) 10px
+        ),
+        var(--pixel-emerald);
+}
+
+progress::-moz-progress-bar {
+    background: var(--pixel-emerald);
+}
+
+/* ==========================================================================
+   INPUTS, SELECTS E TABELAS RPG
+   ========================================================================== */
+.form-control, .form-select, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea {
+    color: var(--pixel-ink) !important;
+    background-color: var(--pixel-surface-elevated) !important;
+    border: 3px solid var(--pixel-bronze) !important;
+    border-radius: 0 !important;
+    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.15) !important;
+    font-family: var(--font-body);
+}
+
+.form-control:focus, .form-select:focus, input:focus, select:focus, textarea:focus {
+    border-color: var(--pixel-emerald) !important;
+    outline: 3px solid var(--pixel-gold) !important;
+    outline-offset: 2px;
+}
+
+.table, .historico-tabela, #table-materias {
+    --bs-table-color: var(--pixel-ink);
+    --bs-table-bg: transparent;
+    --bs-table-border-color: var(--pixel-bronze);
+    --bs-table-striped-bg: rgba(212, 162, 76, 0.12);
+    --bs-table-hover-bg: rgba(212, 162, 76, 0.24);
+    color: var(--pixel-ink) !important;
+    border: 3px solid var(--pixel-bronze) !important;
+}
+
+.table-light, thead {
+    --bs-table-bg: var(--pixel-surface-alt);
+    --bs-table-color: var(--pixel-ink);
+    background: var(--pixel-surface-alt) !important;
+    border-bottom: 3px solid var(--pixel-bronze) !important;
+}
+
+/* ==========================================================================
+   BARRA DE TEMA PIXEL ART (TEMA-PIXEL.JS)
+   ========================================================================== */
+.pixel-theme-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 6px 14px;
+    background: var(--pixel-border-outer);
+    border-bottom: 3px solid var(--pixel-gold);
+    font-family: var(--font-pixel-ui);
+    font-size: 0.72rem;
+    color: #f8e7b5;
+}
+
+.pixel-theme-bar span.pixel-theme-label {
+    margin-right: 4px;
+    color: var(--pixel-gold-bright);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.pixel-theme-chip {
+    min-height: 32px !important;
+    padding: 4px 10px !important;
+    font-size: 0.7rem !important;
+    background: #2b2118 !important;
+    color: #f3e2b8 !important;
+    border: 2px solid var(--pixel-gold) !important;
+    box-shadow: 2px 2px 0 #000 !important;
+}
+
+.pixel-theme-chip[aria-pressed="true"] {
+    background: var(--pixel-gold) !important;
+    color: #1a110b !important;
+    text-shadow: none !important;
+    font-weight: 700;
+}
+
+/* Layout Grids */
+.jornada-layout, .planejamento-layout {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 1.6rem;
+    align-items: start;
+}
+
+@media (max-width: 991px) {
+    .jornada-layout, .planejamento-layout {
+        grid-template-columns: 1fr;
+    }
+}

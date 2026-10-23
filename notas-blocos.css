@@ -1,0 +1,19 @@
+.nota-botao { width: 36px; height: 36px; padding: 0; border: 2px solid #75512b; border-radius: 7px; background: #fff2c6; color: #372613; font: bold 23px Georgia, serif; box-shadow: 0 3px 0 #bba46c; cursor: pointer; }
+.nota-botoes { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.nota-botao { position: relative; }
+.nota-botao small { position: absolute; right: 2px; bottom: 1px; font: bold 10px sans-serif; }
+.nota-preenchida { background: #d6ead0; border-color: #41613b; }
+.nota-botao:focus-visible, .nota-balao button:focus-visible { outline: 3px solid #236e99; outline-offset: 3px; }
+.nota-balao { position: fixed; margin: 0; box-sizing: border-box; width: 370px; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow: auto; padding: 22px; border: 2px solid #674724; border-radius: 18px 18px 18px 3px; background: #fff9e8; color: #332411; box-shadow: -9px 9px 0 #c5ac78, 0 18px 48px #0005; }
+.nota-balao::backdrop { background: #24180c30; }
+.nota-balao h2 { font-size: 18px; margin: 0 0 16px; }
+.nota-balao label, .nota-balao textarea { display: block; width: 100%; }
+.nota-balao textarea { box-sizing: border-box; margin: 8px 0; padding: 10px; resize: vertical; min-height: 96px; border: 1px solid #a38b62; border-radius: 8px; background: #fffdf5; color: #332411; font: inherit; }
+.nota-balao #nota-erro:empty { display: none; }
+.nota-acoes { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.nota-acoes button { padding: 9px 12px; border: 1px solid #75512b; border-radius: 6px; background: #f1dfab; color: #332411; cursor: pointer; }
+.nota-revisao { white-space: pre-wrap; overflow-wrap: anywhere; }
+.nota-balao { overflow: visible; }
+.nota-balao form { max-height: calc(100dvh - 72px); overflow: auto; }
+.nota-balao::before { content: ''; position: absolute; left: -14px; top: 34px; width: 24px; height: 24px; background: #fff9e8; border-left: 2px solid #674724; border-bottom: 2px solid #674724; transform: rotate(45deg); }
+@media (max-width: 600px) { .nota-balao::before { display: none; } }

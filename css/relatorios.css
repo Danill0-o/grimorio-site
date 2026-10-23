@@ -1,0 +1,25 @@
+.relatorios { margin-block: 1.5rem; min-width: 0; color: var(--tinta, #362716); }
+.relatorios-grafico { margin-block: 1.5rem; }
+.relatorios-grafico h3 { font-size: 1.15rem; }
+.relatorios-barras { list-style: none; padding: 0; margin: 0; }
+.relatorios-barras li { margin-block: 1rem; overflow-wrap: anywhere; }
+.relatorios-barras strong { display: block; }
+.relatorios-valor, .relatorios-barras small { display: block; font-variant-numeric: tabular-nums; }
+.relatorios-trilho { display: flex; height: .8rem; background: #dac8a0; border: 1px solid #76502b; margin-block: .3rem; overflow: hidden; border-radius: 3px; }
+.relatorios-estudo, .relatorios-cumprido { background: #214b45; }
+.relatorios-revisao { background: repeating-linear-gradient(135deg, #76502b 0 4px, #c5a06a 4px 7px); }
+.relatorios-outros { background: #6b6376; }
+.relatorios-falta { background: #dac8a0; }
+.relatorios-legenda { display: flex; flex-wrap: wrap; gap: .5rem 1rem; }
+.relatorios-legenda span { background: none; display: inline-flex; align-items: center; gap: .4rem; }
+.relatorios-legenda span::before { content: ''; width: 1rem; height: .8rem; border: 1px solid #76502b; background: #214b45; }
+.relatorios-legenda .relatorios-revisao::before { background: repeating-linear-gradient(135deg, #76502b 0 4px, #c5a06a 4px 7px); }
+.relatorios-legenda .relatorios-outros::before { background: #6b6376; }
+.relatorios-legenda .relatorios-falta::before { background: #dac8a0; }
+.relatorios-ajuda { font-size: .9rem; }
+.relatorios-paginacao { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.relatorios-filtros { display: flex; flex-wrap: wrap; gap: 1rem; align-items: end; }
+.relatorios-filtros label { display: flex; flex-direction: column; max-width: 100%; }
+.relatorios-filtros input, .relatorios-filtros select { padding: .4rem; max-width: 100%; color: #362716; background: #f6eddb; border: 1px solid #76502b; border-radius: 4px; }
+#relatorio-projeto summary { font-size: 1.4rem; font-weight: bold; cursor: pointer; }
+#relatorio-projeto { margin-bottom: 1.5rem; padding: 1.25rem; }

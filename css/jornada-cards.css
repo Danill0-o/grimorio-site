@@ -1,0 +1,255 @@
+/* Apresentação dos cards; largura/passo, crédito e controles do timer continuam existentes. */
+.jornada-page #jornada-cards .dia-card {
+    min-height: 0;
+    padding: 12px;
+    border: 1px solid #987c50;
+    border-top: 3px solid #987c50;
+    border-image: none;
+    border-radius: 10px;
+    background: linear-gradient(115deg, #f4e5c3, #ead4a8);
+    /* O scale anterior reduzia o alvo de 44px nos cards vizinhos. */
+    transform: translateY(20px);
+}
+.jornada-page #jornada-cards .dia-card-selecionado { transform: translateY(0); }
+/* O conector da apresentação antiga ultrapassava a largura dos cards do carrossel. */
+.jornada-page #jornada-cards .dia-card::after { content: none; }
+.jornada-page #jornada-cards .dia-card-atual { border-top-color: #795420; }
+.jornada-page #jornada-cards .dia-card-concluido { border-top-color: #416b53; }
+.jornada-page #jornada-cards .dia-card-bloqueado { border-top-style: dashed; }
+.dia-card-cabecalho { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.jornada-page .dia-card-cabecalho h3 { margin: 0 !important; flex: 1; text-align: left; font-size: 1.2rem; line-height: 1.4; }
+.jornada-page .dia-card-cabecalho .dia-card-badge,
+.jornada-page .dia-card-calendario {
+    display: inline-grid; place-items: center; margin: 0; padding: 4px;
+    border: 1px solid #a48a5f; border-radius: 5px; background: #f7ecd3; color: #513c23;
+}
+.jornada-page .dia-card-concluido .dia-card-badge { background: #e2ecdd; color: #31533b; border-color: #799173; }
+.jornada-icone { width: 20px; height: 20px; flex-shrink: 0; vertical-align: middle; }
+.jornada-page .dia-bloqueio-aviso { margin: 0 0 10px; font-size: .85rem; line-height: 1.4; }
+.jornada-page .dia-lista { margin: 0; gap: 8px; }
+.jornada-page .dia-lista .dia-materia-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    justify-content: stretch;
+    gap: 8px;
+    padding: 10px;
+    min-width: 0;
+    width: 100%;
+}
+.jornada-page .dia-materia-item.materia-com-blocos { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.jornada-page .dia-materia-identificacao {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+}
+.jornada-page .dia-materia-identificacao > strong {
+    margin: 0;
+    font-size: .95rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
+}
+.jornada-page .dia-materia-identificacao > strong .jornada-icone { width: 16px; height: 16px; margin-left: 5px; color: #315b44; }
+.jornada-page .dia-materia-identificacao small { font-size: .85rem; line-height: 1.4; }
+.jornada-page .dia-bloco-item {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    align-items: center;
+    width: 100%;
+    min-width: 0;
+}
+.jornada-page .dia-bloco-item + .dia-bloco-item { margin-top: 6px; padding-top: 8px; border-top: 1px solid rgba(110, 71, 32, 0.35); }
+.jornada-page .dia-bloco-item > .bloco-nome,
+.jornada-page .dia-bloco-item > .materia-indicador { grid-column: 1; }
+.jornada-page .dia-bloco-item > .bloco-nome { font-size: .85rem; line-height: 1.4; }
+.jornada-page .materia-notas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+}
+.jornada-page .materia-notas .bloco-topico {
+    display: block;
+    font-size: .85rem;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    min-width: 0;
+}
+.jornada-page .nota-acao { display: inline-flex; align-items: center; gap: 4px; }
+.jornada-page .nota-acao small { font-size: .85rem; }
+.jornada-page .dia-bloco-item.bloco-concluido { border-left: 2px solid #5e7d59; padding-left: 6px; }
+.jornada-page .materia-indicador {
+    display: grid; grid-template-columns: 92px minmax(0, 1fr);
+    gap: 8px; align-items: center; min-width: 0; min-height: 24px; width: 100%;
+}
+.jornada-page .materia-indicador small { font-size: .85rem; line-height: 1.4; white-space: nowrap; }
+.jornada-page .materia-indicador-barra {
+    display: block; width: 100%; min-width: 0; height: 8px; border: 0; border-radius: 5px;
+    overflow: hidden; accent-color: #315c55; background: #d8c59b;
+}
+.jornada-page .materia-indicador-barra::-webkit-progress-bar { background: #d8c59b; }
+.jornada-page .materia-indicador-barra::-webkit-progress-value { background: #315c55; }
+.jornada-page .materia-indicador-barra::-moz-progress-bar { background: #315c55; }
+.jornada-page .materia-indicador-nivel .materia-indicador-barra { accent-color: #75542d; }
+.jornada-page .materia-indicador-nivel .materia-indicador-barra::-webkit-progress-value { background: #75542d; }
+.jornada-page .materia-indicador-nivel .materia-indicador-barra::-moz-progress-bar { background: #75542d; }
+.jornada-page .dia-materia-concluida { background: #e1e7ce !important; border-color: #799173 !important; }
+.jornada-page .blocos-acoes {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    gap: 4px;
+}
+.jornada-page .blocos-acoes .materia-cronometro-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-left: 0;
+    width: 100%;
+    justify-self: start;
+    justify-content: flex-start;
+}
+.jornada-page .blocos-tempo-nao-registrado { font-size: .85rem; line-height: 1.4; }
+.jornada-page .nota-botoes { margin-top: 4px; gap: 6px; }
+.jornada-page .nota-botao,
+.jornada-page .dia-bloco-item .nota-botao,
+.jornada-page .materia-cronometro-botao {
+    display: inline-grid; place-items: center; box-sizing: border-box;
+    width: 44px; min-width: 44px; height: 44px; min-height: 44px; padding: 0;
+    border-radius: 6px; flex-shrink: 0;
+}
+.jornada-page .nota-botao { font: bold 1.2rem Georgia, serif; box-shadow: none; }
+.jornada-page .materia-cronometro-acoes { gap: 6px; flex-wrap: wrap; }
+.jornada-page .dia-revisoes-titulo { margin: 12px 0 6px; padding: 0; border: 0; font-size: .9rem; text-transform: none; letter-spacing: 0; }
+.jornada-page .revisoes-grupos { display: grid; gap: 6px; }
+.jornada-page .revisoes-grupos .revisao-grupo { margin: 0; background: #f0dfbc; border: 1px solid #ad956a; }
+.jornada-page .revisao-grupo summary { box-sizing: border-box; min-height: 44px; padding: 10px 8px; font-size: .9rem; }
+.jornada-page .revisao-grupo summary span { font-size: .85rem; }
+.jornada-page .revisao-grupo-lista { padding: 0 6px 6px; }
+.jornada-page [data-revisao-id].dia-materia-item { display: grid; grid-template-columns: minmax(0, 1fr) 44px; gap: 4px 6px; }
+.jornada-page [data-revisao-id] .dia-materia-identificacao { grid-column: 1 / -1; }
+.jornada-page [data-revisao-id] .materia-cronometro-acoes { grid-column: 1; margin: 0; }
+.jornada-page [data-revisao-id] .revisao-dispensar { grid-column: 2; justify-self: end; }
+.jornada-page .nota-revisao { font-size: .85rem; line-height: 1.4; }
+.jornada-page .revisao-dispensada { border-style: dashed; }
+.jornada-page .dia-progresso-resumo { margin-top: 10px; font-size: .85rem; }
+.jornada-page .dia-progresso-resumo .progresso-trilho { height: 8px; border-width: 1px; box-shadow: none; }
+/* O estado continua disponível a leitores de tela, sem estilos de badge/box herdados. */
+.jornada-page .dia-bloco-item .bloco-estado.visually-hidden { margin: -1px !important; padding: 0 !important; border: 0 !important; }
+@media (prefers-reduced-motion: reduce) {
+    .jornada-page #jornada-cards .dia-card:not(.dia-card-selecionado) { transform: translateY(20px) !important; }
+    .jornada-page #jornada-cards .dia-card-selecionado { transform: none !important; }
+}
+.dia-extra-adicionar {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    border: 1px solid currentColor;
+    border-radius: 8px;
+    color: var(--bs-primary, #0d6efd);
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+.dia-extra-adicionar:focus-visible, .extra-materia-seletor:focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 2px;
+}
+.extra-materia-seletor {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    margin-top: .5rem;
+    border-radius: 6px;
+    padding: .4rem;
+}
+.dia-extras { margin-top: .75rem; }
+.estudo-extra .bloco-topico { overflow-wrap: anywhere; }
+.estudo-extra .materia-cronometro-botao.d-none { display: none !important; }
+.jornada-page .cronometro-display.cronometro-em-destaque {
+    border-color: #ff2b2b !important;
+    outline: 3px solid #ff2b2b;
+    outline-offset: 2px;
+}
+.jornada-page .sessao-anotacao { overflow-wrap: anywhere; }
+
+
+/* ==========================================================================
+   OVERRIDES PIXEL ART PARA CARDS DA JORNADA (CARTAS DE QUEST RPG)
+   ========================================================================== */
+.jornada-page #jornada-cards .dia-card {
+    border: 4px solid var(--pixel-bronze) !important;
+    border-top: 8px solid var(--pixel-gold) !important;
+    border-radius: 0 !important;
+    background: var(--pixel-card-bg) !important;
+    box-shadow:
+        0 0 0 3px var(--pixel-border-outer),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.28),
+        6px 6px 0 var(--pixel-shadow) !important;
+}
+
+.jornada-page #jornada-cards .dia-card-atual {
+    border-top-color: var(--pixel-emerald-bright) !important;
+    box-shadow:
+        0 0 0 3px var(--pixel-border-outer),
+        0 0 0 6px var(--pixel-gold),
+        8px 10px 0 var(--pixel-shadow) !important;
+}
+
+.jornada-page #jornada-cards .dia-card-concluido {
+    background: var(--pixel-card-done) !important;
+    border-top-color: var(--pixel-emerald) !important;
+}
+
+.jornada-page #jornada-cards .dia-card-bloqueado {
+    background: var(--pixel-card-locked) !important;
+    border-top-style: dashed !important;
+}
+
+.jornada-page .dia-card-cabecalho .dia-card-badge,
+.jornada-page .dia-card-calendario {
+    border: 2px solid var(--pixel-border-outer) !important;
+    border-radius: 0 !important;
+    background: var(--pixel-surface-elevated) !important;
+    color: var(--pixel-ink) !important;
+    font-family: var(--font-pixel-ui);
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.jornada-page .dia-lista li {
+    border: 2px solid var(--pixel-bronze) !important;
+    border-radius: 0 !important;
+    background: var(--pixel-surface-elevated) !important;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+.jornada-page .dia-materia-concluida {
+    background: var(--pixel-card-done) !important;
+    border-color: var(--pixel-emerald) !important;
+}
+
+.jornada-page .revisoes-grupos .revisao-grupo {
+    border: 2px solid var(--pixel-gold) !important;
+    border-radius: 0 !important;
+    background: var(--pixel-surface-alt) !important;
+}
+
+.dia-extra-adicionar {
+    border: 2px solid var(--pixel-border-outer) !important;
+    border-radius: 0 !important;
+    background: var(--pixel-gold) !important;
+    color: #1a110b !important;
+    font-family: var(--font-pixel-title);
+}

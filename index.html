@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <script src="backup-local.js?v=estavel-20261023"></script>
+    <script src="acessibilidade.js?v=estavel-20261023"></script>
+    <script src="projetos-store.js?v=estavel-20261023"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar projeto de estudos</title>
+    <script>
+      const parametrosConfiguracao = new URLSearchParams(window.location.search);
+      const acessoExplicito = parametrosConfiguracao.has('novo') || parametrosConfiguracao.has('editar');
+      if (!acessoExplicito) {
+        window.location.replace('home.html');
+      }
+    </script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/style.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
+
+<link rel="stylesheet" href="css/wizard.css?v=estavel-20261023">
+
+
+<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"></head>
+
+<body class="criacao-page"><header><nav class="grimorio-nav" aria-label="Navegação principal">
+        <a class="grimorio-marca" href="home.html"><span>GRIMÓRIO<small>SUA JORNADA DE CONHECIMENTO</small></span></a>
+      <a href="home.html" class="btn btn-outline-secondary">Meus projetos</a></nav></header>
+<main class="wizard-shell">
+<div class="wizard-intro"><p class="jornada-kicker">Toda jornada começa com um plano</p><h1>Prepare sua campanha</h1></div>
+<nav class="wizard-steps" aria-label="Etapas da criação">
+<button type="button" data-etapa="0" aria-current="step"><span>1</span>Projeto</button><button type="button" data-etapa="1" disabled><span>2</span>Rotina</button><button type="button" data-etapa="2" disabled><span>3</span>Matérias</button><button type="button" data-etapa="3" disabled><span>4</span>Revisar</button>
+</nav>
+<div class="container border wizard-paper">
+<form id="nome_projetoForm" novalidate>
+<section data-painel="0" aria-labelledby="titulo-projeto">
+<p class="wizard-chapter">Etapa 1 de 4</p><h2 id="titulo-projeto" tabindex="-1">Seu projeto</h2><p>Escolha o destino e o período da sua jornada.</p>
+<div class="project-fields">
+<label class="project-name" for="nome_exame">Nome do projeto<input class="form-control" id="nome_exame" required></label>
+<label for="dataInicio">Data de início<input class="form-control" type="date" id="dataInicio" required></label>
+<label for="dataFinal">Data da prova<input class="form-control" type="date" id="dataFinal" required></label>
+</div></section>
+<section data-painel="1" aria-labelledby="titulo-rotina" hidden>
+<p class="wizard-chapter">Etapa 2 de 4</p><h2 id="titulo-rotina" tabindex="-1">Seu ritmo de estudo</h2><p>Reserve um espaço para o conhecimento na sua semana.</p>
+<div class="routine-layout"><fieldset id="divSelecioneOsDias"><legend id="selecioneOsDias">Dias da semana</legend>
+<label class="all-days"><input type="checkbox" id="btn-checkAll"> Todos os dias</label>
+<div id="btn-dia-semana" class="weekdays">
+<label class="choice"><input type="checkbox" id="btn-Dom"><span>Dom</span></label><label class="choice"><input type="checkbox" id="btn-Seg"><span>Seg</span></label><label class="choice"><input type="checkbox" id="btn-Ter"><span>Ter</span></label><label class="choice"><input type="checkbox" id="btn-Qua"><span>Qua</span></label><label class="choice"><input type="checkbox" id="btn-Qui"><span>Qui</span></label><label class="choice"><input type="checkbox" id="btn-Sex"><span>Sex</span></label><label class="choice"><input type="checkbox" id="btn-Sab"><span>Sáb</span></label>
+</div></fieldset>
+<div class="routine-values">
+<label for="horas-por-dia">Tempo diário de estudo, sem contar revisões <small>(HH:MM)</small><input type="time" class="form-control" id="horas-por-dia" required></label>
+<div><label for="blocos-por-dia">Blocos de estudo por dia<select class="form-select" id="blocos-por-dia" aria-describedby="distribuicao-ajuda" required><option value="1">1</option></select></label><p id="distribuicao-ajuda">Escolha quantos blocos deseja fazer normalmente em cada dia de estudo. Uma mesma matéria pode ocupar mais de um bloco no mesmo dia, conforme seus pesos.</p></div>
+</div></div></section></form>
+<section data-painel="2" aria-labelledby="titulo-materias" hidden>
+<p class="wizard-chapter">Etapa 3 de 4</p><h2 id="titulo-materias" tabindex="-1">O que você vai estudar?</h2><p>Adicione as matérias do edital ou abra seu livro de matérias para escolher com um clique aquelas em que você já possui nível e tempo registrados.</p>
+<div class="wizard-grimorio-acoes">
+<button type="button" id="abrir-livro-materias" class="btn btn-livro-materias" aria-haspopup="dialog" aria-controls="livro-materias-dialog">
+<svg class="icone-livro-pixel" viewBox="0 0 24 20" width="28" height="24" aria-hidden="true" focusable="false">
+<path fill="#6e4720" d="M1 2h22v16H1z"/><path fill="#d4a24c" d="M2 3h9v14H2zm11 0h9v14h-9z"/><path fill="#fbf0d4" d="M3 4h7v12H3zm11 0h7v12h-7z"/><path fill="#8c3b16" d="M11 2h2v16h-2z"/><path fill="#1e7a56" d="M5 6h3v2H5zm0 4h4v1H5zm11-4h4v1h-4zm0 3h3v2h-3z"/>
+</svg>
+<span class="livro-botao-textos">
+<strong>Suas matérias</strong>
+<small id="livro-materias-resumo">Ver níveis e escolher do Grimório</small>
+</span>
+</button>
+<a href="materias.html" class="btn btn-outline-secondary" id="atalho-gerenciar-materias">Gerenciar matérias e vínculos</a>
+</div>
+<div id="materia-vinculo-ativo" class="materia-vinculo-banner" hidden>
+<span id="materia-vinculo-texto"></span>
+<button type="button" id="materia-limpar-vinculo" class="btn btn-sm btn-outline-secondary">Digitar nova matéria</button>
+</div>
+<select id="materia-catalogo" hidden aria-hidden="true"><option value="">Criar nova matéria</option></select>
+<form id="cadastroForm" class="subject-fields">
+<label for="materia">Matéria<input class="form-control" id="materia" maxlength="60" aria-describedby="materia-limite" required><small id="materia-limite">Máximo de 60 caracteres.</small></label>
+<label for="Nquestoes">Questões<input class="form-control" type="number" id="Nquestoes" min="0" max="99" required></label>
+<label for="peso">Peso<input class="form-control" type="number" id="peso" min="1" max="99" value="1" required></label>
+<label for="afinidade">Afinidade<input type="range" class="form-range" id="afinidade" min="0.5" max="1.5" step="0.5" value="1"><span class="affinity-labels"><span>Baixa</span><span>Média</span><span>Alta</span></span></label>
+<button type="submit" class="btn btn-primary">Adicionar</button></form>
+<p class="form-text">Baixa afinidade dá mais ênfase à matéria; alta afinidade dá menos. Ao usar uma matéria do seu Grimório, seu nível global é mantido e as metas deste projeto começam do zero.</p>
+<div id="table-materias-div" class="subject-table-wrap">
+<table id="table-materias"><caption>Matérias adicionadas</caption>
+<thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Questões</th><th scope="col">Peso</th><th scope="col">Afinidade</th><th scope="col">Excluir</th></tr></thead><tbody id="table-body"></tbody></table>
+</div><label class="question-total" for="totalQuestoes">Total de questões <input id="totalQuestoes" type="number" value="0" readonly></label>
+<dialog id="livro-materias-dialog" class="livro-aberto-dialog" aria-labelledby="livro-materias-titulo">
+<div class="livro-aberto-capa">
+<header class="livro-aberto-topo">
+<div>
+<p class="jornada-kicker mb-1">ACERVO DO SEU GRIMÓRIO</p>
+<h2 id="livro-materias-titulo">Suas matérias</h2>
+<p class="livro-aberto-subtitulo">Clique em um card nas páginas abaixo para escolher a matéria com seu nível e horas acumuladas.</p>
+</div>
+<button type="button" id="livro-materias-fechar" class="btn btn-outline-secondary livro-fechar" aria-label="Fechar livro de matérias">✕</button>
+</header>
+<div class="catalogo-busca livro-busca-barra">
+<label for="catalogo-consulta">Buscar nas suas matérias</label>
+<input id="catalogo-consulta" class="form-control" type="search" maxlength="120" autocomplete="off" placeholder="Filtrar por nome ou apelido..." role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="catalogo-resultados" aria-describedby="catalogo-status">
+<p id="catalogo-status" role="status" class="form-text"></p>
+<button type="button" id="catalogo-criar" class="btn btn-outline-secondary btn-sm" hidden>Criar nova matéria com este nome</button>
+</div>
+<div id="catalogo-sugestoes" class="livro-aberto-folhas">
+<div class="livro-paginas-cabecalho" aria-hidden="true"><span>Página Esquerda</span><span>Página Direita</span></div>
+<ul id="catalogo-resultados" class="livro-paginas-grid" role="listbox" aria-label="Matérias encontradas no Grimório"></ul>
+</div>
+<footer class="livro-aberto-rodape" id="livro-paginacao" hidden>
+<button type="button" class="btn btn-sm btn-outline-secondary" id="livro-pagina-anterior">◀ Página anterior</button>
+<span id="livro-pagina-info">Página 1 de 1</span>
+<button type="button" class="btn btn-sm btn-outline-secondary" id="livro-pagina-proxima">Próxima página ▶</button>
+</footer>
+</div>
+</dialog>
+</section>
+<section data-painel="3" aria-labelledby="titulo-revisar" hidden>
+<p class="wizard-chapter">Etapa 4 de 4</p><h2 id="titulo-revisar" tabindex="-1">Tudo pronto para começar?</h2><p>Confira seu plano. Você pode voltar para ajustar qualquer etapa.</p>
+<dl id="wizard-resumo" class="wizard-summary"></dl>
+</section>
+<p id="wizard-erro" role="alert"></p>
+<div class="wizard-actions"><button type="button" id="wizard-voltar" class="wizard-link" hidden>← Voltar</button><button type="button" id="wizard-avancar" class="btn btn-primary">Continuar →</button></div>
+</div></main>
+<footer class="site-rodape">
+    <img class="site-rodape-borda" src="img/assets/Footer wood.png" alt="" width="1786" height="236" loading="lazy">
+    <p><strong>GRIMÓRIO</strong></p>
+    <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
+</footer>
+<script src="materias-store.js?v=nomes60-20261022"></script><script src="identidade-store.js?v=2"></script><script src="historico-repository.js"></script>
+<script src="materias-busca.js"></script><script src="calendario-jornada.js?v=2"></script><script src="estudo-extra.js?v=2"></script><script src="estudo-store.js?v=7"></script><script src="distribuicao.js"></script><script src="script.js?v=nomes60-20261022"></script><script src="catalogo-ui.js?v=estavel-20261023"></script><script src="dados-inicio.js?v=6"></script><script src="wizard.js"></script>
+</body></html>
+
+
+
