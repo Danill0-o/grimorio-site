@@ -267,6 +267,14 @@
     font-size: 0.82rem;
 }
 .calendario-folga span { display: block; margin-top: 6px; opacity: 0.85; }
+.calendario-folga-pratica {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    border-style: solid !important;
+}
+.calendario-folga-pratica:focus-visible { outline: 3px solid var(--pixel-gold-bright); outline-offset: 2px; }
+.calendario-missao-estado { font-weight: 700; }
 
 .calendario-ajuda { font-size: .9rem; color: var(--pixel-gold-bright); text-shadow: none; margin-block: 20px; }
 .calendario-extras-anteriores { padding: 20px; margin-block: 24px; }
@@ -481,6 +489,7 @@
 @media (max-width: 960px) {
     .calendario-grade { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .calendario-celula-folga { display: none; }
+    .calendario-celula-folga.calendario-celula-pratica { display: block; }
 }
 @media (max-width: 600px) {
     .calendario-container { padding-block: 20px; }

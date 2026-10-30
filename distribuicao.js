@@ -51,6 +51,80 @@
         }
         const somaPesos = materias.reduce((s,m) => s + m.peso, 0);
         if (!(somaPesos > 0)) throw new Error('Pesos inválidos.');
+        if (Array.isArray(dados.blocosPorDiaLista)) {
+            const listaBlocos = dados.blocosPorDiaLista.map(Number);
+            const duracaoBloco = dados.duracaoNormalBlocoSegundos === undefined
+                ? Math.floor(segundosDia / quantidade)
+                : Number(dados.duracaoNormalBlocoSegundos);
+            if (listaBlocos.length !== dias
+                || listaBlocos.some(n => !Number.isInteger(n) || n < 0 || n > quantidade)
+                || !Number.isSafeInteger(duracaoBloco) || duracaoBloco < 1 || duracaoBloco > segundosDia) {
+                throw new Error('Disponibilidade, blocos ou pesos inválidos.');
+            }
+            const total = listaBlocos.reduce((s, n) => s + n, 0);
+            const capacidadeInsuficiente = total < materias.length;
+            if (total === 0) {
+                const materiaDoDia = {};
+                for (let dia = 0; dia < dias; dia++) materiaDoDia[`dia${dia + 1}`] = [];
+                return {
+                    materiaDoDia,
+                    distribuicaoMaterias: materias.map(m => ({ Materia: m.Materia, projetoMateriaId: m.projetoMateriaId, Materia_distribuida: 0 })),
+                    quantidade,
+                    coberturaExtra: false,
+                    capacidadeInsuficiente: true,
+                    semBlocosTeoricos: true
+                };
+            }
+            const cotas = materias.map(m => total * m.peso / somaPesos);
+            const limites = cotas.map(Math.floor);
+            const ordem = materias.map((_, i) => i).sort((a, b) => (cotas[b] - limites[b]) - (cotas[a] - limites[a]) || a - b);
+            const sobra = total - limites.reduce((s, n) => s + n, 0);
+            for (let i = 0; i < sobra; i++) limites[ordem[i]]++;
+            const ordemCobertura = materias.map((_, i) => i).sort((a, b) => materias[b].peso - materias[a].peso || a - b);
+            ordemCobertura.forEach(i => {
+                if (limites[i] || !(materias[i].peso > 0)) return;
+                let doador = -1;
+                limites.forEach((n, j) => {
+                    if (n > 1 && (doador < 0 || n - cotas[j] > limites[doador] - cotas[doador])) doador = j;
+                });
+                if (doador >= 0) { limites[doador]--; limites[i] = 1; }
+            });
+            const usadas = materias.map(() => 0);
+            const segundos = materias.map(() => 0);
+            const materiaDoDia = {};
+            let passo = 0;
+            for (let dia = 0; dia < dias; dia++) {
+                const quantidadeDia = listaBlocos[dia];
+                const blocos = [];
+                for (let slot = 0; slot < quantidadeDia; slot++) {
+                    passo++;
+                    let escolhido = -1;
+                    let deficit = -Infinity;
+                    materias.forEach((m, i) => {
+                        const valor = passo * limites[i] / total - usadas[i];
+                        if (usadas[i] < limites[i] && valor > deficit) { escolhido = i; deficit = valor; }
+                    });
+                    usadas[escolhido]++;
+                    segundos[escolhido] += duracaoBloco;
+                    blocos.push({
+                        materia: materias[escolhido].Materia,
+                        projetoMateriaId: materias[escolhido].projetoMateriaId,
+                        metaSegundos: duracaoBloco,
+                        tempoEstudado: '',
+                        topico: ''
+                    });
+                }
+                materiaDoDia[`dia${dia + 1}`] = blocos;
+            }
+            return {
+                materiaDoDia,
+                distribuicaoMaterias: materias.map((m, i) => ({ Materia: m.Materia, projetoMateriaId: m.projetoMateriaId, Materia_distribuida: segundos[i] / 60 })),
+                quantidade,
+                coberturaExtra: false,
+                capacidadeInsuficiente,
+                semBlocosTeoricos: false
+            };
+        }
         const coberturaExtra = dias * quantidade < materias.length;
         const total = Math.max(dias * quantidade, materias.length);
         const cotas = materias.map(m => total * m.peso / somaPesos);

@@ -26,7 +26,7 @@
         const inicio = dados ? window.CalendarioJornada.somarDias(dados.dataInicioF, 0) : null;
         const fim = dados ? window.CalendarioJornada.somarDias(dados.dataFinalF, 0) : null;
         const resultado = { projetoId, nome: String(dados?.nomeExame || 'Seu projeto'), inicio, fim, dias: [], extrasForaPlano: [],
-            aviso: '', revisoesHabilitadas: true };
+            folgasPraticas: [], aviso: '', revisoesHabilitadas: true };
         if (!plano || !Object.keys(plano).length) {
             resultado.aviso = 'Este projeto ainda não possui um cronograma. Conclua o planejamento para consultar o calendário.';
             return resultado;
@@ -130,9 +130,21 @@
                     nivel: dominio.nivel, percentualNivel: dominio.percentual,
                     nota: textoNotaOrigem(bloco) };
             });
-            return { dia: dia.dia, numero: indice + 1, dataPrevista: datas[dia.dia] || null, materias, extras: [], revisoes: [] };
+            return { dia: dia.dia, numero: indice + 1, dataPrevista: datas[dia.dia] || null, materias, extras: [], revisoes: [], missoes: [] };
         });
         const porDia = new Map(resultado.dias.map(dia => [dia.dia, dia]));
+        // Atividades práticas são consultivas: sem estado de atraso e sem ações de execução (E6).
+        resultado.folgasPraticas = [];
+        if (window.PraticasStore?.projetarMissoesProjeto) {
+            const praticas = window.PraticasStore.projetarMissoesProjeto(projetoId, { dados, materiaDoDia: plano });
+            Object.entries(praticas.missoesPorDiaJornada).forEach(([dia, missoes]) => {
+                const destino = porDia.get(dia);
+                if (destino) destino.missoes = missoes;
+                else resultado.folgasPraticas.push(...missoes.map(m => ({ dataPrevista: m.dataPrevista, missoes: [m] })));
+            });
+            resultado.folgasPraticas.push(...praticas.folgas);
+            resultado.folgasPraticas.sort((a, b) => a.dataPrevista.localeCompare(b.dataPrevista));
+        }
         sessoes.forEach(s => {
             if (s.projetoId === projetoId && s.blocoExtraId && window.EstudoStore.sessaoEstudoElegivel(s)) {
                 segundosPorExtra.set(s.blocoExtraId, (segundosPorExtra.get(s.blocoExtraId) || 0) + s.duracaoSegundos);

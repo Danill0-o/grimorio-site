@@ -17,19 +17,21 @@
     window.addEventListener('extras:alterados', iniciarJornada);
     window.addEventListener('revisoes:alteradas', iniciarJornada);
     window.addEventListener('storage', (event) => {
-        if (window.HistoricoRepository?.ehChave(event.key) || ['reiniciosDominio', 'sessoesEstudo', 'notasBlocosV1', 'materiasDominioV1'].includes(event.key) || event.key?.endsWith(':revisoesEstadoV1') || event.key?.includes(':estudoExtraV1:')) iniciarJornada();
+        if (event.key?.startsWith('praticasProjetoV1:')) iniciarJornada({ reutilizarPlano: true });
+        else if (window.HistoricoRepository?.ehChave(event.key) || ['reiniciosDominio', 'sessoesEstudo', 'notasBlocosV1', 'materiasDominioV1'].includes(event.key) || event.key?.endsWith(':revisoesEstadoV1') || event.key?.includes(':estudoExtraV1:')) iniciarJornada();
     });
+    window.addEventListener('praticas:alteradas', () => iniciarJornada({ reutilizarPlano: true }));
     window.addEventListener('cronometro:estado', atualizarAtalhosCronometro);
     document.addEventListener('DOMContentLoaded', iniciarControlesCartas);
 
-    function iniciarJornada() {
+    function iniciarJornada(opcoes = {}) {
         const dadosExame = lerObjeto('dadosExame');
         const materiasPlano = lerArray('objetosNormalizados');
         if (!dadosExame || !materiasPlano.length) return mostrarJornadaVazia();
 
         // Preserve os tópicos legados antes de regenerar a projeção do plano.
         window.NotasBlocos.preservarLegadas(lerObjeto('materiaDoDia'));
-        if (typeof sortMaterias === 'function') sortMaterias();
+        if (!opcoes.reutilizarPlano && typeof sortMaterias === 'function') sortMaterias();
         const materiaDoDia = lerObjeto('materiaDoDia');
         const revisoesDoDia = lerObjeto('revisoesDoDia') || {};
         if (!materiaDoDia || !Object.keys(materiaDoDia).length) return mostrarJornadaVazia();
@@ -72,13 +74,25 @@
         const minutosProjeto = segundosProjeto / 60;
         const minutosHoje = somarMinutos(sessoesProjeto.filter((sessao) => mesmaData(new Date(sessao.inicio), new Date())));
         const minutosPorDia = Math.max(1, Number(dadosExame.minutosPorDia) || 1);
-        const progressoPlano = window.EstudoStore.calcularProgressoPlano({
+        let progressoPlano;
+        try { progressoPlano = window.EstudoStore.calcularProgressoPlano({
             dados: dadosExame,
             materiaDoDia,
             sessoesProjeto,
             distribuicaoMaterias: lerArray('lista_distribuicao_materias')
-        });
+        }); } catch (erro) {
+            document.getElementById('cronometro-status').textContent = 'Não foi possível carregar o progresso. Seus dados foram preservados; recarregue para tentar novamente.';
+            console.error(erro); return;
+        }
         const estadoDias = progressoPlano.dias;
+        let missoesPorDia = {};
+        try {
+            missoesPorDia = window.PraticasStore?.projetarMissoesProjeto
+                ? window.PraticasStore.projetarMissoesProjeto(projetoId, { dados: dadosExame, materiaDoDia }).missoesPorDiaJornada : {};
+        } catch (erro) {
+            document.getElementById('cronometro-status').textContent = 'Não foi possível carregar as atividades práticas. Seus dados foram preservados.';
+            console.error(erro);
+        }
         const globaisPorParticipacao = new Map(Object.keys(progressoPlano.materias).map(id => {
             const participacao = window.MateriasStore.obterProjetoMateria(id, projetoId);
             return [id, window.MateriasStore.resolverMateriaGlobal(participacao.materiaGlobalId).materiaGlobalId];
@@ -110,7 +124,7 @@
         const percentualReal = cargaPlanejadaSegundos ? segundosProjeto / cargaPlanejadaSegundos * 100 : 0;
         renderizarProgresso(dadosExame, percentualReal, estadoDias);
         renderizarCards({
-            extras, segundosExtrasPorBloco, anotacoesSessoes,
+            extras, segundosExtrasPorBloco, anotacoesSessoes, missoesPorDia,
             materiaDoDia,
             revisoesDoDia,
             revisoes: mostrarRevisoes ? revisoes : [],
@@ -288,6 +302,7 @@
                 anotacoesSessoes: contexto.anotacoesSessoes,
                 blocos: contexto.materiaDoDia[estado.dia] || []
             });
+            adicionarMissoesPraticas(card, contexto.missoesPorDia?.[estado.dia] || [], estado);
             const revisoes = contexto.revisoes.filter(r => r.diaJornada === estado.dia);
             adicionarEstudosExtras(card, contexto.extras.filter(e => e.diaJornada === estado.dia), { ...contexto, estado });
             if (contexto.mostrarRevisoes) adicionarRevisoesComCronometro(card, revisoes, {
@@ -555,6 +570,58 @@
                 item.append(rodape);
             }
             lista.appendChild(item);
+        });
+        card.append(titulo, lista);
+    }
+
+    // E5: consulta das atividades práticas práticas do dia; execução (cronômetro/conclusão) pertence à E6.
+    function adicionarMissoesPraticas(card, missoes, estado) {
+        if (!missoes.length) return;
+        if (!estado.metasMaterias.length) {
+            const aviso = document.createElement('p');
+            aviso.className = 'dia-missoes-aviso';
+            aviso.textContent = 'Nenhum bloco teórico previsto neste dia (capacidade reservada às atividades práticas).';
+            card.append(aviso);
+        }
+        const titulo = document.createElement('h4');
+        titulo.className = 'dia-missoes-titulo';
+        titulo.textContent = 'Atividades práticas';
+        const lista = document.createElement('ul');
+        lista.className = 'dia-lista dia-missoes-praticas';
+        lista.setAttribute('aria-label', 'Atividades práticas');
+        const minutos = segundos => (segundos / 60).toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+        missoes.forEach(missao => {
+            const item = document.createElement('li');
+            item.className = 'dia-materia-item dia-missao-item';
+            item.classList.toggle('dia-missao-concluida', missao.concluida);
+            item.dataset.missaoId = missao.missaoId;
+            item.dataset.atividadeId = missao.atividadeId;
+            const identificacao = document.createElement('span');
+            identificacao.className = 'dia-materia-identificacao';
+            const nome = document.createElement('strong');
+            nome.textContent = `Atividade prática · ${missao.nome}`;
+            if (missao.concluida) nome.append(criarIcone('concluir'));
+            const detalhe = document.createElement('small');
+            detalhe.className = 'dia-missao-detalhe';
+            detalhe.textContent = missao.consomeCargaEstudo
+                ? `Duração planejada: ${minutos(missao.duracaoPlanejadaSegundos || 0)} min`
+                : `Externo à carga de estudo${missao.duracaoPlanejadaSegundos ? ` · estimativa ${minutos(missao.duracaoPlanejadaSegundos)} min` : ''}`;
+            const estadoMissao = document.createElement('small');
+            estadoMissao.className = 'dia-missao-estado';
+            estadoMissao.textContent = missao.concluida ? 'Concluída' : 'Pendente';
+            identificacao.append(nome, detalhe, estadoMissao);
+            if (missao.tempoRegistradoSegundos) {
+                const tempo = document.createElement('small');
+                tempo.textContent = `${minutos(missao.tempoRegistradoSegundos)} min registrados`;
+                identificacao.append(tempo);
+            }
+            const percentual = missao.percentualAtividade.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
+            identificacao.append(criarIndicadorProgresso('projeto', `${missao.concluidasAtividade}/${missao.planejadasAtividade}`,
+                missao.concluidasAtividade, Math.max(1, missao.planejadasAtividade),
+                `Progresso de ${missao.nome} neste projeto: ${missao.concluidasAtividade} de ${missao.planejadasAtividade} atividades práticas concluídas (${percentual}%)`));
+            item.append(identificacao);
+            if (window.PraticasExecucaoUI) item.append(window.PraticasExecucaoUI.botaoAbrir(missao));
+            lista.append(item);
         });
         card.append(titulo, lista);
     }

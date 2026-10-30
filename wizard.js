@@ -6,10 +6,11 @@
     const el = (id) => document.getElementById(id);
     let etapa = 0;
     let blocosEscolhidos = null;
+    let backupPendente = false;
 
     function atualizarBlocos() {
         const minutos = converterHorasParaMinutos(el('horas-por-dia').value);
-        const maximo = Math.max(1, Math.floor(minutos / 30));
+        const maximo = Math.min(4, Math.max(1, Math.floor(minutos / 30)));
         const valor = Math.min(maximo, Math.max(1, blocosEscolhidos || Math.min(2, maximo)));
         el('blocos-por-dia').replaceChildren(...Array.from({length:maximo}, (_,i) => {
             const opcao = document.createElement('option');
@@ -48,7 +49,7 @@
             if (!selecionados().length) return falhar('Selecione pelo menos um dia da semana.', el('btn-Dom'));
             if (!el('horas-por-dia').checkValidity() || !(converterHorasParaMinutos(el('horas-por-dia').value) > 0)) return falhar('Informe um tempo diário maior que zero.', el('horas-por-dia'));
             const blocos = Number(el('blocos-por-dia').value);
-            if (!Number.isInteger(blocos) || blocos < 1 || blocos > Math.max(1, Math.floor(converterHorasParaMinutos(el('horas-por-dia').value) / 30))) return falhar('Escolha a quantidade de blocos de estudo.', el('blocos-por-dia'));
+            if (!Number.isInteger(blocos) || blocos < 1 || blocos > Math.min(4, Math.max(1, Math.floor(converterHorasParaMinutos(el('horas-por-dia').value) / 30)))) return falhar('Escolha a quantidade de blocos de estudo.', el('blocos-por-dia'));
             if (!quantosDiasTem(new Date(el('dataInicio').value + 'T12:00:00'), new Date(el('dataFinal').value + 'T12:00:00'), selecionados())) return falhar('O período precisa conter pelo menos um dos dias de estudo selecionados.', el('btn-Dom'));
         }
         if (numero === 2) {
@@ -103,19 +104,41 @@
         }));
         const normalizadas = lerArrayArmazenado('objetosNormalizados');
         if (normalizadas.length) {
-            const plano = window.DistribuicaoEstudos.gerar({
+            const minutos = converterHorasParaMinutos(el('horas-por-dia').value);
+            const blocos = Number(el('blocos-por-dia').value);
+            const diasEstudo = quantosDiasTem(new Date(el('dataInicio').value + 'T12:00:00'), new Date(el('dataFinal').value + 'T12:00:00'), selecionados());
+            const dadosResumo = {
+                ...(lerObjetoArmazenado('dadosExame') || {}),
                 distribuicaoVersao: 3,
-                minutosPorDia: converterHorasParaMinutos(el('horas-por-dia').value),
-                blocosPorDia: Number(el('blocos-por-dia').value),
-                diasEstudoPraProva: quantosDiasTem(new Date(el('dataInicio').value + 'T12:00:00'), new Date(el('dataFinal').value + 'T12:00:00'), selecionados())
+                minutosPorDia: minutos,
+                blocosPorDia: blocos,
+                diasEstudoPraProva: diasEstudo,
+                dataInicioF: formatarData(new Date(el('dataInicio').value + 'T12:00:00')),
+                dataFinalF: formatarData(new Date(el('dataFinal').value + 'T12:00:00')),
+                listaDiaDaSemana: selecionados()
+            };
+            let cap = null;
+            try { cap = window.PraticasStore?.planejarProjeto?.(dadosResumo, normalizadas) || null; } catch (_) {}
+            const plano = window.DistribuicaoEstudos.gerar(cap ? cap.dadosDistribuicao : {
+                distribuicaoVersao: 3,
+                minutosPorDia: minutos,
+                blocosPorDia: blocos,
+                diasEstudoPraProva: diasEstudo
             }, normalizadas);
             if (plano.coberturaExtra) {
                 const aviso = document.createElement('p');
                 const grupos = new Map();
                 Object.values(plano.materiaDoDia).forEach(blocos => grupos.set(blocos.length, (grupos.get(blocos.length) || 0) + 1));
-                const minutos = converterHorasParaMinutos(el('horas-por-dia').value);
                 const resultado = [...grupos].map(([n, dias]) => `${dias} ${dias === 1 ? 'dia com' : 'dias com'} ${n} blocos de aproximadamente ${(minutos/n).toLocaleString('pt-BR', {maximumFractionDigits:2})} min`).join('; ');
                 aviso.textContent = `Para incluir todas as ${normalizadas.length} matérias no período disponível, serão usados mais blocos que os ${el('blocos-por-dia').value} escolhidos por dia: ${resultado}. O tempo diário permanece igual.`;
+                el('wizard-resumo').append(aviso);
+            } else if (plano.semBlocosTeoricos) {
+                const aviso = document.createElement('p');
+                aviso.textContent = `Atenção: as atividades práticas agendadas ocupam toda a capacidade diária de estudo (0 blocos teóricos restantes para ${normalizadas.length} matérias). Nenhum bloco teórico será alocado neste período.`;
+                el('wizard-resumo').append(aviso);
+            } else if (plano.capacidadeInsuficiente) {
+                const aviso = document.createElement('p');
+                aviso.textContent = `Atenção: restam ${cap?.previa?.resumo?.totalBlocosNormaisRestantes ?? 0} blocos teóricos para ${normalizadas.length} matérias após reservar as atividades práticas. Os blocos de tamanho fixo serão distribuídos entre as matérias de maior peso.`;
                 el('wizard-resumo').append(aviso);
             }
         }
@@ -138,10 +161,29 @@
         atualizarAtalhoPlanejamento();
         if (foco) document.querySelector(`[data-painel="${etapa}"] h2`).focus();
     }
+    async function backupDaJornada(somenteDownload = false) {
+        const painel = el('wizard-backup-pendente');
+        const botoes = painel.querySelectorAll('button');
+        botoes.forEach(b => { b.disabled = true; });
+        el('wizard-backup-status').textContent = 'Salvando backup da jornada…';
+        try {
+            if (!window.BackupLocal?.salvarRapido) throw new Error('Backup indisponível nesta página.');
+            const offline = !somenteDownload ? await window.ProjetosOffline?.salvar() : null;
+            if (offline?.modo !== 'pasta') await window.BackupLocal.salvarRapido({ somenteDownload });
+            location.assign('pesomateria.html');
+        } catch (e) {
+            painel.hidden = false;
+            el('wizard-backup-status').textContent = 'A jornada foi criada no navegador, mas o backup não foi salvo. Tente novamente ou baixe o JSON. ' + (e.message || '');
+            el('wizard-backup-status').focus();
+            console.error(e);
+            botoes.forEach(b => { b.disabled = false; });
+        }
+    }
     async function avancar() {
-        if (el('wizard-avancar').disabled || document.getElementById('cadastroForm').dataset.salvando || window.cadastroSalvando) return;
+        if (backupPendente || el('wizard-avancar').disabled || document.getElementById('cadastroForm').dataset.salvando || window.cadastroSalvando) return;
         el('wizard-avancar').disabled = true;
         try {
+            if (etapa >= 2 && window.PraticasCadastro && !window.PraticasCadastro.podeAvancar()) return;
             if (!validar(etapa)) return;
             guardarRascunho();
             if (etapa === 0) salvarProjeto(false);
@@ -153,14 +195,19 @@
             }
             salvarProjeto(true);
             await salvarObjetos();
+            if (window.PraticasStore?.sincronizarMissoesProjeto) {
+                await window.PraticasStore.sincronizarMissoesProjeto(lerObjetoArmazenado('dadosExame'), lerArrayArmazenado('objetosNormalizados'));
+            }
             distribui_materias();
             if (!sortMaterias()) return erro('Não foi possível gerar a jornada. Confira a rotina e as matérias.');
             (window.ProjetoStorage || localStorage).removeItem(CHAVE);
-            location.assign('pesomateria.html');
+            backupPendente = true;
+            document.querySelectorAll('.wizard-shell input, .wizard-shell select, .wizard-shell button').forEach(c => { c.disabled = true; });
+            await backupDaJornada();
         } catch (e) {
             erro('Não foi possível salvar. Verifique o armazenamento do navegador e tente novamente.');
             console.error(e);
-        } finally { el('wizard-avancar').disabled = false; }
+        } finally { el('wizard-avancar').disabled = backupPendente; }
     }
     document.addEventListener('DOMContentLoaded', () => {
         if (window.ProjetosStore && !window.ProjetosStore.temAtual()) return;
@@ -188,6 +235,7 @@
             sincronizarControles(); guardarRascunho();
         });
         document.querySelector('.wizard-shell').addEventListener('input', (event) => {
+            if (event.target.closest('#pratica-form')) return;
             if (event.target.id === 'btn-checkAll') return;
             if (event.target.id === 'blocos-por-dia') blocosEscolhidos = Number(el('blocos-por-dia').value);
             if (event.target.id === 'horas-por-dia') atualizarBlocos();
@@ -197,6 +245,9 @@
         el('nome_projetoForm').addEventListener('submit', (event) => { event.preventDefault(); avancar(); });
         el('cadastroForm').addEventListener('submit', guardarRascunho);
         el('wizard-avancar').addEventListener('click', avancar);
+        el('wizard-backup-repetir').addEventListener('click', () => backupDaJornada());
+        el('wizard-backup-baixar').addEventListener('click', () => backupDaJornada(true));
+        el('wizard-backup-continuar').addEventListener('click', () => location.assign('pesomateria.html'));
         el('wizard-voltar').addEventListener('click', () => mostrar(etapa - 1));
         document.querySelectorAll('[data-etapa]').forEach(botao => botao.addEventListener('click', () => {
             const destino = Number(botao.dataset.etapa);

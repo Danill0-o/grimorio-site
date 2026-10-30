@@ -25,9 +25,18 @@
             || ['cronometro-revisao', 'conclusao-revisao'].includes(sessao.origem);
     }
     function obterProgressaoGlobal() {
-        const segundos = listarSessoes().filter(sessaoXpElegivel)
+        const segundosEstudo = listarSessoes().filter(sessaoXpElegivel)
             .reduce((total, sessao) => total + Number(sessao.duracaoSegundos), 0);
-        return { segundos, xp: segundos / 60, ...projetarProgressao(segundos, LIMIARES_GLOBAL) };
+        const temPraticas = Object.keys(localStorage).some(k => k.startsWith('praticasProjetoV1:'));
+        if (temPraticas && !window.PraticasStore?.listarProgressao) throw new Error('Progressão das práticas indisponível');
+        const praticas = temPraticas ? window.PraticasStore.listarProgressao() : [];
+        const xpPraticasUnidades = praticas.reduce((total, p) => total + p.xpUnidades, 0);
+        const segundosPraticas = praticas.reduce((total, p) => total + p.tempoRegistradoSegundos, 0);
+        const unidadesXp = segundosEstudo + xpPraticasUnidades, segundos = segundosEstudo + segundosPraticas;
+        if (!Number.isSafeInteger(unidadesXp) || !Number.isSafeInteger(segundos)) throw new Error('Total de progressão excede o limite seguro');
+        return { segundos, segundosEstudo, segundosPraticas, xp: unidadesXp / 60,
+            xpEstudo: segundosEstudo / 60, xpPraticas: xpPraticasUnidades / 60,
+            ...projetarProgressao(unidadesXp, LIMIARES_GLOBAL) };
     }
 
     function recuperarCronometro() {
@@ -304,6 +313,10 @@
             };
         });
 
+        let missoesPorDia = {};
+        if (dados?.projetoId && window.PraticasStore?.projetarMissoesProjeto) {
+            missoesPorDia = window.PraticasStore.projetarMissoesProjeto(dados.projetoId, { dados, materiaDoDia }).missoesPorDiaJornada || {};
+        }
         const aparicoesProcessadas = {};
         const segundosProcessados = {};
         const diasCalculados = dias.map((dia, indice) => {
@@ -342,12 +355,19 @@
             });
             const metaTotalDia = metas.reduce((total, meta) => total + meta.metaSegundos, 0);
             const pontosDia = metas.reduce((total, meta) => total + meta.pontosAplicadosSegundos, 0);
+            const missoesDia = missoesPorDia[dia] || [];
+            const semBlocoTeoricoComPratica = metas.length === 0 && missoesDia.length > 0;
+            const missoesConcluidas = semBlocoTeoricoComPratica ? missoesDia.filter(m => m.concluida).length : 0;
             return {
                 dia,
                 indice,
                 metasMaterias: metas,
-                concluido: metas.length > 0 && metas.every((meta) => meta.completo),
-                percentual: metaTotalDia ? limitarPercentual((pontosDia / metaTotalDia) * 100) : 0
+                concluido: semBlocoTeoricoComPratica
+                    ? missoesConcluidas === missoesDia.length
+                    : metas.length > 0 && metas.every((meta) => meta.completo),
+                percentual: semBlocoTeoricoComPratica
+                    ? limitarPercentual((missoesConcluidas / missoesDia.length) * 100)
+                    : metaTotalDia ? limitarPercentual((pontosDia / metaTotalDia) * 100) : 0
             };
         });
 

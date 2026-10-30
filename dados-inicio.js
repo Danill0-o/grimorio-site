@@ -44,7 +44,9 @@ function converterMinutosParaHoras(minutos){ //converte os minutos para o format
 function distribui_materias(){
     const dados = lerObjetoArmazenado('dadosExame');
     if (dados?.distribuicaoVersao === 2 || dados?.distribuicaoVersao === 3) {
-        lista_distribuicao_materias = window.DistribuicaoEstudos.gerar(dados, lerArrayArmazenado('objetosNormalizados')).distribuicaoMaterias;
+        const normalizadas = lerArrayArmazenado('objetosNormalizados');
+        const cap = dados.distribuicaoVersao === 3 ? window.PraticasStore?.planejarProjeto?.(dados, normalizadas) : null;
+        lista_distribuicao_materias = window.DistribuicaoEstudos.gerar(cap ? cap.dadosDistribuicao : dados, normalizadas).distribuicaoMaterias;
         (window.ProjetoStorage || localStorage).setItem('lista_distribuicao_materias', JSON.stringify(lista_distribuicao_materias));
         return lista_distribuicao_materias;
     }

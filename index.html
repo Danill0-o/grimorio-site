@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <script src="backup-local.js?v=estavel-20261023"></script>
-    <script src="acessibilidade.js?v=estavel-20261023"></script>
-    <script src="projetos-store.js?v=estavel-20261023"></script>
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
+<script src="armazenamento-offline.js?v=offline-20261030"></script>
+<script src="iniciar-offline.js?v=offline-20261030"></script>
+    <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
+    <script type="application/grimorio" src="backup-local.js?v=offline-20261030"></script>
+    <script type="application/grimorio" src="acessibilidade.js?v=estavel-20261023"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=praticas-e2-20261025"></script><script type="application/grimorio" src="praticas-store.js?v=praticas-tipos-20261029"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar projeto de estudos</title>
-    <script>
+    <script type="application/grimorio">
       const parametrosConfiguracao = new URLSearchParams(window.location.search);
       const acessoExplicito = parametrosConfiguracao.has('novo') || parametrosConfiguracao.has('editar');
       if (!acessoExplicito) {
@@ -19,7 +22,7 @@
     <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
     <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
 
-<link rel="stylesheet" href="css/wizard.css?v=estavel-20261023">
+<link rel="stylesheet" href="css/wizard.css?v=praticas-tipos-20261029">
 
 
 <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"></head>
@@ -53,7 +56,8 @@
 <div><label for="blocos-por-dia">Blocos de estudo por dia<select class="form-select" id="blocos-por-dia" aria-describedby="distribuicao-ajuda" required><option value="1">1</option></select></label><p id="distribuicao-ajuda">Escolha quantos blocos deseja fazer normalmente em cada dia de estudo. Uma mesma matéria pode ocupar mais de um bloco no mesmo dia, conforme seus pesos.</p></div>
 </div></div></section></form>
 <section data-painel="2" aria-labelledby="titulo-materias" hidden>
-<p class="wizard-chapter">Etapa 3 de 4</p><h2 id="titulo-materias" tabindex="-1">O que você vai estudar?</h2><p>Adicione as matérias do edital ou abra seu livro de matérias para escolher com um clique aquelas em que você já possui nível e tempo registrados.</p>
+<p class="wizard-chapter">Etapa 3 de 4</p><h2 id="titulo-materias" tabindex="-1">O que você vai estudar?</h2><p>Adicione as matérias teóricas do edital ou escolha no seu livro. Redações, discursivas, simulados e outros treinos têm cadastro próprio em Atividades práticas, nesta mesma etapa.</p>
+<h3 class="conteudo-grupo">Matérias</h3>
 <div class="wizard-grimorio-acoes">
 <button type="button" id="abrir-livro-materias" class="btn btn-livro-materias" aria-haspopup="dialog" aria-controls="livro-materias-dialog">
 <svg class="icone-livro-pixel" viewBox="0 0 24 20" width="28" height="24" aria-hidden="true" focusable="false">
@@ -76,12 +80,52 @@
 <label for="Nquestoes">Questões<input class="form-control" type="number" id="Nquestoes" min="0" max="99" required></label>
 <label for="peso">Peso<input class="form-control" type="number" id="peso" min="1" max="99" value="1" required></label>
 <label for="afinidade">Afinidade<input type="range" class="form-range" id="afinidade" min="0.5" max="1.5" step="0.5" value="1"><span class="affinity-labels"><span>Baixa</span><span>Média</span><span>Alta</span></span></label>
-<button type="submit" class="btn btn-primary">Adicionar</button></form>
+<button type="submit" class="btn btn-primary">Adicionar matéria</button></form>
 <p class="form-text">Baixa afinidade dá mais ênfase à matéria; alta afinidade dá menos. Ao usar uma matéria do seu Grimório, seu nível global é mantido e as metas deste projeto começam do zero.</p>
 <div id="table-materias-div" class="subject-table-wrap">
 <table id="table-materias"><caption>Matérias adicionadas</caption>
 <thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Questões</th><th scope="col">Peso</th><th scope="col">Afinidade</th><th scope="col">Excluir</th></tr></thead><tbody id="table-body"></tbody></table>
 </div><label class="question-total" for="totalQuestoes">Total de questões <input id="totalQuestoes" type="number" value="0" readonly></label>
+<section id="praticas-cadastro" class="praticas-cadastro" aria-labelledby="praticas-titulo">
+<div class="praticas-cabecalho"><h3 id="praticas-titulo">Atividades práticas</h3></div>
+<p id="praticas-aviso">Escolha quando realizar suas atividades. Elas aparecerão na Jornada e no Calendário ao finalizar o planejamento.</p>
+<button type="button" id="pratica-adicionar" class="btn btn-outline-secondary" aria-expanded="false" aria-controls="pratica-editor" disabled>Adicionar atividade prática</button>
+<div id="pratica-editor" hidden>
+<h4 id="pratica-editor-titulo">Nova atividade prática</h4>
+<form id="pratica-form" novalidate aria-labelledby="pratica-editor-titulo" aria-describedby="praticas-aviso">
+<fieldset id="pratica-campos" class="pratica-campos">
+<label for="pratica-tipo">Tipo<select id="pratica-tipo" class="form-select" required aria-describedby="pratica-tipo-ajuda"></select><small id="pratica-tipo-ajuda"></small></label><div id="pratica-detalhes" hidden>
+<label id="pratica-nome-grupo" hidden for="pratica-nome">Nome da atividade<input id="pratica-nome" class="form-control" autocomplete="off" placeholder="Nome da atividade"></label>
+<label for="pratica-duracao"><span id="pratica-duracao-rotulo">Duração planejada (minutos)</span><input id="pratica-duracao" class="form-control" type="number" min="0" step="any" inputmode="decimal" aria-describedby="pratica-duracao-ajuda"><small id="pratica-duracao-ajuda">Informe sua estimativa. A duração não será reservada no cronograma nesta etapa.</small></label>
+<label class="form-check" for="pratica-duracao-referencia"><input class="form-check-input" id="pratica-duracao-referencia" type="checkbox">Usar a duração ideal da referência de linhas/tempo</label>
+<label for="pratica-preset-xp">Referência de extensão da atividade<select id="pratica-preset-xp" class="form-select" aria-describedby="pratica-preset-xp-ajuda"></select><small id="pratica-preset-xp-ajuda"></small></label>
+<div id="pratica-xp-personalizado" hidden>
+<label for="pratica-xp-linhas" id="pratica-xp-linhas-grupo">Extensão de referência (linhas)<input id="pratica-xp-linhas" class="form-control" type="number" min="0.5" step="any"></label>
+<label for="pratica-xp-tempo" id="pratica-xp-tempo-grupo">Tempo ideal de referência (minutos)<input id="pratica-xp-tempo" class="form-control" type="number" min="0.0166666667" step="any"></label>
+</div>
+<fieldset class="pratica-importancia"><legend>Importância na prova</legend><p id="pratica-importancia-ajuda">Informe os dois valores ou deixe ambos em branco. A pontuação não define o tempo de estudo.</p><div class="pratica-pontuacao">
+<label for="pratica-pontos">Pontos da atividade<input id="pratica-pontos" class="form-control" type="number" min="0" step="any" inputmode="decimal"></label>
+<label for="pratica-total" id="pratica-total-grupo">Total de pontos da prova<input id="pratica-total" class="form-control" type="number" min="0" step="any" inputmode="decimal"></label>
+</div></fieldset>
+<fieldset id="pratica-agendamento" class="pratica-agendamento"><legend>Frequência e início</legend>
+<label for="pratica-periodicidade">Com que frequência deseja realizar a atividade?<select id="pratica-periodicidade" class="form-select"><option value="" disabled>Escolha a frequência</option><option value="automatica">Automática pelo peso na prova</option><option value="semanal">Semanal (toda semana)</option><option value="quinzenal">Quinzenal (a cada 14 dias)</option><option value="mensal">Mensal (a cada 28 dias)</option></select></label>
+<p id="pratica-automatico-ajuda" hidden>A quantidade será calculada na revisão, após preencher todas as matérias e pesos. O peso usa questões × pontos das matérias comuns mais os pontos das práticas internas, sem afinidade. TAF mantém frequência manual.</p>
+<fieldset id="pratica-agendamento-detalhes" class="pratica-agendamento-detalhes" hidden disabled>
+<div class="pratica-dias-bloco"><span class="pratica-subrotulo" id="pratica-dias-rotulo">Dias da semana da atividade</span><div id="pratica-dias-semana" class="pratica-dias-grid" role="group" aria-labelledby="pratica-dias-rotulo"></div><small id="pratica-dias-ajuda"></small></div>
+<label for="pratica-inicio-modo">Quando deseja iniciar a atividade?<select id="pratica-inicio-modo" class="form-select"><option value="inicio">Desde o início do projeto</option><option value="data">Em data específica</option><option value="estagio">A partir de um progresso previsto nas matérias</option></select></label>
+<fieldset id="pratica-inicio-data-grupo" class="pratica-inicio-subgrupo" hidden disabled><label for="pratica-inicio-data">Data planejada de início<input id="pratica-inicio-data" class="form-control" type="date"></label></fieldset>
+<fieldset id="pratica-inicio-estagio-grupo" class="pratica-inicio-subgrupo" hidden disabled>
+<div class="pratica-pontuacao"><label for="pratica-estagio-preset">Quanto das matérias deseja ter estudado?<select id="pratica-estagio-preset" class="form-select"><option value="25">25% da carga planejada</option><option value="50" selected>50% da carga planejada</option><option value="75">75% da carga planejada</option><option value="personalizado">Percentual personalizado</option></select></label>
+<label id="pratica-estagio-percentual-grupo" for="pratica-estagio-percentual">Progresso desejado (%)<input id="pratica-estagio-percentual" class="form-control" type="number" min="1" max="100" step="any" inputmode="decimal" value="50"></label></div>
+<div class="pratica-dias-bloco"><span class="pratica-subrotulo" id="pratica-estagio-materias-rotulo">Quais matérias considerar?</span><div id="pratica-estagio-materias" class="pratica-materias-grid" role="group" aria-labelledby="pratica-estagio-materias-rotulo"></div><small id="pratica-estagio-ajuda">Exemplo: 50% significa começar na data em que você terá estudado metade do conteúdo planejado das matérias escolhidas, se seguir o cronograma. Essa data não muda automaticamente com seu progresso real.</small></div>
+</fieldset>
+</fieldset></fieldset>
+</div><div class="pratica-acoes"><button type="submit" id="pratica-salvar" class="btn btn-primary">Salvar atividade</button><button type="button" id="pratica-cancelar" class="btn btn-outline-secondary">Cancelar</button></div>
+</fieldset></form></div>
+<p id="pratica-erro" role="alert" tabindex="-1"></p><button type="button" id="pratica-recarregar" class="btn btn-outline-secondary" hidden>Recarregar cadastro</button><p id="pratica-status" role="status">Carregando atividades práticas…</p>
+<ul id="praticas-lista" class="praticas-lista" aria-label="Atividades práticas cadastradas"></ul>
+<div id="praticas-previa-capacidade" class="praticas-previa-capacidade" hidden aria-live="polite"></div>
+</section>
 <dialog id="livro-materias-dialog" class="livro-aberto-dialog" aria-labelledby="livro-materias-titulo">
 <div class="livro-aberto-capa">
 <header class="livro-aberto-topo">
@@ -111,10 +155,18 @@
 </dialog>
 </section>
 <section data-painel="3" aria-labelledby="titulo-revisar" hidden>
-<p class="wizard-chapter">Etapa 4 de 4</p><h2 id="titulo-revisar" tabindex="-1">Tudo pronto para começar?</h2><p>Confira seu plano. Você pode voltar para ajustar qualquer etapa.</p>
+<p class="wizard-chapter">Etapa 4 de 4</p><h2 id="titulo-revisar" tabindex="-1">Tudo pronto para começar?</h2><p>Confira seu plano. Ao criar a jornada, um backup completo será salvo na pasta configurada ou baixado em JSON.</p>
 <dl id="wizard-resumo" class="wizard-summary"></dl>
+<section id="praticas-resumo" class="praticas-cadastro" aria-labelledby="praticas-resumo-titulo" hidden><h3 id="praticas-resumo-titulo">Atividades práticas</h3><p>Confira as atividades e as datas previstas antes de finalizar.</p><ul id="praticas-resumo-lista"></ul><div id="praticas-resumo-capacidade" class="praticas-previa-capacidade" hidden></div></section>
 </section>
 <p id="wizard-erro" role="alert"></p>
+<section id="wizard-backup-pendente" hidden aria-labelledby="wizard-backup-titulo">
+<h3 id="wizard-backup-titulo">Backup da jornada</h3>
+<p id="wizard-backup-status" role="status" tabindex="-1"></p>
+<button id="wizard-backup-repetir" type="button" class="btn btn-primary">Tentar salvar novamente</button>
+<button id="wizard-backup-baixar" type="button" class="btn btn-outline-secondary">Baixar JSON</button>
+<button id="wizard-backup-continuar" type="button" class="btn btn-outline-secondary">Continuar sem backup</button>
+</section>
 <div class="wizard-actions"><button type="button" id="wizard-voltar" class="wizard-link" hidden>← Voltar</button><button type="button" id="wizard-avancar" class="btn btn-primary">Continuar →</button></div>
 </div></main>
 <footer class="site-rodape">
@@ -122,8 +174,8 @@
     <p><strong>GRIMÓRIO</strong></p>
     <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
 </footer>
-<script src="materias-store.js?v=nomes60-20261022"></script><script src="identidade-store.js?v=2"></script><script src="historico-repository.js"></script>
-<script src="materias-busca.js"></script><script src="calendario-jornada.js?v=2"></script><script src="estudo-extra.js?v=2"></script><script src="estudo-store.js?v=7"></script><script src="distribuicao.js"></script><script src="script.js?v=nomes60-20261022"></script><script src="catalogo-ui.js?v=estavel-20261023"></script><script src="dados-inicio.js?v=6"></script><script src="wizard.js"></script>
+<script type="application/grimorio" src="materias-store.js?v=nomes60-20261022"></script><script type="application/grimorio" src="identidade-store.js?v=2"></script><script type="application/grimorio" src="historico-repository.js"></script>
+<script type="application/grimorio" src="materias-busca.js"></script><script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=2"></script><script type="application/grimorio" src="estudo-store.js?v=praticas-e7-final-20261026"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=nomes60-20261022"></script><script type="application/grimorio" src="catalogo-ui.js?v=estavel-20261023"></script><script type="application/grimorio" src="dados-inicio.js?v=6"></script><script type="application/grimorio" src="praticas-cadastro.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="wizard.js?v=offline-20261030"></script>
 </body></html>
 
 

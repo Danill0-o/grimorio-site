@@ -499,8 +499,8 @@ button:disabled {
 
 .progresso-barra-atual,
 .jornada-preenchimento,
-.relatorios-estudo,
-.relatorios-cumprido {
+.relatorios-trilho .relatorios-estudo,
+.relatorios-trilho .relatorios-cumprido {
     background:
         repeating-linear-gradient(
             90deg,
@@ -644,4 +644,12 @@ progress::-moz-progress-bar {
     .jornada-layout, .planejamento-layout {
         grid-template-columns: 1fr;
     }
+}
+
+/* Textos diretamente sobre os fundos escuros da Taverna e do Bosque. */
+:is([data-tema-pixel="taverna"], [data-tema-pixel="floresta"]) .wizard-intro h1,
+:is([data-tema-pixel="taverna"], [data-tema-pixel="floresta"]) .jornada-conteudo > section > label,
+:is([data-tema-pixel="taverna"], [data-tema-pixel="floresta"]) .jornada-conteudo > section > .cartas-ajuda,
+:is([data-tema-pixel="taverna"], [data-tema-pixel="floresta"]) .jornada-conteudo > section > div > .text-secondary {
+    color: #fff !important;
 }

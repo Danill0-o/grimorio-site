@@ -50,11 +50,13 @@
                 b.addEventListener('click',()=>executar(()=>callback(b))); acoes.append(b); return b;
             }
             if (!projeto.arquivado) {
-                const abrir=botao('abrir',preparando?'Continuar preparação':'Abrir projeto',()=>{
+                const abrir=botao('abrir',preparando?'Continuar preparação':'Abrir projeto',async()=>{
+                    await window.ProjetosOffline?.trocar(projeto.id);
                     window.ProjetosStore.selecionar(projeto.id); location.assign(preparando?'index.html?editar=1':'agenda.html');
                 });
                 abrir.dataset.projetoAbrir=projeto.id;
             }
+            botao('offline','Salvar e liberar espaço',async()=>{if(!await window.BackupLocal.obterPastaSalva())await window.BackupLocal.configurarPastaFixa();const r=await window.ProjetosOffline.salvar(projeto.id,{descarregar:true});renderizar(r.descarregado?'Backup conferido. Espaço do projeto liberado no localStorage.':'Pasta indisponível. O projeto foi mantido no navegador.');});
             botao('arquivo',projeto.arquivado?'Restaurar':'Arquivar',async()=>{
                 await window.ProjetosStore[projeto.arquivado?'restaurar':'arquivar'](projeto.id);
                 renderizar(projeto.arquivado?'Projeto restaurado nos ativos.':'Projeto movido para Arquivados.');
@@ -63,6 +65,7 @@
             botao('duplicar','Duplicar',async()=>{
                 if (!copias.has(projeto.id)) copias.set(projeto.id,`projeto-${crypto.randomUUID()}`);
                 const id=await window.ProjetosStore.duplicar(projeto.id,copias.get(projeto.id));
+                await window.ProjetosOffline?.trocar(id);
                 window.ProjetosStore.selecionar(id); location.assign('index.html?editar=1');
             });
             botao('excluir','Excluir',b=>{
@@ -94,9 +97,11 @@
         dialog.close(); renderizar('Projeto excluído. Histórico de estudo preservado.');
     }));
     for(const [id,valor] of [['projetos-ativos',false],['projetos-arquivados',true]]) document.getElementById(id).addEventListener('click',()=>executar(()=>{arquivados=valor;renderizar();}));
-    document.getElementById('novo-projeto').addEventListener('click',()=>executar(()=>{
+    document.getElementById('novo-projeto').addEventListener('click',()=>executar(async()=>{
+        await window.ProjetosOffline?.trocar(null);
         window.ProjetosStore.criar(); location.assign('index.html?novo=1');
     }));
     window.addEventListener('storage',()=>{try{renderizar();}catch(erro){status.textContent=erro.message;}});
+    document.getElementById('offline-organizar')?.addEventListener('click',()=>executar(async()=>{const n=await window.ProjetosOffline.organizar();renderizar(`${n.salvos ? `Backup conferido e espaço liberado para ${n.salvos} projetos.` : 'Nenhum projeto foi descarregado.'} ${n.erros.length ? n.erros.length+' projetos preservados sem descarregar: '+n.erros.join('; ') : ''}`);}));
     executar(()=>renderizar());
 })();

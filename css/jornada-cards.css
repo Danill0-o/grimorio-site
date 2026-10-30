@@ -253,3 +253,11 @@
     color: #1a110b !important;
     font-family: var(--font-pixel-title);
 }
+
+/* E5: missões práticas consultivas nos cards da Jornada. */
+.dia-missoes-titulo { font-size: .95rem; margin: 10px 0 4px; }
+.dia-missoes-aviso { font-size: .85rem; margin: 6px 0; opacity: .9; }
+.dia-missao-item { border-left: 4px solid var(--pixel-bronze); }
+.dia-missao-item.dia-missao-concluida { border-left-color: var(--pixel-gold); }
+.dia-missao-detalhe, .dia-missao-estado { display: block; }
+.dia-missao-estado { font-weight: 700; }

@@ -9,7 +9,7 @@
         'somaDasQuestoesNormalizadas', 'materiaDoDia', 'revisoesDoDia', 'planosIdentidadeV1',
         'revisoesEstadoV1', 'revisoesTransacaoV1', 'grimorioTemaPixelV1', 'grimorioScanlinesPixelV1',
         'grimorioBackupAnteriorV1']);
-    const prefixos = ['projetoV1:', 'historicoOperacaoV1:', 'cronometroV1:', 'projetosTransacaoV2:'];
+    const prefixos = ['projetoV1:', 'historicoOperacaoV1:', 'cronometroV1:', 'projetosTransacaoV2:', 'praticasProjetoV1:'];
     const DB_NOME = 'grimorioBackupPastaV1';
     const STORE_NOME = 'diretorio';
     const CHAVE_HANDLE = 'pastaFixa';
@@ -107,6 +107,14 @@
             if (['projetoSelecionadoV1', 'grimorioTemaPixelV1', 'grimorioScanlinesPixelV1'].includes(k)) continue;
             parsed[k] = json(k, valor);
         }
+        for (const k of Object.keys(parsed).filter(k => k.startsWith('praticasProjetoV1:'))) {
+            const partes = /^praticasProjetoV1:([^:]+)$/.exec(k);
+            exigir(partes && objeto(parsed[`projetoV1:${partes[1]}:registro`])
+                && parsed[`projetoV1:${partes[1]}:registro`].id === partes[1], `projeto das atividades práticas em ${k}.`);
+            exigir(typeof window.PraticasSchema?.validar === 'function', 'validador das atividades práticas indisponível. Recarregue o aplicativo.');
+            try { window.PraticasSchema.validar(parsed[k], partes[1]); }
+            catch (erro) { falhar(`atividades práticas em ${k}: ${erro.message}`); }
+        }
         const dominio = parsed.materiasDominioV1 === undefined ? { versao: 1, materiasGlobais: {}, projetosMaterias: {} } : parsed.materiasDominioV1;
         exigir(objeto(dominio) && Object.keys(dominio).every(k => ['versao', 'materiasGlobais', 'projetosMaterias'].includes(k))
             && dominio.versao === 1 && objeto(dominio.materiasGlobais) && objeto(dominio.projetosMaterias), 'domínio de matérias.');
@@ -173,7 +181,15 @@
                 exigir(objeto(v) && v.versao === 1 && texto(v.id) && k === `cronometroV1:${v.projetoId}` && texto(v.materia)
                     && objeto(v.contexto) && v.contexto.projetoId === v.projetoId && ['rodando', 'parado'].includes(v.estado)
                     && Number.isFinite(v.tempoMs) && v.tempoMs >= 0 && instante(v.inicio), 'checkpoint de cronômetro.');
-                vinculo(v.contexto.projetoMateriaId, v.projetoId);
+                if (v.contexto.tipo === 'pratica') {
+                    const estado = parsed[`praticasProjetoV1:${v.projetoId}`];
+                    const missao = estado?.missoes?.[v.contexto.missaoId];
+                    const atividade = estado?.atividades?.[v.contexto.atividadeId]?.atividade;
+                    exigir(missao && atividade && missao.atividadeId === atividade.atividadeId
+                        && missao.projetoId === v.projetoId && atividade.tipo !== 'taf'
+                        && Object.keys(v.contexto).every(k => ['tipo','projetoId','atividadeId','missaoId'].includes(k)),
+                    'checkpoint de atividade prática.');
+                } else vinculo(v.contexto.projetoMateriaId, v.projetoId);
             }
             const p = /^projetoV1:([^:]+):(.+)$/.exec(k), nome = p ? p[2] : k, projetoId = p?.[1];
             if (p) exigir(chaves.has(nome) || nome === 'registro' || /^estudoExtraV1:extra-[\w-]+$/.test(nome), `chave de projeto ${k}.`);
@@ -422,7 +438,7 @@
 
     async function salvarRapido(opcoes = {}) {
         const dados = exportar(opcoes.storage || window.localStorage);
-        let handle = await obterPastaSalva();
+        let handle = opcoes.somenteDownload ? null : await obterPastaSalva();
         if (!handle && opcoes.escolherPastaSeAusente && typeof window.showDirectoryPicker === 'function') {
             handle = await configurarPastaFixa();
         }
@@ -436,6 +452,7 @@
 
     window.BackupLocal = {
         exportar,
+        executarExclusivo: exclusivo,
         restaurar,
         validarBackup,
         solicitarPersistencia,
@@ -444,7 +461,8 @@
         salvarRapido,
         exportarAnterior,
         garantirDisponivel,
-        get pronta() { return pronta; }
+        get pronta() { return pronta; },
+        get bloqueado() { return bloqueado; }
     };
 
     function bloquearPagina(mensagem) {

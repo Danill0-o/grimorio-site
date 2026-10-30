@@ -495,7 +495,8 @@ function sortMaterias() {
     if (!materiasNormalizadas.length || !dadosExame) return false;
 
     if (dadosExame.distribuicaoVersao === 2 || dadosExame.distribuicaoVersao === 3) {
-        const plano = window.DistribuicaoEstudos.gerar(dadosExame, materiasNormalizadas);
+        const cap = dadosExame.distribuicaoVersao === 3 ? window.PraticasStore?.planejarProjeto?.(dadosExame, materiasNormalizadas) : null;
+        const plano = window.DistribuicaoEstudos.gerar(cap ? cap.dadosDistribuicao : dadosExame, materiasNormalizadas);
         window.IdentidadeStore?.identificarPlano(plano.materiaDoDia);
         const revisoesDoDia = revisoes(Object.entries(plano.materiaDoDia).map(([dia, blocos]) => ({ [dia]: blocos })));
         (window.ProjetoStorage || localStorage).setItem('lista_distribuicao_materias', JSON.stringify(plano.distribuicaoMaterias));
@@ -591,7 +592,7 @@ function revisoes(arrayObjetosDivisaoPorDia, dados = JSON.parse((window.ProjetoS
     const mapa = calendario.mapear(dados, arrayObjetosDivisaoPorDia.length);
     Object.keys(plano).forEach(dia => { revisoesDoDia[dia] = {revisao1:null,revisao2:null,revisao3:null}; });
     Object.entries(plano).forEach(([origem, blocos]) => {
-        if (!mapa.porDia[origem]) return;
+        if (!mapa.porDia[origem] || !Array.isArray(blocos) || !blocos.length) return;
         calendario.projetarRevisoes(mapa.porDia[origem], dados).forEach(({etapa,data}) => {
             const destino = mapa.porData[data];
             if (!destino || !revisoesDoDia[destino]) return;

@@ -115,13 +115,19 @@
         const minutos=Number(dados.minutosPorDia)||0;
         const horas=rascunho?.valores?.['horas-por-dia'] || dados.horasPorDia || `${String(Math.floor(minutos/60)).padStart(2,'0')}:${String(minutos%60).padStart(2,'0')}`;
         const dias=rascunho?.dias || dados.listaDiaDaSemana || [];
+        if (!window.PraticasStore && (storage.getItem(`praticasProjetoV1:${id}`) !== null || storage.getItem(`praticasProjetoV1:${destino}`) !== null)) {
+            throw new Error('O armazenamento de atividades práticas precisa estar disponível antes de copiar este projeto. Recarregue a página.');
+        }
         const cadastro=await window.MateriasStore.prepararCopia(id,destino,materias);
+        const mapaMaterias=Object.fromEntries(materias.map((m,i)=>[m.projetoMateriaId,cadastro[i]?.projetoMateriaId]).filter(([k,v])=>k&&v));
+        const praticas=window.PraticasStore ? window.PraticasStore.prepararCopia(id, destino, mapaMaterias) : {};
         // Copiar somente entradas editáveis, nunca o namespace/plano ou estados derivados.
         gravar({
             [prefixo(destino)+'dadosExame']:JSON.stringify({projetoId:destino,nomeExame:nome}),
             [prefixo(destino)+'objetosSalvos']:JSON.stringify(cadastro),
             [prefixo(destino)+'totalQuestoes']:JSON.stringify(cadastro.reduce((s,m)=>s+(Number(m.Nquestoes)||0),0)),
             [prefixo(destino)+'wizardProjeto']:JSON.stringify({etapa:0,valores:{nome_exame:nome,dataInicio:'',dataFinal:'','horas-por-dia':horas},dias}),
+            ...praticas,
             [prefixo(destino)+'registro']:JSON.stringify({id:destino,criadoEm:new Date().toISOString(),origemCopia:id})
         },`projetosTransacaoV2:${destino}`);
         return destino;

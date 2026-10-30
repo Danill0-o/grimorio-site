@@ -1,7 +1,7 @@
 /* Consulta do histórico bruto; filtros não alteram XP, domínio, metas ou armazenamento. */
 (function () {
     'use strict';
-    const TAMANHO_PAGINA = 50;
+    const TAMANHO_PAGINA = 10;
     let pagina = 0;
     const dataHora = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
     const idsFiltros = ['historico-de', 'historico-ate', 'historico-materia', 'historico-projeto', 'historico-tipo', 'historico-agrupamento'];

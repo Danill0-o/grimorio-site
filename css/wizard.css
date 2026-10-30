@@ -420,3 +420,55 @@
 @media (max-width: 575px) {
     .weekdays { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+/* Atividades práticas: cadastro separado da distribuição de matérias (E3). */
+.conteudo-grupo { margin-top: 24px; }
+.praticas-cadastro { margin-top: 32px; padding-top: 24px; border-top: 2px solid var(--pixel-bronze); color: var(--pixel-ink); overflow-wrap: anywhere; }
+.praticas-cabecalho, .pratica-acoes { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.praticas-cabecalho h3 { margin: 0; }
+.pratica-etiqueta { display: inline-block; padding: 4px 8px; border: 1px solid var(--pixel-bronze); background: var(--pixel-surface-alt); color: var(--pixel-ink); font-size: .8rem; }
+.praticas-cadastro p { margin: 12px 0; }
+#pratica-editor { margin: 20px 0; padding: 20px; background: var(--pixel-surface-alt); border: 2px solid var(--pixel-bronze); }
+.pratica-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.pratica-campos > label, .pratica-pontuacao > label { min-width: 0; }
+.pratica-campos label > .form-select { width: 100%; margin-top: 8px; }
+.pratica-campos small { display: block; margin-top: 6px; color: var(--pixel-ink); }
+.pratica-importancia, .pratica-agendamento, .pratica-campos > .pratica-acoes { grid-column: 1 / -1; }
+.pratica-pontuacao { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.pratica-agendamento { display: grid; gap: 16px; padding-top: 12px; border-top: 1px dashed var(--pixel-bronze); }
+.pratica-agendamento-detalhes, .pratica-inicio-subgrupo { display: grid; gap: 16px; }
+.pratica-subrotulo { display: block; font-size: .9rem; margin-bottom: 8px; }
+.pratica-dias-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.pratica-materias-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.pratica-dia-btn, .pratica-materia-btn { min-height: 44px; min-width: 44px; padding: 6px 10px; border: 2px solid var(--pixel-bronze); background: var(--pixel-surface); color: var(--pixel-ink); font-family: var(--font-pixel-ui); }
+.pratica-dia-btn[aria-pressed="true"], .pratica-materia-btn[aria-pressed="true"] { background: var(--pixel-emerald); color: #fff; border-color: var(--pixel-border-outer); font-weight: bold; }
+.praticas-previa-capacidade { margin-top: 20px; padding: 16px; background: var(--pixel-surface-alt); border: 2px solid var(--pixel-bronze); }
+.praticas-previa-capacidade h4 { margin: 0 0 10px; font-size: 1.05rem; }
+.praticas-previa-capacidade ul { margin: 8px 0 0; padding-left: 20px; display: grid; gap: 6px; }
+.praticas-lista { list-style: none; padding: 0; display: grid; gap: 14px; margin-top: 20px; }
+.pratica-cartao { min-width: 0; padding: 16px; background: var(--pixel-surface-alt); border: 2px solid var(--pixel-bronze); }
+.pratica-cartao h4 { margin-bottom: 8px; overflow-wrap: anywhere; }
+.praticas-cadastro button { min-height: 44px; white-space: normal; }
+.praticas-cadastro input, .praticas-cadastro select { min-height: 44px; }
+#pratica-erro { color: var(--pixel-ink); font-weight: bold; }
+#pratica-erro:empty, #pratica-status:empty, #pratica-tipo-ajuda:empty, #pratica-dias-ajuda:empty { display: none; }
+@media (max-width: 575px) {
+    #pratica-editor { padding: 14px; }
+    .pratica-campos, .pratica-pontuacao { grid-template-columns: minmax(0, 1fr); }
+    .pratica-dias-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+#blocos-por-dia { margin-block: 12px; }
+
+/* Estado selecionado acima das regras globais de tema. */
+#pratica-dias-semana .pratica-dia-btn[aria-pressed="true"],
+#pratica-estagio-materias .pratica-materia-btn[aria-pressed="true"] {
+ background: #702d24 !important; color: #fff0c4 !important;
+ border-color: #fff0c4 !important; box-shadow: inset 0 0 0 2px #fff0c4 !important;
+}
+
+#pratica-detalhes { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; min-width: 0; }
+#pratica-detalhes > label { min-width: 0; }
+#pratica-detalhes > .form-check { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding-left: 0; }
+#pratica-detalhes > .form-check .form-check-input { float: none; margin: 0; flex-shrink: 0; }
+@media (max-width: 600px) { #pratica-detalhes { grid-template-columns: minmax(0, 1fr); } }

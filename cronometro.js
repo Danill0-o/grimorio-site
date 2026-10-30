@@ -10,6 +10,7 @@
     let sessaoId = null;
     let contextoManual = null;
     let registroManualEmCurso = false;
+    let registroPraticaEmCurso = false;
     let tentativaManual = null;
     let ultimoEstadoSinalizado = 'ocioso';
     let fimDestaque;
@@ -61,8 +62,22 @@
                 window.ProjetosStore?.validarAtual?.();
                 window.EstudoStore.listarSessoes(); // recupera registro interrompido antes de ler o rascunho
                 let raw = localStorage.getItem(chaveTimer());
-                if (raw && window.HistoricoRepository?.possuiRegistro(JSON.parse(raw).id)) {
+                if (raw && JSON.parse(raw).contexto?.tipo !== 'pratica' && window.HistoricoRepository?.possuiRegistro(JSON.parse(raw).id)) {
                     localStorage.removeItem(chaveTimer()); raw = null;
+                }
+                if (raw && JSON.parse(raw).contexto?.tipo === 'pratica') {
+                    const r = JSON.parse(raw), fatos = window.PraticasStore.obterEstado(projetoId());
+                    if (r.versao !== 1 || r.projetoId !== projetoId() || r.contexto.projetoId !== r.projetoId
+                        || Object.keys(r.contexto).some(k => !['tipo','projetoId','atividadeId','missaoId'].includes(k))
+                        || !Number.isFinite(r.tempoMs) || r.tempoMs < 0 || !['rodando','parado'].includes(r.estado)
+                        || !Number.isFinite(Date.parse(r.inicio)) || new Date(r.inicio).toISOString() !== r.inicio) throw new Error('Checkpoint prático inválido');
+                    const gravada = fatos.sessoes[r.id];
+                    if (gravada) {
+                        if (gravada.missaoId !== r.contexto.missaoId || gravada.atividadeId !== r.contexto.atividadeId
+                            || gravada.inicio !== r.inicio || gravada.duracaoSegundos !== Math.floor(r.tempoMs / 1000)
+                            || gravada.origem !== 'cronometro') throw new Error('Checkpoint divergente do registro de prática');
+                        localStorage.removeItem(chaveTimer()); raw = null; // inclusive tombstone: não ressuscitar
+                    }
                 }
                 if (raw) {
                     const r = JSON.parse(raw);
@@ -73,12 +88,18 @@
                         || !Number.isFinite(new Date(r.inicio).getTime())) throw new Error('Cronômetro inválido');
                     sessaoId = r.id; contextoSessao = r.contexto; inicioSessao = new Date(r.inicio);
                     tempoDecorridoMs = r.tempoMs; estado = 'parado';
-                    window.MateriasStore.obterProjetoMateria(r.contexto.projetoMateriaId, r.projetoId);
-                    if (![...elementosAtivos.materia.options].some(o => o.value === r.contexto.projetoMateriaId)) {
-                        const option = document.createElement('option'); option.value = r.contexto.projetoMateriaId; option.textContent = r.materia;
-                        elementosAtivos.materia.appendChild(option);
+                    if (r.contexto.tipo === 'pratica') {
+                        const e = window.PraticasExecucao.consultar(r.contexto.missaoId);
+                        if (e.missao.atividadeId !== r.contexto.atividadeId || !e.missao.usaCronometro || r.contexto.projetoMateriaId) throw new Error('Contexto de prática inválido');
+                        selecionarPratica(e.missao);
+                    } else {
+                        window.MateriasStore.obterProjetoMateria(r.contexto.projetoMateriaId, r.projetoId);
+                        if (![...elementosAtivos.materia.options].some(o => o.value === r.contexto.projetoMateriaId)) {
+                            const option = document.createElement('option'); option.value = r.contexto.projetoMateriaId; option.textContent = r.materia;
+                            elementosAtivos.materia.appendChild(option);
+                        }
+                        elementosAtivos.materia.value = r.contexto.projetoMateriaId;
                     }
-                    elementosAtivos.materia.value = r.contexto.projetoMateriaId;
                     definirStatus(elementosAtivos, 'Sessão recuperada e pausada. O período fora da página não foi somado. Continue, registre ou zere.');
                 }
                 pronto = true; salvarTimer(); atualizarDisplay(elementosAtivos); atualizarControles(elementosAtivos); emitirEstado();
@@ -138,6 +159,10 @@
     function iniciarMateria(projetoMateriaId, opcoes = {}) {
         const elementos = elementosAtivos;
         if (!elementos || !pronto) return false;
+        if (registroPraticaEmCurso || contextoSessao.tipo === 'pratica') {
+            definirStatus(elementos, 'Registre ou zere a sessão prática antes de iniciar outra sessão.', true);
+            return false;
+        }
         if (!projetoMateriaId) {
             definirStatus(elementos, 'Selecione uma matéria antes de iniciar.', true);
             elementos.materia.focus();
@@ -183,6 +208,35 @@
         definirStatus(elementos, `Estudando ${novaMateria}.`);
         emitirEstado();
         return true;
+    }
+
+    function selecionarPratica(missao) {
+        elementosAtivos.materia.querySelectorAll('option[data-pratica]').forEach(o => o.remove());
+        const option = document.createElement('option');
+        option.value = `pratica:${missao.missaoId}`; option.dataset.pratica = 'true';
+        option.textContent = `Atividade prática · ${missao.nome}`;
+        elementosAtivos.materia.append(option); elementosAtivos.materia.value = option.value;
+    }
+    async function iniciarPratica(missaoId) {
+        if (!elementosAtivos || !pronto || registroPraticaEmCurso) return false;
+        if (estado !== 'ocioso') {
+            if (contextoSessao.tipo === 'pratica' && contextoSessao.missaoId === missaoId) return estado === 'parado' ? continuar() : false;
+            definirStatus(elementosAtivos, 'Registre ou zere a sessão atual antes de iniciar outra sessão.', true);
+            return false;
+        }
+        registroPraticaEmCurso = true; atualizarControles(elementosAtivos);
+        try {
+            const { missao } = await window.PraticasExecucao.preparar(missaoId);
+            if (!missao.usaCronometro) throw new Error('TAF permite somente registro posterior de tempo.');
+            selecionarPratica(missao);
+            contextoSessao = { tipo: 'pratica', projetoId: projetoId(), atividadeId: missao.atividadeId, missaoId };
+            sessaoId = crypto.randomUUID(); inicioSessao = new Date();
+            tempoDecorridoMs = 0; inicioContagem = performance.now(); estado = 'rodando';
+            intervalo = window.setInterval(() => atualizarDisplay(elementosAtivos), 250);
+            atualizarDisplay(elementosAtivos); definirStatus(elementosAtivos, `Realizando ${missao.nome}. O tempo não conclui a atividade prática.`);
+            return pronto;
+        } catch (erro) { definirStatus(elementosAtivos, erro.message, true); return false; }
+        finally { registroPraticaEmCurso = false; atualizarControles(elementosAtivos); emitirEstado(); }
     }
 
     function novoInicioPermitido(opcoes) {
@@ -245,7 +299,7 @@
 
     function parar() {
         const elementos = elementosAtivos;
-        if (!elementos || !pronto || estado !== 'rodando') return false;
+        if (!elementos || !pronto || registroPraticaEmCurso || estado !== 'rodando') return false;
         tempoDecorridoMs = tempoAtual();
         window.clearInterval(intervalo);
         intervalo = null;
@@ -259,7 +313,7 @@
     }
 
     function continuar() {
-        if (!elementosAtivos || !pronto || estado !== 'parado') return false;
+        if (!elementosAtivos || !pronto || registroPraticaEmCurso || estado !== 'parado') return false;
         // Deslocar a origem mantém o acumulado e exclui todo o período pausado.
         inicioContagem = performance.now() - tempoDecorridoMs;
         estado = 'rodando';
@@ -273,7 +327,7 @@
     }
 
     function zerar() {
-        if (!elementosAtivos || !pronto || estado !== 'parado') return false;
+        if (!elementosAtivos || !pronto || registroPraticaEmCurso || estado !== 'parado') return false;
         if (!window.confirm('Zerar o cronômetro? O tempo desta sessão será descartado sem registrar progresso.')) return false;
         try { localStorage.removeItem(chaveTimer()); } catch (erro) { falhaPersistencia(); return false; }
         reiniciarEstado();
@@ -287,6 +341,8 @@
     function registrarAtual() {
         const elementos = elementosAtivos;
         if (!elementos || !pronto || estado !== 'parado' || !elementos.materia.value) return false;
+        if (registroPraticaEmCurso) return false;
+        if (contextoSessao.tipo === 'pratica') return registrarPraticaAtual();
         const materiaRegistrada = rotulo(elementos.materia);
         const duracaoSegundos = Math.max(1, Math.round(tempoDecorridoMs / 1000));
         try {
@@ -312,6 +368,29 @@
         definirStatus(elementos, `${formatarPontos(duracaoSegundos / 60)} registrados em ${materiaRegistrada}.`);
         emitirEstado();
         return true;
+    }
+
+    async function registrarPraticaAtual() {
+        const duracaoSegundos = Math.floor(tempoDecorridoMs / 1000);
+        if (duracaoSegundos <= 0) { definirStatus(elementosAtivos, 'Registre pelo menos um segundo de prática.', true); return false; }
+        registroPraticaEmCurso = true; atualizarControles(elementosAtivos);
+        let gravado = false;
+        try {
+            salvarTimer(); // checkpoint pausado antes do commit; ID e payload estáveis no retry/recovery
+            await window.PraticasExecucao.registrarCronometro(contextoSessao.missaoId, {
+                sessaoId, inicio: inicioSessao.toISOString(), duracaoSegundos
+            });
+            gravado = true;
+            localStorage.removeItem(chaveTimer());
+            reiniciarEstado(); atualizarDisplay(elementosAtivos);
+            definirStatus(elementosAtivos, 'Tempo da prática registrado. Conclua a atividade prática quando a realizar.');
+            return true;
+        } catch (erro) {
+            if (gravado) pronto = false;
+            definirStatus(elementosAtivos, gravado ? 'Tempo salvo. Recarregue para finalizar a recuperação do cronômetro.'
+                : `Não foi possível finalizar o registro. A sessão foi preservada para tentar novamente. ${erro.message}`, true);
+            return false;
+        } finally { registroPraticaEmCurso = false; atualizarControles(elementosAtivos); emitirEstado(); }
     }
 
     async function registrarManual(event) {
@@ -403,6 +482,7 @@
         }).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
         preencherSelect(elementos.materia, materias, 'Selecione uma matéria', selecaoAtual);
+        if (contextoSessao.tipo === 'pratica') selecionarPratica(window.PraticasExecucao.consultar(contextoSessao.missaoId).missao);
         if (elementos.materiaManual) preencherSelect(elementos.materiaManual, materias, 'Selecione uma matéria');
         atualizarControles(elementos);
     }
@@ -424,12 +504,12 @@
 
     function atualizarControles(elementos) {
         const semMaterias = elementos.materia.options.length <= 1;
-        elementos.materia.disabled = !pronto || estado !== 'ocioso' || semMaterias;
-        elementos.iniciar.disabled = !pronto || estado === 'rodando' || semMaterias;
+        elementos.materia.disabled = !pronto || registroPraticaEmCurso || estado !== 'ocioso' || semMaterias;
+        elementos.iniciar.disabled = !pronto || registroPraticaEmCurso || estado === 'rodando' || semMaterias;
         elementos.iniciar.textContent = estado === 'parado' ? 'Continuar' : 'Iniciar';
-        elementos.parar.disabled = !pronto || estado === 'ocioso';
+        elementos.parar.disabled = !pronto || registroPraticaEmCurso || estado === 'ocioso';
         elementos.parar.textContent = estado === 'parado' ? 'Zerar' : 'Parar';
-        elementos.registrar.disabled = !pronto || estado !== 'parado';
+        elementos.registrar.disabled = !pronto || registroPraticaEmCurso || estado !== 'parado';
     }
 
     function atualizarDisplay(elementos) {
@@ -574,6 +654,9 @@
             pronto,
             materia: elementosAtivos ? rotulo(elementosAtivos.materia) : '',
             projetoMateriaId: contextoSessao.projetoMateriaId || '',
+            missaoId: contextoSessao.missaoId || '',
+            atividadeId: contextoSessao.atividadeId || '',
+            registrando: registroPraticaEmCurso,
             duracaoSegundos,
             tipo: contextoSessao.tipo || 'estudo',
             diaJornada: contextoSessao.diaJornada || '',
@@ -584,6 +667,7 @@
     }
 
     function reiniciarEstado() {
+        elementosAtivos?.materia.querySelectorAll('option[data-pratica]').forEach(o => o.remove());
         estado = 'ocioso';
         sessaoId = null;
         inicioContagem = 0;
@@ -649,5 +733,5 @@
         }
     }
 
-    window.CronometroEstudos = { iniciarMateria, parar, continuar, zerar, registrarAtual, obterEstado, abrirRegistroManual };
+    window.CronometroEstudos = { iniciarMateria, iniciarPratica, parar, continuar, zerar, registrarAtual, obterEstado, abrirRegistroManual };
 })();

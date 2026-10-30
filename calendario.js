@@ -3,7 +3,7 @@
     'use strict';
     const meses = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
     const diasSemanaAbrev = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'];
-    let plano, dialogo, diaAberto = null, dataRenderizada = null, atualizacaoPendente = false;
+    let plano, dialogo, diaAberto = null, folgaAberta = null, dataRenderizada = null, atualizacaoPendente = false;
     let mesIndiceAtual = null, chavesMeses = [], touchInicioX = null, touchInicioY = null;
 
     function elemento(tag, classe, texto) {
@@ -17,7 +17,7 @@
         if (!iso) return 'Data indisponível';
         const d = new Date(`${iso}T12:00:00Z`);
         const sem = Number.isNaN(d.getTime()) ? '' : ` ${diasSemanaAbrev[d.getUTCDay()]}`;
-        return `${dataCivil(iso)}${sem}`;
+        return `${iso.slice(-2)}${sem}`;
     }
     function diaLinear(numero) { return `Dia ${String(numero).padStart(2, '0')}`; }
     function duracao(segundos) {
@@ -47,7 +47,7 @@
         botao.append(topo);
 
         const corpo = elemento('span', 'calendario-dia-corpo');
-        const nomesMaterias = [...new Set([...dia.materias, ...dia.extras].map(m => m.nome))];
+        const nomesMaterias = [...new Set([...dia.materias, ...dia.extras, ...(dia.missoes || [])].map(m => m.nome))];
         const resumoMaterias = nomesMaterias.map(nome => resumirTexto(nome, 24)).join(' · ') || 'Sem matéria prevista';
         const spanMaterias = elemento('span', 'calendario-dia-materias', resumirTexto(resumoMaterias, 44));
         spanMaterias.title = nomesMaterias.join(' · ');
@@ -134,12 +134,29 @@
             }
             const fim = new Date(primeiro); fim.setUTCMonth(fim.getUTCMonth() + 1, 0);
             const porData = new Map(dias.map(dia => [dia.dataPrevista, dia]));
+            const folgasPraticas = new Map((plano?.folgasPraticas || []).map(f => [f.dataPrevista, f]));
             for (let numero = 1; numero <= fim.getUTCDate(); numero++) {
                 const iso = `${chave}-${String(numero).padStart(2, '0')}`, dia = porData.get(iso);
                 const li = elemento('li', dia ? '' : 'calendario-celula-folga');
+                const rotuloFolga = `${String(numero).padStart(2, '0')} ${diasSemanaAbrev[new Date(`${iso}T12:00:00Z`).getUTCDay()]}`;
                 if (dia) li.append(botaoDia(dia));
-                else {
-                    const folga = elemento('div', 'calendario-folga', `${String(numero).padStart(2, '0')} ${diasSemanaAbrev[new Date(`${iso}T12:00:00Z`).getUTCDay()]}`);
+                else if (folgasPraticas.has(iso)) {
+                    li.classList.add('calendario-celula-pratica');
+                    // Folga teórica com TAF: consulta própria, fora dos dias lineares da jornada.
+                    const nomes = [...new Set(folgasPraticas.get(iso).missoes.map(m => m.nome))];
+                    const folga = elemento('button', 'calendario-folga calendario-folga-pratica', rotuloFolga);
+                    folga.type = 'button';
+                    folga.dataset.calendarioFolgaData = iso;
+                    folga.setAttribute('aria-haspopup', 'dialog');
+                    folga.setAttribute('aria-controls', 'calendario-popup');
+                    folga.setAttribute('aria-label', `${dataCivil(iso)}: folga teórica com ${nomes.join(', ')}`);
+                    const resumo = elemento('span', 'calendario-dia-materias', resumirTexto(nomes.join(' · '), 44));
+                    resumo.title = nomes.join(' · ');
+                    folga.append(resumo);
+                    folga.addEventListener('click', () => abrirFolga(iso));
+                    li.append(folga);
+                } else {
+                    const folga = elemento('div', 'calendario-folga', rotuloFolga);
                     folga.append(elemento('span', '', 'Sem estudo previsto'));
                     li.append(folga);
                 }
@@ -163,6 +180,15 @@
                 const chave = dia.dataPrevista?.slice(0, 7) || 'indisponivel';
                 if (!grupos.has(chave)) grupos.set(chave, []);
                 grupos.get(chave).push(dia);
+            }
+            for (const folga of plano.folgasPraticas || []) {
+                const chave = folga.dataPrevista.slice(0, 7);
+                if (!grupos.has(chave)) grupos.set(chave, []);
+            }
+            if ((plano.folgasPraticas || []).length) {
+                const ordenados = [...grupos].sort(([a], [b]) => a === 'indisponivel' ? 1 : b === 'indisponivel' ? -1 : a.localeCompare(b));
+                grupos.clear();
+                ordenados.forEach(([k, v]) => grupos.set(k, v));
             }
             chavesMeses = [...grupos.keys()];
             if (mesIndiceAtual === null || mesIndiceAtual >= chavesMeses.length) {
@@ -188,7 +214,8 @@
             dataRenderizada = window.CalendarioJornada.dataLocal();
             if (dialogo.open) {
                 const dia = plano.dias.find(d => d.dia === diaAberto);
-                if (dia) preencherPopup(dia); else dialogo.close();
+                const folga = folgaAberta && (plano.folgasPraticas || []).find(f => f.dataPrevista === folgaAberta);
+                if (dia) preencherPopup(dia); else if (folga) preencherPopupFolga(folga); else dialogo.close();
             } else if (focoAnterior) encontrarBotao(focoAnterior)?.focus({ preventScroll: true });
         } catch (erro) {
             plano = null;
@@ -340,7 +367,50 @@
             li.append(cardLink);
             return li;
         }, 'Nenhum estudo extra adicionado neste dia.');
-        document.getElementById('calendario-popup-conteudo').replaceChildren(normais, revisoes, extras);
+        const secoes = [normais, revisoes, extras];
+        if ((dia.missoes || []).length) secoes.splice(1, 0, secaoMissoes(dia.missoes, dia.numero));
+        document.getElementById('calendario-popup-conteudo').replaceChildren(...secoes);
+    }
+    const tiposPratica = { redacao: 'Redação', discursiva: 'Discursiva', 'estudo-caso': 'Estudo de caso', peca: 'Peça',
+        sentenca: 'Sentença', parecer: 'Parecer', simulado: 'Simulado', taf: 'TAF', outra: 'Outra prática' };
+    // Consulta: estado Concluída/Pendente, sem atraso punitivo e sem controles de execução.
+    function secaoMissoes(missoes, numeroDia = null) {
+        return secaoPopup('Atividades práticas', missoes, missao => {
+            const li = elemento('li', 'calendario-popup-item calendario-popup-missao');
+            li.dataset.missaoId = missao.missaoId;
+            li.dataset.atividadeId = missao.atividadeId;
+            const card = numeroDia ? criarLinkCardJornada(numeroDia) : elemento('a', 'calendario-popup-card-link livro-materia-card');
+            card.href = `agenda.html?${numeroDia ? `dia=${numeroDia}&` : ''}missao=${encodeURIComponent(missao.missaoId)}`;
+            const topo = elemento('div', 'livro-card-topo');
+            topo.append(elemento('strong', 'livro-card-nome', missao.nome),
+                elemento('span', 'livro-card-nivel', tiposPratica[missao.tipo] || missao.tipo));
+            const meta = missao.consomeCargaEstudo
+                ? `Duração planejada · ${duracao(missao.duracaoPlanejadaSegundos || 0)}`
+                : `Externo à carga de estudo${missao.duracaoPlanejadaSegundos ? ` · estimativa ${duracao(missao.duracaoPlanejadaSegundos)}` : ''}`;
+            card.append(topo, elemento('p', 'calendario-card-meta', meta),
+                elemento('small', '', missao.tempoRegistradoSegundos ? `Tempo registrado · ${duracao(missao.tempoRegistradoSegundos)}` : 'Ainda sem tempo registrado'),
+                elemento('small', '', `Atividade: ${missao.concluidasAtividade} de ${missao.planejadasAtividade} atividades práticas concluídas`),
+                elemento('small', 'calendario-missao-estado', missao.concluida ? 'Concluída' : 'Pendente'));
+            card.append(elemento('small', 'calendario-card-ir', 'Abrir atividade prática na Jornada →'));
+            li.append(card);
+            return li;
+        }, 'Nenhuma atividade prática prática prevista neste dia.');
+    }
+    function abrirFolga(iso) {
+        const folga = (plano?.folgasPraticas || []).find(f => f.dataPrevista === iso);
+        if (!folga) return;
+        diaAberto = null; folgaAberta = iso;
+        preencherPopupFolga(folga);
+        dialogo.showModal();
+        dialogo.scrollTop = 0;
+        document.getElementById('calendario-popup-fechar').focus({ preventScroll: true });
+    }
+    function preencherPopupFolga(folga) {
+        document.getElementById('calendario-popup-titulo').textContent = 'Folga teórica';
+        const semana = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${folga.dataPrevista}T12:00:00Z`));
+        document.getElementById('calendario-popup-data').textContent = `${dataCivil(folga.dataPrevista)} · ${semana}`;
+        const aviso = elemento('p', 'calendario-popup-vazio', 'Sem estudo teórico previsto. A atividade abaixo não consome a carga de estudo.');
+        document.getElementById('calendario-popup-conteudo').replaceChildren(aviso, secaoMissoes(folga.missoes));
     }
     function abrirDia(chave) {
         const dia = plano?.dias.find(d => d.dia === chave);
@@ -351,7 +421,7 @@
             mesIndiceAtual = idxMes;
             atualizarVisibilidadeMeses();
         }
-        diaAberto = chave;
+        diaAberto = chave; folgaAberta = null;
         preencherPopup(dia);
         dialogo.showModal();
         dialogo.scrollTop = 0;
@@ -382,15 +452,18 @@
         }, { passive: true });
         document.getElementById('calendario-popup-fechar').addEventListener('click', () => dialogo.close());
         dialogo.addEventListener('close', () => {
-            const botao = encontrarBotao(diaAberto);
-            diaAberto = null;
+            const botao = encontrarBotao(diaAberto)
+                || (folgaAberta && document.querySelector(`[data-calendario-folga-data="${folgaAberta}"]`));
+            diaAberto = null; folgaAberta = null;
             (botao || document.querySelector('main')).focus({ preventScroll: true });
         });
         renderizar();
-        for (const evento of ['estudo:registrado', 'estudo:excluido', 'extras:alterados', 'revisoes:alteradas', 'notas:alteradas']) window.addEventListener(evento, solicitarAtualizacao);
+        for (const evento of ['estudo:registrado', 'estudo:excluido', 'extras:alterados', 'revisoes:alteradas', 'notas:alteradas', 'praticas:alteradas']) window.addEventListener(evento, solicitarAtualizacao);
         window.addEventListener('storage', evento => {
+            const projetoAtual = plano?.projetoId || window.ProjetosStore.idAtual();
             if (window.HistoricoRepository.ehChave(evento.key) || evento.key === 'materiasDominioV1' || evento.key === 'notasBlocosV1'
-                || evento.key?.startsWith(`projetoV1:${plano?.projetoId || window.ProjetosStore.idAtual()}:`)) solicitarAtualizacao();
+                || evento.key === `praticasProjetoV1:${projetoAtual}`
+                || evento.key?.startsWith(`projetoV1:${projetoAtual}:`)) solicitarAtualizacao();
         });
         window.addEventListener('focus', solicitarAtualizacao);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) solicitarAtualizacao(); });

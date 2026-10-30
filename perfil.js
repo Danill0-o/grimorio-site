@@ -46,7 +46,8 @@
             const materias = EstudoStore.listarDominioGlobal().sort((a, b) => b.segundos - a.segundos
                 || a.nomeCanonico.localeCompare(b.nomeCanonico, 'pt-BR') || a.materiaGlobalId.localeCompare(b.materiaGlobalId));
             const sessoes = EstudoStore.listarSessoes();
-            const total = sessoes.reduce((soma, sessao) => soma + Number(sessao.duracaoSegundos), 0);
+            const global = EstudoStore.obterProgressaoGlobal();
+            const total = sessoes.reduce((soma, sessao) => soma + Number(sessao.duracaoSegundos), 0) + global.segundosPraticas;
             const projetos = ProjetosStore.listar().length;
             const cards = materias.map(m => {
                 const card = elemento('article', undefined, 'materia-level-card');
@@ -71,13 +72,12 @@
             document.getElementById('perfil-tempo').textContent = tempo(total);
             document.getElementById('perfil-materias').textContent = numero(materias.length);
             document.getElementById('perfil-projetos').textContent = numero(projetos);
-            const global = EstudoStore.obterProgressaoGlobal();
             document.getElementById('perfil-global-nivel').textContent = `Nível global ${global.nivel}`;
             document.getElementById('perfil-global-xp').textContent = `${numero(global.xp)} XP · ${tempo(global.segundos)} de dedicação`;
             document.getElementById('perfil-global-barra').value = global.percentual;
             document.getElementById('perfil-global-avanco').textContent = global.nivel === 100
                 ? 'Nível 100 alcançado · seu XP e suas horas continuam acumulando'
-                : `${numero(global.percentual)}% · faltam ${tempo(Math.ceil(global.pontosParaProximoNivel * 60))} para o nível ${global.nivel + 1}`;
+                : `${numero(global.percentual)}% · faltam ${numero(global.pontosParaProximoNivel)} XP para o nível ${global.nivel + 1}`;
             renderizarHistorico(sessoes);
             status.textContent = materias.length ? '' : 'Seu domínio começa com a primeira sessão. Abra um projeto e registre seu estudo.';
             if (materiaComFoco) {
@@ -137,5 +137,5 @@
         });
     });
     document.addEventListener('DOMContentLoaded', renderizar);
-    for (const evento of ['estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'storage', 'pageshow']) window.addEventListener(evento, renderizar);
+    for (const evento of ['estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'praticas:alteradas', 'storage', 'pageshow']) window.addEventListener(evento, renderizar);
 })();
