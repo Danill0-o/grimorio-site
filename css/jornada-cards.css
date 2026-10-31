@@ -91,15 +91,88 @@
 }
 .jornada-page .materia-indicador small { font-size: .85rem; line-height: 1.4; white-space: nowrap; }
 .jornada-page .materia-indicador-barra {
-    display: block; width: 100%; min-width: 0; height: 8px; border: 0; border-radius: 5px;
-    overflow: hidden; accent-color: #315c55; background: #d8c59b;
+    appearance: none;
+    -webkit-appearance: none;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 11px;
+    border: 2px solid var(--pixel-border-outer);
+    border-radius: 0 !important;
+    overflow: hidden;
+    accent-color: var(--pixel-emerald);
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.18) 0px,
+            rgba(0, 0, 0, 0.18) 2px,
+            transparent 2px,
+            transparent 10px
+        ),
+        var(--pixel-surface-alt);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.35);
 }
-.jornada-page .materia-indicador-barra::-webkit-progress-bar { background: #d8c59b; }
-.jornada-page .materia-indicador-barra::-webkit-progress-value { background: #315c55; }
-.jornada-page .materia-indicador-barra::-moz-progress-bar { background: #315c55; }
-.jornada-page .materia-indicador-nivel .materia-indicador-barra { accent-color: #75542d; }
-.jornada-page .materia-indicador-nivel .materia-indicador-barra::-webkit-progress-value { background: #75542d; }
-.jornada-page .materia-indicador-nivel .materia-indicador-barra::-moz-progress-bar { background: #75542d; }
+.jornada-page .materia-indicador-barra::-webkit-progress-bar {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.18) 0px,
+            rgba(0, 0, 0, 0.18) 2px,
+            transparent 2px,
+            transparent 10px
+        ),
+        var(--pixel-surface-alt);
+}
+.jornada-page .materia-indicador-barra::-webkit-progress-value {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 8px,
+            rgba(0, 0, 0, 0.22) 8px,
+            rgba(0, 0, 0, 0.22) 10px
+        ),
+        linear-gradient(180deg, var(--pixel-emerald-bright), var(--pixel-emerald));
+}
+.jornada-page .materia-indicador-barra::-moz-progress-bar {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 8px,
+            rgba(0, 0, 0, 0.22) 8px,
+            rgba(0, 0, 0, 0.22) 10px
+        ),
+        linear-gradient(180deg, var(--pixel-emerald-bright), var(--pixel-emerald));
+}
+.jornada-page .materia-indicador-projeto .materia-indicador-barra,
+.jornada-page .materia-indicador-nivel .materia-indicador-barra {
+    accent-color: #2563eb;
+}
+.jornada-page .materia-indicador-projeto .materia-indicador-barra::-webkit-progress-value,
+.jornada-page .materia-indicador-nivel .materia-indicador-barra::-webkit-progress-value {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 8px,
+            rgba(0, 0, 0, 0.22) 8px,
+            rgba(0, 0, 0, 0.22) 10px
+        ),
+        linear-gradient(180deg, #60a5fa, #2563eb);
+}
+.jornada-page .materia-indicador-projeto .materia-indicador-barra::-moz-progress-bar,
+.jornada-page .materia-indicador-nivel .materia-indicador-barra::-moz-progress-bar {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 8px,
+            rgba(0, 0, 0, 0.22) 8px,
+            rgba(0, 0, 0, 0.22) 10px
+        ),
+        linear-gradient(180deg, #60a5fa, #2563eb);
+}
 .jornada-page .dia-materia-concluida { background: #e1e7ce !important; border-color: #799173 !important; }
 .jornada-page .blocos-acoes {
     display: flex;
@@ -261,3 +334,94 @@
 .dia-missao-item.dia-missao-concluida { border-left-color: var(--pixel-gold); }
 .dia-missao-detalhe, .dia-missao-estado { display: block; }
 .dia-missao-estado { font-weight: 700; }
+
+.jornada-page .estudo-extra { position: relative; padding-right: 48px; }
+.jornada-page .estudo-extra button.extra-excluir { position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 4px; background: transparent !important; color: var(--pixel-ink) !important; border: 0 !important; box-shadow: none !important; font-size: 16px; }
+.jornada-page .estudo-extra button.extra-excluir:hover, .jornada-page .estudo-extra button.extra-excluir:focus-visible { outline: 2px solid currentColor; }
+
+.jornada-page .extra-excluir-icone { display: block; width: 18px; height: 18px; object-fit: contain; pointer-events: none; filter: none; }
+.jornada-page[data-tema-pixel="arcano"] .extra-excluir-icone, [data-tema-pixel="arcano"] .jornada-page .extra-excluir-icone { filter: brightness(0) invert(1); }
+.jornada-page .site-rodape .credito-lixeira { display: block; margin-top: 12px; font-size: .75rem; }
+
+/* Expansão sob clique das matérias no card do dia */
+.jornada-page .dia-materias .dia-materia-item {
+    cursor: pointer;
+}
+.jornada-page .dia-materias .dia-materia-identificacao > strong {
+    position: relative;
+    padding-right: 18px;
+}
+.jornada-page .dia-materias .dia-materia-identificacao > strong::after {
+    content: "▾";
+    position: absolute;
+    right: 0;
+    top: 2px;
+    font-size: .85rem;
+    line-height: 1;
+    color: var(--pixel-ink-muted);
+}
+.jornada-page .dia-materias .dia-materia-item.dia-materia-expandida .dia-materia-identificacao > strong::after {
+    content: "▴";
+}
+.jornada-page .dia-materias .dia-materia-item:not(.dia-materia-expandida) .materia-indicador-projeto,
+.jornada-page .dia-materias .dia-materia-item:not(.dia-materia-expandida) .materia-indicador-nivel,
+.jornada-page .dia-materias .dia-materia-item:not(.dia-materia-expandida) .materia-notas,
+.jornada-page .dia-materias .dia-materia-item:not(.dia-materia-expandida) .blocos-acoes {
+    display: none !important;
+}
+
+.jornada-page .dia-progresso-resumo .progresso-trilho {
+    height: 11px !important;
+    border: 2px solid var(--pixel-border-outer) !important;
+    border-radius: 0 !important;
+}
+
+/* Layout de navegação das cartas */
+.jornada-page .cartas-navegacao {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.jornada-page .cartas-navegacao-seletor {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 380px;
+}
+.jornada-page .cartas-navegacao-seletor [data-carta-passo] {
+    flex: 0 0 44px;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 !important;
+    display: inline-grid;
+    place-items: center;
+}
+.jornada-page #carta-seletor {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    min-height: 44px;
+}
+.jornada-page .cartas-navegacao-atalhos {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Legendas de progresso real vs ideal */
+.jornada-page .progresso-legenda::before {
+    border: 1px solid var(--pixel-border-outer);
+    vertical-align: middle;
+}
+.jornada-page .progresso-legenda-atual::before {
+    background: linear-gradient(180deg, var(--pixel-emerald-bright), var(--pixel-emerald)) !important;
+}
+.jornada-page .progresso-legenda-ideal::before {
+    background: linear-gradient(180deg, var(--pixel-gold-bright), var(--pixel-gold)) !important;
+}

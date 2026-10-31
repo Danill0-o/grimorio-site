@@ -1,0 +1,18 @@
+/* Espaçamento explícito: esta página não depende das utilidades do Bootstrap. */
+.materias-page .jornada-pagina > .container { box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+.materias-page main > .jornada-panel { box-sizing: border-box; min-width: 0; padding: clamp(16px, 3vw, 28px); margin-bottom: 24px; }
+.materias-page .jornada-panel > *, .materias-page .perfil-grid > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.materias-page :is(h1,h2,h3,p,label,summary,li) { overflow-wrap: anywhere; }
+.materias-page :is(.catalogo-memorias-corpo,.vinculo-painel-corpo) { display: grid; gap: 12px; padding: 18px 12px; min-width: 0; }
+.materias-page :is(details > summary) { padding: 12px; cursor: pointer; }
+.materias-page :is(input,select,textarea) { box-sizing: border-box; width: 100%; max-width: 100%; min-width: 0; }
+.materias-page button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.materias-page .catalogo-nova-global-form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 16px; }
+.materias-page .catalogo-nova-global-form label { display: grid; gap: 8px; min-width: 0; }
+.materias-page #catalogo-memorias-lista { padding-left: 20px; margin: 0; }
+@media(max-width:600px){
+ .materias-page .jornada-pagina > .container { padding: 16px 12px; }
+ .materias-page .catalogo-nova-global-form { grid-template-columns: minmax(0,1fr); }
+ .materias-page :is(.catalogo-memorias-corpo,.vinculo-painel-corpo) { padding: 14px 4px; }
+ .materias-page .perfil-grid { grid-template-columns: minmax(0,1fr); }
+}

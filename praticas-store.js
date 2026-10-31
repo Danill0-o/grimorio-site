@@ -243,7 +243,6 @@
     // dias fora da rotina atual (prática interna) e referências de estágio removidas.
     function normalizarAtividadesParaPlanejamento(atividades, materiasNormalizadas, diasRotina) {
         const idsMaterias = new Set((Array.isArray(materiasNormalizadas) ? materiasNormalizadas : []).map(m => m?.projetoMateriaId).filter(Boolean));
-        const rotina = new Set(diasRotina);
         return atividades.map(original => {
             let atividade = original;
             if (atividade.agendamento?.inicio?.modo !== 'estagio') return atividade;
@@ -261,7 +260,7 @@
         });
     }
     function planejarProjeto(dados, materiasNormalizadas = null) {
-        if (!dados || typeof dados !== 'object' || dados.distribuicaoVersao !== 3 || typeof dados.projetoId !== 'string') return null;
+        if (!dados || typeof dados !== 'object' || typeof dados.projetoId !== 'string') return null;
         if (storage.getItem(chave(dados.projetoId)) === null) return null;
         const estado = ler(dados.projetoId);
         const ativas = Object.values(estado.atividades).filter(r => !r.removida).map(r => r.atividade);
@@ -276,7 +275,15 @@
         const minutosPorDia = Number(dados.minutosPorDia);
         const disponibilidadeDiariaSegundos = Math.round(minutosPorDia * 60);
         const blocosPorDia = Number(dados.blocosPorDia ?? dados.materiasPorDia) || 1;
-        const diasEstudo = Number(dados.diasEstudoPraProva);
+        let diasEstudo = Number(dados.diasEstudoPraProva);
+        if ((!Number.isInteger(diasEstudo) || diasEstudo < 1) && dataInicio && dataFinal && dataFinal >= dataInicio && listaDiaDaSemana.length) {
+            const rotinaSet = new Set(listaDiaDaSemana), nomesDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
+            let contagem = 0;
+            for (const d = new Date(`${dataInicio}T12:00:00.000Z`), fim = new Date(`${dataFinal}T12:00:00.000Z`); d <= fim; d.setUTCDate(d.getUTCDate() + 1)) {
+                if (rotinaSet.has(nomesDias[d.getUTCDay()])) contagem++;
+            }
+            diasEstudo = contagem;
+        }
         if (!dataInicio || !dataFinal || dataFinal < dataInicio || !listaDiaDaSemana.length
             || !Number.isSafeInteger(disponibilidadeDiariaSegundos) || disponibilidadeDiariaSegundos < 1
             || !Number.isInteger(blocosPorDia) || blocosPorDia < 1
@@ -287,13 +294,21 @@
         if (!atividadesCalculo.some(a => a.agendamento)) return null;
         let planoTeoricoBase = null;
         if (atividadesCalculo.some(a => a.agendamento?.inicio?.modo === 'estagio')) {
-            if (!Array.isArray(materias) || !materias.length || !window.DistribuicaoEstudos?.gerar) return null;
-            planoTeoricoBase = window.DistribuicaoEstudos.gerar({
-                distribuicaoVersao: 3,
-                minutosPorDia,
-                blocosPorDia,
-                diasEstudoPraProva: diasEstudo
-            }, materias).materiaDoDia;
+            if (Array.isArray(materias) && materias.length && window.DistribuicaoEstudos?.gerar) {
+                planoTeoricoBase = window.DistribuicaoEstudos.gerar({
+                    distribuicaoVersao: 3,
+                    minutosPorDia,
+                    blocosPorDia,
+                    diasEstudoPraProva: diasEstudo
+                }, materias).materiaDoDia;
+            } else {
+                const planoSalvo = lerJsonProjeto(dados.projetoId, 'materiaDoDia', null);
+                if (planoSalvo && typeof planoSalvo === 'object' && Object.keys(planoSalvo).length === diasEstudo) {
+                    planoTeoricoBase = planoSalvo;
+                } else {
+                    return null;
+                }
+            }
         }
         const previa = dominio.planejarCapacidadePraticas({
             projetoId: dados.projetoId,
@@ -311,7 +326,7 @@
             ...(planoTeoricoBase ? { planoTeoricoBase } : {})
         });
         // Sem reserva interna, a v3 vigente é usada sem alteração (TAF não consome carga).
-        const temReservaInterna = previa.diasEstudo.some(d => d.reservaInternaSegundos > 0);
+        const temReservaInterna = dados.distribuicaoVersao === 3 && previa.diasEstudo.some(d => d.reservaInternaSegundos > 0);
         const dadosDistribuicao = temReservaInterna && previa.diasEstudo.length === diasEstudo
             ? {
                 ...dados,
@@ -425,7 +440,8 @@
         const emCronometro = missaoEmCronometro(estado);
         if (emCronometro) comFatosHistoricos.add(emCronometro);
         // Atividade prática automática sem fato acompanha o plano vigente; fatos e atividades práticas manuais são preservados.
-        const planoVigente = dados?.distribuicaoVersao === 3;
+        const planoVigente = Boolean(planejamento) || (dados?.distribuicaoVersao === 3
+            && !Object.values(estado.atividades).some(r => !r.removida && r.atividade.agendamento));
         const missoesEfetivasPorId = new Map();
         for (const [missaoId, missao] of Object.entries(estado.missoes)) {
             const registro = estado.atividades[missao.atividadeId];

@@ -2,10 +2,10 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<script src="armazenamento-offline.js?v=offline-20261030"></script>
+<script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=offline-20261030"></script>
     <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
-    <script type="application/grimorio" src="backup-local.js?v=offline-20261030"></script>
+    <script type="application/grimorio" src="backup-local.js?v=pomodoro-20261031"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Matérias e Vínculos — Grimório</title>
     <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
@@ -13,27 +13,25 @@
     <link rel="stylesheet" href="css/perfil.css?v=temas3-20261022">
     <link rel="stylesheet" href="css/wizard.css?v=praticas-tipos-20261029">
     <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
-    <script type="application/grimorio" src="projetos-store.js?v=praticas-e2-20261025"></script><script type="application/grimorio" src="praticas-store.js?v=praticas-tipos-20261029"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="praticas-store.js?v=praticas-tipos-20261029"></script>
     <script type="application/grimorio" src="materias-store.js?v=nomes60-20261022"></script>
     <script type="application/grimorio" src="identidade-store.js?v=2"></script>
-    <script type="application/grimorio" src="historico-repository.js"></script>
+    <script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
     <script type="application/grimorio" src="calendario-jornada.js?v=2"></script>
-    <script type="application/grimorio" src="estudo-extra.js?v=2"></script>
+    <script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script>
     <script type="application/grimorio" src="estudo-store.js?v=praticas-e7-final-20261026"></script>
     <script type="application/grimorio" src="materias-busca.js"></script>
     <script type="application/grimorio" src="catalogo-ui.js?v=estavel-20261023" defer></script>
     <script type="application/grimorio" src="materias-vinculo-ui.js" defer></script>
-    <script type="application/grimorio" src="acessibilidade.js?v=estavel-20261023" defer></script>
+    <script type="application/grimorio" src="acessibilidade.js?v=sidebar-global-20261030" defer></script>
+<link rel="stylesheet" href="css/jornada-interface.css?v=sidebar-global-20261030">
+<script type="application/grimorio" src="sidebar.js?v=sidebar-global-20261030"></script>
+<link rel="stylesheet" href="css/materias.css?v=espacamento-20261030">
 </head>
 <body class="perfil-page materias-page">
+<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Suas matérias e vínculos</a><button type="button" id="abrir-historico" aria-haspopup="dialog" aria-controls="historico-dialog">Histórico de estudos</button><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
     <header class="container">
-        <nav class="grimorio-nav" aria-label="Navegação principal">
-            <a class="grimorio-marca" href="home.html"><span>GRIMÓRIO<small>SUA JORNADA DE CONHECIMENTO</small></span></a>
-            <a class="btn btn-outline-secondary" href="home.html">Meus projetos</a>
-            <a class="btn btn-outline-secondary" href="perfil.html">Perfil</a>
-            <a class="btn" href="materias.html" aria-current="page">Matérias e vínculos</a>
-            <a class="btn btn-outline-primary" href="index.html?editar=1" id="materias-voltar-wizard" hidden>Voltar à edição do projeto</a>
-        </nav>
+
         <section class="jornada-hero perfil-hero" aria-labelledby="materias-pagina-titulo">
             <p class="jornada-kicker">CATÁLOGO E IDENTIDADE DO GRIMÓRIO</p>
             <h1 id="materias-pagina-titulo">Suas matérias e vínculos</h1>
@@ -102,5 +100,19 @@
             <button type="button" class="btn" id="vinculo-confirmar">Confirmar correção</button>
         </div>
     </dialog>
+</div></div>
+<dialog id="historico-dialog" aria-labelledby="historico-titulo">
+<header class="historico-cabecalho"><div><h2 id="historico-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
+<details id="historico-filtros-painel" open><summary>Filtrar registros</summary>
+<form id="historico-filtros" class="historico-filtros" role="search">
+<label>Buscar matéria<input id="historico-busca" type="search" placeholder="Nome da matéria" autocomplete="off"></label>
+<label>Registros<select id="historico-tipo"><option value="">Todos os tipos</option><option value="estudo">Estudos (inclui extras)</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option></select></label>
+<label>Projeto<select id="historico-projeto"><option value="">Todos os projetos</option><option value="atual">Projeto selecionado</option></select></label>
+</form></details>
+<p id="historico-resumo" role="status" aria-live="polite"></p>
+<div class="historico-rolagem"><table id="tabela-sessoes-estudo"><caption>Registros mais recentes primeiro.</caption><thead><tr><th scope="col">Data</th><th scope="col">Hora</th><th scope="col">Matéria</th><th scope="col">Tempo estudado</th><th scope="col">Ações</th></tr></thead><tbody id="sessoes-estudo-body"></tbody></table></div>
+<div class="historico-paginacao"><button type="button" id="historico-anterior">Anterior</button><span id="historico-pagina"></span><button type="button" id="historico-proximo">Próxima</button></div>
+</dialog>
+<script type="application/grimorio" src="jornada-interface.js?v=sidebar-global-20261030"></script>
 </body>
 </html>

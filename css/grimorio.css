@@ -526,6 +526,19 @@ button:disabled {
     border-radius: 0 !important;
 }
 
+.progresso-legenda::before {
+    border: 1px solid var(--pixel-border-outer);
+    vertical-align: middle;
+}
+
+.progresso-legenda-atual::before {
+    background: linear-gradient(180deg, var(--pixel-emerald-bright), var(--pixel-emerald)) !important;
+}
+
+.progresso-legenda-ideal::before {
+    background: linear-gradient(180deg, var(--pixel-gold-bright), var(--pixel-gold)) !important;
+}
+
 progress {
     appearance: none;
     -webkit-appearance: none;

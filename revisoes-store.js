@@ -139,10 +139,11 @@
         salvar(registro);
         return ativas.map(id => registro.entidades[id]);
     }
-    function listar() { const reg=ler(); return reg.ativas.map(id=>reg.entidades[id]); }
+    function listar() { const reg=ler(); return reg.ativas.map(id=>reg.entidades[id]).filter(r=>!r.blocoExtraId||!window.EstudoExtra?.excluido(r.blocoExtraId,r.projetoId)); }
     function notificar() { window.dispatchEvent(new Event('revisoes:alteradas')); }
     function alterar(id, estado) {
         const reg=ler(); const r=reg.entidades[id];
+        if (r?.blocoExtraId&&window.EstudoExtra?.excluido(r.blocoExtraId,r.projetoId))throw new Error('O extra desta revisão foi excluído.');
         if (!r || !reg.ativas.includes(id) || r.estado==='concluida') return;
         r.estado=estado; reconciliar(r, window.EstudoStore.listarSessoes()); salvar(reg); notificar();
     }

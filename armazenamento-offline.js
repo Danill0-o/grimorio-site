@@ -42,7 +42,7 @@ function verificarPendencias(id){
  const timer=window.CronometroEstudos?.obterEstado();if(window.ProjetosStore?.idAtual()===id&&timer?.estado&&timer.estado!=='ocioso')throw Error('Registre ou zere o cronômetro antes do backup offline.');
  for(const k of nomes()){
   if(k===`cronometroV1:${id}`||k==='cronometroRegistroV1'||k==='projetosTransacaoV1'||k===`projetosTransacaoV2:${id}`||k===`projetoV1:${id}:revisoesTransacaoV1`)throw Error('Registre ou zere o cronômetro e recupere as operações pendentes antes de descarregar o projeto.');
-  if(k.startsWith(`projetoV1:${id}:estudoExtraV1:`)&&JSON.parse(fachada.getItem(k))?.registroManualPendente)throw Error('Há registro manual pendente de recuperação.');
+  if(k.startsWith(`projetoV1:${id}:estudoExtraV1:`)&&JSON.parse(fachada.getItem(k))?.registroManualPendente&&!window.EstudoExtra?.excluido(JSON.parse(fachada.getItem(k)).blocoId,id))throw Error('Há registro manual pendente de recuperação.');
  }
 }
 async function lerArquivo(pasta,nome){return await (await (await pasta.getFileHandle(nome)).getFile()).text();}

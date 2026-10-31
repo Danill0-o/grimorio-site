@@ -1,0 +1,79 @@
+.jornada-shell { display: grid; grid-template-columns: 210px minmax(0,1fr); gap: 24px; align-items: start; padding: 16px; }
+.jornada-pagina { min-width: 0; }
+.jornada-menu { position: sticky; top: 16px; max-height: calc(100dvh - 32px); overflow-y: auto; background: var(--pixel-surface); color: var(--pixel-ink); border: 3px solid var(--pixel-bronze); padding: 14px; }
+.jornada-menu nav { display: grid; gap: 10px; }
+.jornada-menu nav > a, .jornada-menu nav > button, .jornada-menu summary { min-height: 44px; display: flex; align-items: center; padding: 10px; color: var(--pixel-ink); text-decoration: none; font-family: var(--font-pixel-ui); font-size: .8rem; cursor: pointer; }
+.jornada-menu nav > a:hover, .jornada-menu summary:hover { background: var(--pixel-surface-alt); text-decoration: underline; }
+.jornada-menu nav > button { width: 100%; white-space: normal; }
+.jornada-menu-titulo { margin: 0 0 8px; font-weight: bold; }
+#jornada-menu-aberto > summary { display: none; }
+#jornada-temas { border-top: 1px solid var(--pixel-bronze); }
+#jornada-temas .pixel-theme-bar { display: grid; justify-content: stretch; padding: 8px 0; margin: 0; border: 0; background: transparent; }
+#jornada-temas .pixel-theme-label { display: none; }
+#jornada-temas .pixel-theme-chip { width: 100%; white-space: normal; }
+#historico-dialog { width: min(1000px,calc(100vw - 24px)); max-height: 90dvh; overflow: auto; background: var(--pixel-surface); color: var(--pixel-ink); border: 3px solid var(--pixel-bronze); padding: 24px; }
+#historico-dialog::backdrop { background: rgb(0 0 0 / .65); }
+.historico-cabecalho { display: flex; align-items: start; justify-content: space-between; gap: 20px; }
+#historico-dialog h2, #historico-dialog p, #historico-dialog label, #historico-dialog caption { color: var(--pixel-ink) !important; }
+#historico-dialog h2 { font-size: 1.25rem; }
+#historico-dialog p, #historico-dialog caption { font-size: .9rem; }
+.historico-filtros { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 14px; margin: 16px 0; }
+.historico-filtros label { display: grid; gap: 6px; min-width: 0; }
+.historico-filtros input, .historico-filtros select { width: 100%; min-width: 0; min-height: 44px; }
+.historico-rolagem { overflow-x: auto; }
+#tabela-sessoes-estudo { width: 100%; border-collapse: collapse; font-size: .9rem; }
+#tabela-sessoes-estudo caption { caption-side: top; padding: 0 0 12px; }
+#tabela-sessoes-estudo th { background: #302619 !important; color: #fff !important; padding: 12px; text-align: left; }
+#tabela-sessoes-estudo td { background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; padding: 12px; border-bottom: 1px solid var(--pixel-bronze); vertical-align: top; box-shadow: none !important; }
+#tabela-sessoes-estudo td small { display: block; margin-top: 4px; color: inherit; }
+#tabela-sessoes-estudo button { min-height: 44px; }
+.historico-paginacao { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 20px; }
+@media(max-width:1099px){
+ .jornada-shell { display: block; padding: 0; }
+ .jornada-menu { top: 0; z-index: 100; padding: 8px 16px; max-height: 80dvh; }
+ #jornada-menu-aberto > summary { display: flex; }
+ .jornada-menu nav { padding: 12px 0; }
+ .jornada-menu-titulo { display: none; }
+}
+@media(max-width:600px){
+ #historico-dialog { padding: 14px; }
+ .historico-cabecalho { display: block; }
+ .historico-filtros { grid-template-columns: 1fr; }
+ #tabela-sessoes-estudo { min-width: 640px; }
+ .historico-paginacao { flex-wrap: wrap; }
+}
+
+#historico-filtros-painel > summary { display: none; min-height: 44px; padding: 10px 0; cursor: pointer; }
+#tabela-sessoes-estudo caption { font-family: var(--font-body); text-transform: none; }
+@media(max-width:1099px){ #historico-filtros-painel > summary { display: list-item; } }
+@media(max-width:600px){
+ #tabela-sessoes-estudo { min-width: 0; table-layout: fixed; }
+ #tabela-sessoes-estudo thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+ #tabela-sessoes-estudo tbody { display: grid; gap: 12px; }
+ #tabela-sessoes-estudo tr { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--pixel-bronze); }
+ #tabela-sessoes-estudo td { display: block; min-width: 0; padding: 10px; border: 0; overflow-wrap: anywhere; }
+ #tabela-sessoes-estudo td::before { content: attr(data-rotulo); display: block; font-size: .75rem; font-weight: bold; margin-bottom: 4px; }
+ #tabela-sessoes-estudo td:nth-child(3), #tabela-sessoes-estudo td:nth-child(5), #tabela-sessoes-estudo td[colspan] { grid-column: 1 / -1; }
+ #tabela-sessoes-estudo td:nth-child(5) { text-align: right; }
+ #tabela-sessoes-estudo td:nth-child(5)::before { display: none; }
+}
+
+.jornada-menu summary::after { content: "▾"; margin-left: auto; padding-left: 8px; }
+.jornada-menu details[open] > summary::after { content: "▴"; }
+/* Links, ações e dropdowns usam a mesma superfície e tipografia no menu. */
+.jornada-shell .jornada-menu nav > a, .jornada-shell .jornada-menu nav > button, .jornada-shell .jornada-menu summary {
+ box-sizing: border-box; width: 100%; min-height: 44px; margin: 0;
+ background: transparent !important; color: var(--pixel-ink) !important;
+ border: 0 !important; border-radius: 0 !important; box-shadow: none !important;
+ text-shadow: none !important; font-family: var(--font-pixel-ui); font-size: .8rem; font-weight: 400; text-transform: none;
+ justify-content: flex-start; text-align: left; line-height: 1.6; letter-spacing: normal;
+}
+.jornada-shell .jornada-menu nav > a:hover, .jornada-shell .jornada-menu nav > button:hover, .jornada-shell .jornada-menu summary:hover { background: var(--pixel-surface-alt) !important; }
+.jornada-shell .jornada-menu [aria-current="page"] { border-left: 3px solid var(--pixel-bronze) !important; }
+.jornada-shell .jornada-menu :is(a,button,summary):focus-visible { outline: 2px solid var(--pixel-ink); outline-offset: -2px; }
+#praticas-painel-dialog { width: min(900px,calc(100vw - 24px)); max-height: 90dvh; overflow: auto; padding: 24px; background: var(--pixel-surface); color: var(--pixel-ink); border: 3px solid var(--pixel-bronze); }
+#praticas-painel-dialog::backdrop { background: rgb(0 0 0 / .65); }
+#praticas-painel-dialog h2, #praticas-painel-dialog p { color: var(--pixel-ink) !important; }
+#praticas-painel-dialog h2 { font-size: 1.2rem; }
+#praticas-painel-dialog .praticas-painel { margin: 0; padding: 0; border: 0; }
+@media(max-width:600px){#praticas-painel-dialog { padding: 14px; }}

@@ -137,13 +137,24 @@
         resultado.folgasPraticas = [];
         if (window.PraticasStore?.projetarMissoesProjeto) {
             const praticas = window.PraticasStore.projetarMissoesProjeto(projetoId, { dados, materiaDoDia: plano });
+            const folgasMapa = new Map();
+            const adicionarFolga = (dataPrevista, missoesLista) => {
+                if (!dataPrevista || !Array.isArray(missoesLista) || !missoesLista.length) return;
+                const atual = folgasMapa.get(dataPrevista) || [];
+                for (const m of missoesLista) {
+                    if (!atual.some(x => x.missaoId === m.missaoId)) atual.push(m);
+                }
+                folgasMapa.set(dataPrevista, atual);
+            };
             Object.entries(praticas.missoesPorDiaJornada).forEach(([dia, missoes]) => {
                 const destino = porDia.get(dia);
                 if (destino) destino.missoes = missoes;
-                else resultado.folgasPraticas.push(...missoes.map(m => ({ dataPrevista: m.dataPrevista, missoes: [m] })));
+                else missoes.forEach(m => adicionarFolga(m.dataPrevista, [m]));
             });
-            resultado.folgasPraticas.push(...praticas.folgas);
-            resultado.folgasPraticas.sort((a, b) => a.dataPrevista.localeCompare(b.dataPrevista));
+            praticas.folgas.forEach(folga => adicionarFolga(folga.dataPrevista, folga.missoes));
+            resultado.folgasPraticas = [...folgasMapa.entries()]
+                .sort(([a], [b]) => a.localeCompare(b))
+                .map(([dataPrevista, missoes]) => ({ dataPrevista, missoes }));
         }
         sessoes.forEach(s => {
             if (s.projetoId === projetoId && s.blocoExtraId && window.EstudoStore.sessaoEstudoElegivel(s)) {

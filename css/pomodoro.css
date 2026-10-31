@@ -1,0 +1,37 @@
+.jornada-sidebar #cronometro-estudos { min-width: 0; }
+#cronometro-estudos .cronometro-display { font-size: 2.8rem !important; letter-spacing: .04em; }
+.pomodoro-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 1rem; }
+.pomodoro-cabecalho > div { min-width: 0; }
+.pomodoro-cabecalho h2 { font-size: .95rem; }
+.pomodoro-cabecalho .jornada-kicker { font-size: .6rem; }
+#pomodoro-alternar { flex: 0 0 56px; width: 56px; height: 56px; padding: 0; border: 0 !important; background: transparent !important; box-shadow: none !important; cursor: pointer; }
+#pomodoro-alternar:hover { filter: brightness(1.15); }
+#pomodoro-alternar span { display: block; width: 100%; height: 100%; background: url('../img/pomodoro/desligado.png') center / 100% 100% no-repeat; image-rendering: pixelated; }
+#pomodoro-alternar[aria-pressed="true"] span { background-image: url('../img/pomodoro/ativo.png'); background-size: 600% 100%; animation: pomodoro-quadros 3s step-end infinite; }
+@keyframes pomodoro-quadros {
+    0% { background-position: 0% 0; } 16.6667% { background-position: 20% 0; }
+    33.3333% { background-position: 40% 0; } 50% { background-position: 60% 0; }
+    66.6667% { background-position: 80% 0; } 83.3333%, 100% { background-position: 100% 0; }
+}
+#pomodoro-painel { margin-bottom: 1rem; }
+.pomodoro-display { display: flex; align-items: center; justify-content: center; gap: 16px; }
+.pomodoro-neon { width: 40px; height: 40px; flex: 0 0 40px; background: url('../img/pomodoro/neon-verde.png') center / contain no-repeat; image-rendering: pixelated; }
+[data-tema-pixel="arcano"] .pomodoro-neon { background-image: url('../img/pomodoro/neon-azul.png'); }
+.pomodoro-aguardando .pomodoro-neon { animation: pomodoro-piscar 1s step-end infinite; }
+@keyframes pomodoro-piscar { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+#pomodoro-status { font-size: .85rem; margin: .65rem 0 0; color: var(--pixel-ink); }
+#pomodoro-retomar { width: 100%; margin-top: .5rem; }
+#pomodoro-erro { color: var(--pixel-ink); border-left: 3px solid var(--pixel-crimson); padding: .5rem; font-size: .85rem; }
+#pomodoro-dialog { width: min(420px, calc(100vw - 24px)); max-height: 90dvh; overflow: auto; padding: 24px; background: var(--pixel-surface); color: var(--pixel-ink); border: 3px solid var(--pixel-bronze); }
+#pomodoro-dialog::backdrop { background: rgb(0 0 0 / .65); }
+#pomodoro-dialog h2 { font-size: 1.1rem; }
+#pomodoro-dialog p, #pomodoro-dialog label { color: var(--pixel-ink); }
+.pomodoro-padrao { display: flex; gap: 10px; align-items: center; min-height: 44px; margin-bottom: 1rem; }
+.pomodoro-padrao input { width: 20px; height: 20px; flex-shrink: 0; }
+.pomodoro-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.pomodoro-campos label { min-width: 0; }
+.pomodoro-campos input { width: 100%; min-height: 44px; font-variant-numeric: tabular-nums; margin-top: .4rem; }
+#pomodoro-formato { margin-top: .5rem; font-size: .8rem; }
+.pomodoro-acoes { display: flex; gap: 12px; justify-content: flex-end; margin-top: 1rem; }
+@media (max-width: 400px) { #pomodoro-dialog { padding: 16px; } .pomodoro-acoes { flex-direction: column-reverse; } }
+@media (prefers-reduced-motion: reduce) { #pomodoro-alternar span, .pomodoro-neon { animation: none !important; } }

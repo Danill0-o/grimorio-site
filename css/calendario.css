@@ -219,6 +219,7 @@
 }
 
 .calendario-dia-materias,
+.calendario-dia-praticas,
 .calendario-dia-revisoes {
     display: block;
     width: 100%;
@@ -229,6 +230,11 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.calendario-dia-praticas {
+    font-size: 0.78rem;
+    color: var(--pixel-ink-muted) !important;
 }
 
 .calendario-dia-revisoes {

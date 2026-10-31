@@ -28,9 +28,12 @@
         if (raw === null) throw new Error('Integridade: estudo extra ausente');
         return validar(JSON.parse(raw), projetoId, blocoId);
     }
+    const excluido=(blocoId,projetoId=window.ProjetosStore.idAtual())=>Boolean(window.HistoricoRepository?.extraExcluido(projetoId,blocoId));
+    function exigirAtivo(blocoId,projetoId){if(excluido(blocoId,projetoId))throw new Error('Este estudo extra foi excluído.');}
     function listar(projetoId = window.ProjetosStore.idAtual()) {
         return Object.keys(localStorage).filter(k => k.startsWith(prefixo(projetoId)))
             .map(k => obter(k.slice(prefixo(projetoId).length), projetoId))
+            .filter(e=>!excluido(e.blocoId,projetoId))
             .sort((a, b) => a.criadoEm.localeCompare(b.criadoEm) || a.blocoId.localeCompare(b.blocoId));
     }
     function contextoDia(projetoId, diaJornada) {
@@ -52,6 +55,7 @@
     function notificar() { window.dispatchEvent(new Event('extras:alterados')); }
     async function criar(diaJornada, blocoId = `extra-${crypto.randomUUID()}`, projetoId = window.ProjetosStore.idAtual()) {
         const resultado = await escrever(projetoId, () => {
+            exigirAtivo(blocoId,projetoId);
             const { dataOrigem } = contextoDia(projetoId, diaJornada);
             if (localStorage.getItem(chave(projetoId, blocoId)) !== null) {
                 const anterior = obter(blocoId, projetoId);
@@ -68,6 +72,7 @@
     }
     async function escolherMateria(blocoId, projetoMateriaId, projetoId = window.ProjetosStore.idAtual()) {
         const resultado = await escrever(projetoId, () => {
+            exigirAtivo(blocoId,projetoId);
             const extra = obter(blocoId, projetoId);
             if (extra.projetoMateriaId === projetoMateriaId) return extra;
             // A origem selecionada é imutável: notas, timer e sessões nunca mudam de matéria.
@@ -85,6 +90,7 @@
         return resultado;
     }
     function vinculosSessao(dados) {
+        exigirAtivo(dados.blocoExtraId,dados.projetoId);
         const extra = obter(dados.blocoExtraId, dados.projetoId);
         const diaOrigem = dados.tipo === 'revisao' ? dados.referenciaDia : dados.diaJornada;
         if (!extra.projetoMateriaId || extra.projetoMateriaId !== dados.projetoMateriaId
@@ -95,7 +101,7 @@
             blocoId: extra.blocoId, blocoExtraId: extra.blocoId };
     }
     function recuperarRegistro(extra) {
-        if (!extra.registroManualPendente) return null;
+        if (excluido(extra.blocoId,extra.projetoId)||!extra.registroManualPendente) return null;
         const sessao = window.EstudoStore.prepararSessao(extra.registroManualPendente);
         if (!sessao) throw new Error('Registro manual inválido');
         if (sessao.anotacao) {
@@ -140,6 +146,7 @@
                 || (plano[dados.diaJornada] || []).some(b => b.projetoMateriaId === dados.projetoMateriaId)
                 || window.CalendarioJornada.dataLocal(dados.inicio) !== dataOrigem) throw new Error('Contexto do extra manual inválido');
             const blocoId = `extra-${dados.id}`;
+            exigirAtivo(blocoId,dados.projetoId);
             const pending = { ...dados, tipo:'estudo', origem:'manual', blocoId, blocoExtraId:blocoId };
             if (localStorage.getItem(chave(dados.projetoId, blocoId)) === null) {
                 const e = validar({versao:1, projetoId:dados.projetoId, projetoMateriaId:dados.projetoMateriaId,
@@ -158,5 +165,17 @@
         window.dispatchEvent(new CustomEvent('estudo:registrado', {detail:{sessoes:[resultado],pontosConhecimento:resultado.duracaoSegundos/60}}));
         return resultado;
     }
-    window.EstudoExtra = { criar, escolherMateria, listar, obter, vinculosSessao, registrarManual, recuperarRegistros };
+    async function excluir(blocoId,projetoId=window.ProjetosStore.idAtual()) {
+        await escrever(projetoId,()=>{
+            obter(blocoId,projetoId);
+            const checkpoint=JSON.parse(localStorage.getItem('cronometroV1:'+projetoId)||'null');
+            const journal=JSON.parse(localStorage.getItem('cronometroRegistroV1')||'null');
+            const timer=window.CronometroEstudos?.obterEstado();
+            if(checkpoint?.contexto?.blocoExtraId===blocoId||(journal?.sessao?.projetoId===projetoId&&journal.sessao.blocoExtraId===blocoId)||(window.ProjetosStore.idAtual()===projetoId&&timer?.blocoExtraId===blocoId&&timer.estado!=='ocioso'))
+                throw new Error('Registre ou zere o cronômetro deste extra antes de excluí-lo.');
+            window.HistoricoRepository.excluirExtra(projetoId,blocoId);
+        });
+        notificar();window.dispatchEvent(new Event('estudo:excluido'));
+    }
+    window.EstudoExtra = { excluir, excluido, criar, escolherMateria, listar, obter, vinculosSessao, registrarManual, recuperarRegistros };
 })();

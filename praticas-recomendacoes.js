@@ -16,8 +16,9 @@
             const id = identidade(m?.projetoMateriaId);
             if (vistos.has(id)) falhar('matéria repetida no peso da prova'); vistos.add(id);
             if (m.projetoId !== undefined && m.projetoId !== projetoId) falhar('matéria de outro projeto');
-            totalMaterias = numero(totalMaterias + numero(m.Nquestoes,'questões') * numero(m.peso,'peso'),'total das matérias');
+            totalMaterias = numero(totalMaterias + numero(m.Nquestoes,'questões',true) * numero(m.peso,'peso'),'total das matérias',true);
         }
+        if (totalMaterias <= 0) falhar('total das matérias inválido');
         vistos.clear();
         for (const a of atividades) {
             const id = identidade(a?.atividadeId);

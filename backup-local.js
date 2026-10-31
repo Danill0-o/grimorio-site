@@ -36,6 +36,20 @@
         return nome !== null && (chaves.has(nome) || prefixos.some(p => nome.startsWith(p)));
     }
 
+    // Preferência/checkpoint auxiliar: nunca representa tempo estudado ou XP.
+    function validarPomodoro(v) {
+        if (!objeto(v) || v.versao !== 1 || typeof v.ativo !== 'boolean'
+            || ![v.focoSegundos, v.pausaSegundos].every(n => Number.isInteger(n) && n >= 1 && n <= 5999)
+            || !['pronto', 'foco', 'aguarda-pausa', 'pausa', 'aguarda-foco'].includes(v.etapa)
+            || !Number.isInteger(v.restanteSegundos) || v.restanteSegundos < 0
+            || !(v.sessaoId === null || texto(v.sessaoId))) return false;
+        if (!v.ativo) return v.etapa === 'pronto' && v.restanteSegundos === 0 && v.sessaoId === null;
+        if (v.etapa === 'pronto') return v.restanteSegundos === v.focoSegundos && v.sessaoId === null;
+        if (!texto(v.sessaoId)) return false;
+        if (v.etapa.startsWith('aguarda-')) return v.restanteSegundos === 0;
+        return v.restanteSegundos > 0 && v.restanteSegundos <= (v.etapa === 'foco' ? v.focoSegundos : v.pausaSegundos);
+    }
+
     function capturar(storage) {
         const nomes = [];
         for (let i = 0; i < storage.length; i++) {
@@ -170,8 +184,9 @@
         if (parsed.reiniciosDominio !== undefined) resets(parsed.reiniciosDominio);
         for (const [k, v] of Object.entries(parsed)) {
             if (k.startsWith('historicoOperacaoV1:')) {
-                exigir(objeto(v) && v.versao === 1 && texto(v.id) && k === `historicoOperacaoV1:${v.id}` && ['adicionar', 'excluir', 'reiniciar-dominio'].includes(v.tipo), 'operação de histórico.');
+                exigir(objeto(v) && v.versao === 1 && texto(v.id) && k === `historicoOperacaoV1:${v.id}` && ['adicionar', 'excluir', 'excluir-extra', 'reiniciar-dominio'].includes(v.tipo), 'operação de histórico.');
                 if (v.tipo === 'adicionar') lote(v.sessoes);
+                if(v.tipo === 'excluir-extra') exigir(texto(v.projetoId)&&/^extra-[\w-]+$/.test(v.blocoExtraId), 'tombstone de extra.');
                 if (v.tipo === 'excluir') exigir(texto(v.sessaoId), 'tombstone.');
                 if (v.tipo === 'reiniciar-dominio') resets(v.grupos);
             }
@@ -192,7 +207,8 @@
                 } else vinculo(v.contexto.projetoMateriaId, v.projetoId);
             }
             const p = /^projetoV1:([^:]+):(.+)$/.exec(k), nome = p ? p[2] : k, projetoId = p?.[1];
-            if (p) exigir(chaves.has(nome) || nome === 'registro' || /^estudoExtraV1:extra-[\w-]+$/.test(nome), `chave de projeto ${k}.`);
+            if (p) exigir(chaves.has(nome) || nome === 'registro' || nome === 'pomodoroV1' || /^estudoExtraV1:extra-[\w-]+$/.test(nome), `chave de projeto ${k}.`);
+            if (nome === 'pomodoroV1') exigir(Boolean(p) && validarPomodoro(v), 'configuração/checkpoint do Pomodoro.');
             if (nome === 'registro') exigir(objeto(v) && v.id === projetoId && instante(v.criadoEm), 'registro de projeto.');
             if (nome === 'dadosExame') exigir(objeto(v) && texto(v.projetoId) && (!projetoId || v.projetoId === projetoId), 'dados de projeto.');
             if (['objetosSalvos', 'objetosNormalizados', 'lista_distribuicao_materias'].includes(nome)) { exigir(Array.isArray(v), `lista ${k}.`); v.forEach(b => { exigir(objeto(b), `matéria em ${k}.`); vinculo(b.projetoMateriaId, projetoId || participacoes[b.projetoMateriaId]?.projetoId); }); }
@@ -451,6 +467,7 @@
     }
 
     window.BackupLocal = {
+        validarPomodoro,
         exportar,
         executarExclusivo: exclusivo,
         restaurar,

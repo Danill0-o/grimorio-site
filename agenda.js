@@ -8,6 +8,7 @@
     let projetoSelecionado = null;
     let restaurandoFoco = false;
     let todasMetasConcluidas = false;
+    const materiasExpandidas = new Set();
 
     document.addEventListener('DOMContentLoaded', iniciarJornada);
     window.addEventListener('estudo:registrado', iniciarJornada);
@@ -43,7 +44,11 @@
             document.getElementById('cronometro-status').textContent = 'Não foi possível carregar os estudos extras. Seus dados foram preservados.';
             console.error(erro); return;
         }
-        if (projetoSelecionado !== projetoId) { indiceSelecionado = null; projetoSelecionado = projetoId; }
+        if (projetoSelecionado !== projetoId) {
+            indiceSelecionado = null;
+            projetoSelecionado = projetoId;
+            materiasExpandidas.clear();
+        }
         const paramsUrl = new URLSearchParams(window.location?.search || '');
         const parametroDia = paramsUrl.get('dia');
         if (parametroDia !== null) {
@@ -456,6 +461,18 @@
             item.dataset.cronometroTipo = 'estudo';
             item.dataset.diaJornada = contexto.diaJornada;
             item.dataset.faltamSegundos = meta.faltamSegundos;
+            const chaveMateria = `${contexto.diaJornada}:${meta.projetoMateriaId}`;
+            const expandidaInicial = materiasExpandidas.has(chaveMateria);
+            item.classList.toggle('dia-materia-expandida', expandidaInicial);
+            item.setAttribute('aria-expanded', String(expandidaInicial));
+            item.addEventListener('click', (event) => {
+                if (event.target.closest('button, input, select, a, summary, textarea, .blocos-acoes')) return;
+                const expandida = !item.classList.contains('dia-materia-expandida');
+                item.classList.toggle('dia-materia-expandida', expandida);
+                item.setAttribute('aria-expanded', String(expandida));
+                if (expandida) materiasExpandidas.add(chaveMateria);
+                else materiasExpandidas.delete(chaveMateria);
+            });
             const identificacao = document.createElement('span');
             identificacao.className = 'dia-materia-identificacao';
             const nome = document.createElement('strong');
@@ -635,6 +652,16 @@
             const item = document.createElement('li');
             item.className = 'dia-materia-item materia-com-blocos estudo-extra';
             item.dataset.blocoExtraId = extra.blocoId;
+            const excluir=document.createElement('button');excluir.type='button';excluir.className='extra-excluir';
+            const icone=document.createElement('img');icone.src='img/icons/lixeira-magnific.png';icone.alt='';icone.width=18;icone.height=18;icone.className='extra-excluir-icone';icone.setAttribute('aria-hidden','true');excluir.append(icone);excluir.title='Excluir estudo extra';excluir.setAttribute('aria-label','Excluir estudo extra');
+            excluir.addEventListener('click',async()=>{
+                const nome=extra.projetoMateriaId?window.IdentidadeStore.nomeMateria(extra.projetoMateriaId):'sem matéria selecionada';
+                if(!window.confirm('Excluir o estudo extra de '+nome+'? O tempo, o XP e as revisões vinculados a este extra serão removidos.'))return;
+                excluir.disabled=true;
+                try{await window.EstudoExtra.excluir(extra.blocoId,contexto.projetoId);document.querySelector('[data-dia="'+extra.diaJornada+'"] .dia-extra-adicionar')?.focus();}
+                catch(e){document.getElementById('cronometro-status').textContent=e.message;excluir.disabled=false;}
+            });
+            item.append(excluir);
             const identificacao = document.createElement('span');
             identificacao.className = 'dia-materia-identificacao';
             const titulo = document.createElement('strong');
@@ -879,12 +906,25 @@
         atualizarAtalhosCronometro();
     }
 
+    function centralizarCronometroMobile() {
+        if (!window.matchMedia('(max-width: 991px)').matches) return;
+        const cronometro = document.getElementById('cronometro-estudos') || document.querySelector('.cronometro-card');
+        if (!cronometro) return;
+        cronometro.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+            block: 'center'
+        });
+    }
+
     function criarAcoesCronometro(materia, opcoes = {}, aoConcluir = null) {
         const acoes = document.createElement('span');
         acoes.className = 'materia-cronometro-acoes';
         const inicio = opcoes.registroManual
             ? criarBotaoCronometro('manual', `Registrar tempo passado de ${materia}`, () => window.CronometroEstudos?.abrirRegistroManual(opcoes.projetoMateriaId, opcoes))
-            : criarBotaoCronometro('play', `Iniciar cronômetro para ${materia}`, () => window.CronometroEstudos?.iniciarMateria(opcoes.projetoMateriaId, opcoes));
+            : criarBotaoCronometro('play', `Iniciar cronômetro para ${materia}`, () => {
+                const sucesso = window.CronometroEstudos?.iniciarMateria(opcoes.projetoMateriaId, opcoes);
+                if (sucesso !== false) centralizarCronometroMobile();
+            });
         acoes.append(
             inicio,
             criarBotaoCronometro('stop', `Parar cronômetro de ${materia}`, () => window.CronometroEstudos?.parar()),
@@ -945,6 +985,11 @@
             const mesmaRevisao = (item.dataset.revisaoId || '') === (estado.revisaoId || '');
             const mesmoExtra = (item.dataset.blocoExtraId || '') === (estado.blocoExtraId || '');
             const ativa = mesmaMateria && mesmoTipo && mesmaReferencia && mesmoDia && mesmaRevisao && mesmoExtra && estado.estado !== 'ocioso';
+            if (ativa && item.closest('.dia-materias') && item.dataset.diaJornada && item.dataset.projetoMateriaId) {
+                materiasExpandidas.add(`${item.dataset.diaJornada}:${item.dataset.projetoMateriaId}`);
+                item.classList.add('dia-materia-expandida');
+                item.setAttribute('aria-expanded', 'true');
+            }
             const play = item.querySelector('.materia-acao-play');
             const stop = item.querySelector('.materia-acao-stop');
             const registrar = item.querySelector('.materia-acao-registrar');

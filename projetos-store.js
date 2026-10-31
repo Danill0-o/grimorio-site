@@ -67,7 +67,8 @@
     }
     function semTempoPendente(id) {
         if (Object.keys(storage).some(k => k.startsWith(`${prefixo(id)}estudoExtraV1:`)
-            && JSON.parse(storage.getItem(k))?.registroManualPendente)) {
+            && JSON.parse(storage.getItem(k))?.registroManualPendente
+            && !window.HistoricoRepository?.extraExcluido(id,JSON.parse(storage.getItem(k)).blocoId))) {
             throw new Error('Há um registro manual para recuperar. Confira o armazenamento e recarregue antes de gerenciar este projeto.');
         }
         const journal = ler('cronometroRegistroV1');

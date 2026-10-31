@@ -308,7 +308,7 @@
         if (!pronto) return false;
         atualizarControles(elementos);
         definirStatus(elementos, 'Cronômetro pausado. Continue, registre o tempo ou zere a sessão.');
-        emitirEstado();
+        emitirEstado('pausar');
         return true;
     }
 
@@ -459,7 +459,6 @@
             registrar: document.getElementById('cronometro-registrar'),
             status: document.getElementById('cronometro-status'),
             sessoesBody: document.getElementById('sessoes-estudo-body'),
-            acumuladoBody: document.getElementById('tempo-acumulado-body'),
             formManual: document.getElementById('registro-manual-form'),
             materiaManual: document.getElementById('registro-manual-materia'),
             horasManual: document.getElementById('registro-manual-horas'),
@@ -508,7 +507,7 @@
         elementos.iniciar.disabled = !pronto || registroPraticaEmCurso || estado === 'rodando' || semMaterias;
         elementos.iniciar.textContent = estado === 'parado' ? 'Continuar' : 'Iniciar';
         elementos.parar.disabled = !pronto || registroPraticaEmCurso || estado === 'ocioso';
-        elementos.parar.textContent = estado === 'parado' ? 'Zerar' : 'Parar';
+        elementos.parar.textContent = estado === 'parado' ? 'Zerar' : 'Pausa';
         elementos.registrar.disabled = !pronto || registroPraticaEmCurso || estado !== 'parado';
     }
 
@@ -523,93 +522,7 @@
         }
     }
 
-    function renderizarTabelas(elementos) {
-        if (!elementos.sessoesBody || !elementos.acumuladoBody) return;
-        const sessoes = window.EstudoStore.listarSessoes().sort((a, b) => new Date(b.inicio) - new Date(a.inicio));
-        elementos.sessoesBody.replaceChildren();
-        elementos.acumuladoBody.replaceChildren();
-        if (!sessoes.length) {
-            adicionarLinhaVazia(elementos.sessoesBody, 5, 'Nenhuma sessão registrada.');
-            adicionarLinhaVazia(elementos.acumuladoBody, 2, 'Nenhum ponto de conhecimento acumulado.');
-            return;
-        }
-
-        const gruposPorData = sessoes.reduce((grupos, sessao) => {
-            const data = new Date(sessao.inicio).toLocaleDateString('pt-BR');
-            if (!grupos.has(data)) grupos.set(data, []);
-            grupos.get(data).push(sessao);
-            return grupos;
-        }, new Map());
-        gruposPorData.forEach((sessoesDoDia, data) => {
-            const totalSegundos = sessoesDoDia.reduce((total, sessao) => total + Number(sessao.duracaoSegundos || 0), 0);
-            const linhaResumo = document.createElement('tr');
-            linhaResumo.className = 'historico-dia-resumo';
-            const celulaData = document.createElement('th');
-            celulaData.scope = 'row';
-            celulaData.textContent = data;
-            const celulaTotal = document.createElement('td');
-            celulaTotal.colSpan = 3;
-            celulaTotal.textContent = formatarMinutosResumo(totalSegundos);
-            celulaTotal.className = 'fw-semibold';
-            const celulaExpandir = document.createElement('td');
-            const expandir = document.createElement('button');
-            expandir.type = 'button';
-            expandir.className = 'btn btn-sm btn-outline-secondary historico-expandir';
-            expandir.textContent = 'Ver entradas';
-            expandir.setAttribute('aria-expanded', 'false');
-            expandir.setAttribute('aria-label', `Expandir registros de ${data}`);
-            celulaExpandir.appendChild(expandir);
-            linhaResumo.append(celulaData, celulaTotal, celulaExpandir);
-            elementos.sessoesBody.appendChild(linhaResumo);
-
-            const linhasDetalhe = sessoesDoDia.map((sessao) => {
-                const inicio = new Date(sessao.inicio);
-                const linha = document.createElement('tr');
-                linha.className = 'historico-dia-detalhe d-none';
-                ['', sessao.precisaoInicio === 'dia' ? 'Horário não informado' : inicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }), sessao.materia, formatarDuracao(sessao.duracaoSegundos)]
-                    .forEach((valor) => {
-                        const celula = document.createElement('td');
-                        celula.textContent = valor;
-                        linha.appendChild(celula);
-                    });
-                if (sessao.registradoEm) linha.children[1].title = `Registrado em ${new Date(sessao.registradoEm).toLocaleString('pt-BR')}`;
-                const celulaAcao = document.createElement('td');
-                const excluir = document.createElement('button');
-                excluir.type = 'button';
-                excluir.className = 'btn btn-sm btn-outline-danger';
-                excluir.textContent = 'Excluir';
-                excluir.setAttribute('aria-label', `Excluir registro de ${sessao.materia}`);
-                excluir.addEventListener('click', () => excluirSessao(sessao));
-                celulaAcao.appendChild(excluir);
-                linha.appendChild(celulaAcao);
-                elementos.sessoesBody.appendChild(linha);
-                return linha;
-            });
-            expandir.addEventListener('click', () => {
-                const aberto = expandir.getAttribute('aria-expanded') === 'true';
-                expandir.setAttribute('aria-expanded', String(!aberto));
-                expandir.setAttribute('aria-label', `${aberto ? 'Expandir' : 'Recolher'} registros de ${data}`);
-                expandir.textContent = aberto ? 'Ver entradas' : 'Ocultar entradas';
-                linhasDetalhe.forEach((linha) => linha.classList.toggle('d-none', aberto));
-            });
-        });
-
-        const totais = sessoes.reduce((acumulado, sessao) => {
-            const id = window.EstudoStore.chaveGlobal(sessao);
-            acumulado[id] = (acumulado[id] || 0) + sessao.duracaoSegundos;
-            return acumulado;
-        }, {});
-        Object.entries(totais).sort((a, b) => b[1] - a[1]).forEach(([materia, segundos]) => {
-            const linha = document.createElement('tr');
-            const celulaMateria = document.createElement('td');
-            const celulaPontos = document.createElement('td');
-            celulaMateria.textContent = window.MateriasStore.resolverMateriaGlobal(materia).nomeCanonico;
-            celulaPontos.textContent = formatarPontos(segundos / 60);
-            celulaPontos.className = 'fw-semibold';
-            linha.append(celulaMateria, celulaPontos);
-            elementos.acumuladoBody.appendChild(linha);
-        });
-    }
+    function renderizarTabelas() { window.HistoricoJornada?.atualizar(); }
 
     function adicionarLinhaVazia(tbody, colunas, mensagem) {
         const linha = document.createElement('tr');
@@ -633,7 +546,7 @@
         destino?.focus();
     }
 
-    function emitirEstado() {
+    function emitirEstado(acao) {
         if (pronto) { try { salvarTimer(); } catch (erro) { falhaPersistencia(); } }
         if (estado === 'rodando' && ultimoEstadoSinalizado !== 'rodando') {
             const visor = document.getElementById('cronometro-display');
@@ -644,13 +557,14 @@
             }
         }
         ultimoEstadoSinalizado = estado;
-        window.dispatchEvent(new CustomEvent('cronometro:estado', { detail: obterEstado() }));
+        window.dispatchEvent(new CustomEvent('cronometro:estado', { detail: { ...obterEstado(), acao } }));
     }
 
     function obterEstado() {
         const duracaoSegundos = Math.floor(tempoAtual() / 1000);
         return {
             estado,
+            sessaoId,
             pronto,
             materia: elementosAtivos ? rotulo(elementosAtivos.materia) : '',
             projetoMateriaId: contextoSessao.projetoMateriaId || '',

@@ -47,11 +47,23 @@
         botao.append(topo);
 
         const corpo = elemento('span', 'calendario-dia-corpo');
-        const nomesMaterias = [...new Set([...dia.materias, ...dia.extras, ...(dia.missoes || [])].map(m => m.nome))];
-        const resumoMaterias = nomesMaterias.map(nome => resumirTexto(nome, 24)).join(' · ') || 'Sem matéria prevista';
-        const spanMaterias = elemento('span', 'calendario-dia-materias', resumirTexto(resumoMaterias, 44));
-        spanMaterias.title = nomesMaterias.join(' · ');
-        corpo.append(spanMaterias);
+        const nomesEstudo = [...new Set([...dia.materias, ...dia.extras].map(m => m.nome))];
+        const nomesMissoes = [...new Set((dia.missoes || []).map(m => m.nome))];
+        const nomesTodos = [...new Set([...nomesEstudo, ...nomesMissoes])];
+        if (nomesEstudo.length && nomesMissoes.length) {
+            const resumoMaterias = nomesEstudo.map(nome => resumirTexto(nome, 24)).join(' · ');
+            const spanMaterias = elemento('span', 'calendario-dia-materias', resumirTexto(resumoMaterias, 44));
+            spanMaterias.title = nomesTodos.join(' · ');
+            const resumoPraticas = nomesMissoes.map(nome => resumirTexto(nome, 22)).join(' · ');
+            const spanPraticas = elemento('span', 'calendario-dia-praticas', resumirTexto(`Prática: ${resumoPraticas}`, 44));
+            spanPraticas.title = nomesMissoes.join(' · ');
+            corpo.append(spanMaterias, spanPraticas);
+        } else {
+            const resumoMaterias = nomesTodos.map(nome => resumirTexto(nome, 24)).join(' · ') || 'Sem matéria prevista';
+            const spanMaterias = elemento('span', 'calendario-dia-materias', resumirTexto(resumoMaterias, 44));
+            spanMaterias.title = nomesTodos.join(' · ');
+            corpo.append(spanMaterias);
+        }
         botao.append(corpo);
 
         botao.addEventListener('click', () => abrirDia(dia.dia));
@@ -367,8 +379,7 @@
             li.append(cardLink);
             return li;
         }, 'Nenhum estudo extra adicionado neste dia.');
-        const secoes = [normais, revisoes, extras];
-        if ((dia.missoes || []).length) secoes.splice(1, 0, secaoMissoes(dia.missoes, dia.numero));
+        const secoes = [normais, secaoMissoes(dia.missoes || [], dia.numero), revisoes, extras];
         document.getElementById('calendario-popup-conteudo').replaceChildren(...secoes);
     }
     const tiposPratica = { redacao: 'Redação', discursiva: 'Discursiva', 'estudo-caso': 'Estudo de caso', peca: 'Peça',
@@ -381,20 +392,32 @@
             li.dataset.atividadeId = missao.atividadeId;
             const card = numeroDia ? criarLinkCardJornada(numeroDia) : elemento('a', 'calendario-popup-card-link livro-materia-card');
             card.href = `agenda.html?${numeroDia ? `dia=${numeroDia}&` : ''}missao=${encodeURIComponent(missao.missaoId)}`;
+            card.setAttribute('aria-label', `Abrir atividade prática ${missao.nome}${numeroDia ? ` (${diaLinear(numeroDia)})` : ''} na Jornada`);
             const topo = elemento('div', 'livro-card-topo');
             topo.append(elemento('strong', 'livro-card-nome', missao.nome),
                 elemento('span', 'livro-card-nivel', tiposPratica[missao.tipo] || missao.tipo));
             const meta = missao.consomeCargaEstudo
                 ? `Duração planejada · ${duracao(missao.duracaoPlanejadaSegundos || 0)}`
                 : `Externo à carga de estudo${missao.duracaoPlanejadaSegundos ? ` · estimativa ${duracao(missao.duracaoPlanejadaSegundos)}` : ''}`;
+            const barraProgresso = criarBarraIndicador(
+                `${missao.concluidasAtividade || 0} / ${missao.planejadasAtividade || 1}`,
+                missao.concluidasAtividade || 0,
+                Math.max(1, missao.planejadasAtividade || 1),
+                'calendario-card-indicador-meta'
+            );
             card.append(topo, elemento('p', 'calendario-card-meta', meta),
+                barraProgresso,
                 elemento('small', '', missao.tempoRegistradoSegundos ? `Tempo registrado · ${duracao(missao.tempoRegistradoSegundos)}` : 'Ainda sem tempo registrado'),
-                elemento('small', '', `Atividade: ${missao.concluidasAtividade} de ${missao.planejadasAtividade} atividades práticas concluídas`),
-                elemento('small', 'calendario-missao-estado', missao.concluida ? 'Concluída' : 'Pendente'));
-            card.append(elemento('small', 'calendario-card-ir', 'Abrir atividade prática na Jornada →'));
+                elemento('small', '', `Atividade: ${missao.concluidasAtividade} de ${missao.planejadasAtividade} atividades práticas concluídas`));
+            const rodape = elemento('div', 'calendario-card-rodape');
+            rodape.append(
+                elemento('small', 'calendario-missao-estado', missao.concluida ? 'Concluída' : 'Pendente'),
+                elemento('small', 'calendario-card-ir', 'Abrir atividade prática na Jornada →')
+            );
+            card.append(rodape);
             li.append(card);
             return li;
-        }, 'Nenhuma atividade prática prática prevista neste dia.');
+        }, 'Nenhuma atividade prática prevista neste dia.');
     }
     function abrirFolga(iso) {
         const folga = (plano?.folgasPraticas || []).find(f => f.dataPrevista === iso);

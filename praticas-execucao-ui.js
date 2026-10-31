@@ -242,18 +242,18 @@
         } catch (erro) {
             missaoAtual = anterior;
             if (dialogo.open) status(erro.message, true);
-            else { painel.hidden = false; painel.textContent = erro.message; }
+            else { painel.hidden = false; painel.textContent = erro.message; const lista=document.getElementById('praticas-painel-dialog');if(lista&&!lista.open)lista.showModal(); }
         }
     }
     function renderizarPainel() {
         if (!painel) {
             painel = el('section', '', 'praticas-painel'); painel.id = 'praticas-historico';
-            document.querySelector('main').append(painel);
+            document.getElementById('praticas-modal-conteudo').append(painel);
         }
         try {
             const proj = window.PraticasStore.projetarMissoesProjeto(window.EstudoStore.obterProjetoAtualId());
-            painel.replaceChildren(); painel.hidden = !proj.missoes.length;
-            if (painel.hidden) return;
+            painel.replaceChildren(); painel.hidden = false;
+            if (!proj.missoes.length) { painel.append(el('p','Nenhuma atividade prática agendada neste projeto.')); return; }
             painel.append(el('h2', 'Atividades práticas e histórico'), el('p', 'Atividades práticas previstas, realizações e tempo registrado. Inclui treinamentos em dias de folga.'));
             const lista = el('ul', '', 'pratica-missoes');
             for (const m of proj.missoes) {
@@ -268,9 +268,12 @@
         if (dialogo?.open) { try { atualizar(); } catch (erro) { status(erro.message, true); } }
     }
     document.addEventListener('DOMContentLoaded', () => {
-        renderizarPainel();
         const url = new URL(window.location.href), missao = url.searchParams.get('missao');
-        if (missao) { abrir(missao); url.searchParams.delete('missao'); history.replaceState(null, '', url); }
+        if (missao) { url.searchParams.delete('missao'); history.replaceState(null, '', url); }
+        queueMicrotask(() => {
+            renderizarPainel();
+            if (missao) abrir(missao);
+        });
     });
     window.addEventListener('praticas:alteradas', recarregar);
     window.addEventListener('storage', e => { if (e.key?.startsWith('praticasProjetoV1:')) recarregar(); });

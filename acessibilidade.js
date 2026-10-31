@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', event => {
         if (event.key !== 'Tab') return;
-        const dialogo = document.querySelector('dialog[open]');
+        const dialogo = [...document.querySelectorAll('dialog[open]')].at(-1);
         if (!dialogo) return;
         const controles = [...dialogo.querySelectorAll('button, input, select, textarea, a[href], [tabindex]')]
             .filter(el => !el.disabled && el.tabIndex >= 0 && el.checkVisibility());
@@ -105,6 +105,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         barra.appendChild(crtBtn);
 
+        const destino = document.getElementById('jornada-temas-opcoes');
+        if (destino) { destino.append(barra); return; }
         const salto = document.querySelector('body > .skip-link');
         if (salto) salto.after(barra);
         else document.body.prepend(barra);
