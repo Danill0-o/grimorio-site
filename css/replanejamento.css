@@ -1,0 +1,21 @@
+.replanejamento-historico {
+    margin: 12px 0;
+    padding: 12px;
+    background: var(--pixel-surface);
+    color: var(--pixel-ink);
+    border: 1px solid var(--pixel-bronze);
+    overflow-wrap: anywhere;
+}
+.replanejamento-historico :is(h4, p, span, summary) {
+    color: var(--pixel-ink) !important;
+    text-shadow: none;
+}
+.replanejamento-historico h4 { font-size: 1rem; }
+.replanejamento-historico p { margin: 8px 0; }
+.replanejamento-historico summary { cursor: pointer; padding: 12px 0; list-style: none; }
+.replanejamento-historico summary::-webkit-details-marker { display: none; }
+.replanejamento-historico summary:focus-visible { outline: 3px solid var(--pixel-ink); outline-offset: 2px; }
+.replanejamento-historico .nota-botao { margin-left: 8px; }
+#wizard-resumo { background: var(--pixel-surface); }
+#wizard-resumo dt { color: var(--pixel-ink-muted) !important; text-shadow: none; }
+#wizard-resumo dd { color: var(--pixel-ink) !important; text-shadow: none; }

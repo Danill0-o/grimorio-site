@@ -1,25 +1,296 @@
-.praticas-painel { margin-block: 2rem; padding: 1.25rem; background: var(--pixel-surface, var(--bs-body-bg)); color: var(--bs-body-color); border: 2px solid var(--bs-border-color); border-radius: .5rem; }
-.pratica-missoes, .pratica-historico { list-style: none; padding: 0; margin: 0; }
-.pratica-missoes li, .pratica-historico li { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: .75rem; border-bottom: 1px solid var(--bs-border-color); overflow-wrap: anywhere; }
-.pratica-dialogo { width: min(42rem, calc(100% - 1rem)); max-height: calc(100dvh - 2rem); padding: 0; border: 2px solid var(--bs-border-color); border-radius: .5rem; background: var(--pixel-surface, var(--bs-body-bg)); color: var(--bs-body-color); }
-.pratica-dialogo::backdrop { background: rgb(0 0 0 / 65%); }
-.pratica-dialogo-conteudo { padding: 1.25rem; }
-.pratica-topo { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
-.pratica-dialogo h2 { font-size: 1.5rem; overflow-wrap: anywhere; }
-.pratica-dialogo h3, .pratica-form legend { font-size: 1.15rem; font-weight: 700; }
-.pratica-form, .pratica-timer { margin-block: 1rem; padding-block: 1rem; border-top: 1px solid var(--bs-border-color); }
-.pratica-campo { display: block; margin-block: .75rem; }
-.pratica-dialogo .btn, .praticas-painel .btn, .dia-missao-item > .btn { min-height: 44px; flex-shrink: 0; }
-.pratica-timer .btn { margin: .25rem; }
-.pratica-dialogo fieldset:disabled { opacity: .7; }
-.pratica-dialogo [data-status] { position: sticky; top: 0; z-index: 1; margin-bottom: 0; padding-block: .5rem; background: var(--pixel-surface, var(--bs-body-bg)); }
-.pratica-dialogo [data-status]:empty { display: none; }
-.pratica-dialogo [data-barra-nivel-pratica] { width: 100%; height: 14px; accent-color: var(--pixel-emerald); }
+.praticas-painel {
+    margin-block: 1rem;
+    padding: 1.25rem;
+    background: var(--pixel-surface, var(--bs-body-bg));
+    color: var(--bs-body-color);
+    border: 2px solid var(--bs-border-color);
+    border-radius: .5rem;
+}
+
+.praticas-tipos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.pratica-tipo-card {
+    display: flex;
+    flex-direction: column;
+    gap: .65rem;
+    padding: 1.1rem;
+    border: 2px solid var(--bs-border-color);
+    border-radius: .5rem;
+    background: var(--pixel-surface-alt, rgba(0, 0, 0, 0.14));
+    color: var(--bs-body-color);
+    cursor: pointer;
+    transition: border-color .15s ease, transform .15s ease;
+}
+
+.pratica-tipo-card:hover,
+.pratica-tipo-card:focus-visible {
+    border-color: var(--pixel-emerald, var(--bs-primary));
+    outline: none;
+}
+
+.pratica-tipo-card-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+}
+
+.pratica-tipo-card-topo h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    overflow-wrap: anywhere;
+}
+
+.pratica-card-nivel {
+    display: inline-block;
+    padding: .2rem .55rem;
+    font-size: .8rem;
+    font-weight: 700;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .35rem;
+    background: var(--pixel-surface, var(--bs-body-bg));
+    white-space: nowrap;
+}
+
+.pratica-tipo-card-meta,
+.pratica-tipo-card-xp {
+    margin: 0;
+    font-size: .88rem;
+    line-height: 1.45;
+}
+
+.pratica-tipo-card-progresso {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+}
+
+.pratica-tipo-card-acao {
+    margin-top: auto;
+    padding-top: .4rem;
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--pixel-emerald, var(--bs-primary));
+}
+
+.pratica-missoes,
+.pratica-historico {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.pratica-missoes li,
+.pratica-historico li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: .75rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    overflow-wrap: anywhere;
+}
+
+.pratica-ocorrencia-info {
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+    min-width: 0;
+}
+
+.pratica-ocorrencia-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+}
+
+.pratica-status-badge {
+    display: inline-block;
+    padding: .15rem .5rem;
+    font-size: .78rem;
+    font-weight: 700;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .3rem;
+}
+
+.pratica-status-concluida {
+    border-color: var(--pixel-emerald, #2f9e44);
+    color: var(--pixel-emerald, #2f9e44);
+}
+
+.pratica-dialogo {
+    width: min(42rem, calc(100% - 1rem));
+    max-height: calc(100dvh - 2rem);
+    padding: 0;
+    border: 2px solid var(--bs-border-color);
+    border-radius: .5rem;
+    background: var(--pixel-surface, var(--bs-body-bg));
+    color: var(--bs-body-color);
+}
+
+.pratica-dialogo::backdrop {
+    background: rgb(0 0 0 / 65%);
+}
+
+.pratica-dialogo-conteudo {
+    padding: 1.25rem;
+}
+
+.pratica-topo {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .75rem;
+}
+
+.pratica-dialogo h2 {
+    margin: 0;
+    font-size: 1.45rem;
+    overflow-wrap: anywhere;
+}
+
+.pratica-dialogo h3,
+.pratica-form legend,
+.pratica-gaveta > summary {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.pratica-resumo-dia {
+    padding: .85rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .4rem;
+    background: var(--pixel-surface-alt, rgba(0, 0, 0, 0.12));
+}
+
+.pratica-dia-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+    gap: .65rem;
+    margin: 0 0 .65rem;
+}
+
+.pratica-dia-item {
+    padding: .45rem .6rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .35rem;
+    background: var(--pixel-surface, var(--bs-body-bg));
+}
+
+.pratica-dia-item dt {
+    font-size: .75rem;
+    font-weight: 600;
+    opacity: .8;
+    margin-bottom: .15rem;
+}
+
+.pratica-dia-item dd {
+    margin: 0;
+    font-size: .95rem;
+    font-weight: 700;
+}
+
+.pratica-xp-linha {
+    font-size: .9rem;
+    font-weight: 600;
+}
+
+.pratica-acoes-principais {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr));
+    gap: .75rem;
+    margin-block: 1rem;
+}
+
+.pratica-gaveta,
+.pratica-form,
+.pratica-historico-secao {
+    margin-block: 1rem;
+    padding-top: .85rem;
+    border-top: 1px solid var(--bs-border-color);
+}
+
+.pratica-gaveta > summary {
+    cursor: pointer;
+    padding-block: .25rem;
+}
+
+.pratica-gaveta .pratica-form {
+    margin-block: .5rem 0;
+    padding-top: .5rem;
+    border-top: 0;
+}
+
+.pratica-campo {
+    display: block;
+    margin-block: .75rem;
+}
+
+.pratica-dialogo .btn,
+.praticas-painel .btn,
+.dia-missao-item > .btn {
+    min-height: 44px;
+    flex-shrink: 0;
+}
+
+.pratica-dialogo fieldset:disabled {
+    opacity: .7;
+}
+
+.pratica-dialogo [data-status] {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin-bottom: .75rem;
+    padding: .5rem .75rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: .35rem;
+    background: var(--pixel-surface, var(--bs-body-bg));
+    font-weight: 600;
+}
+
+.pratica-dialogo [data-status]:empty {
+    display: none;
+}
+
+.pratica-tipo-card [data-barra-nivel-pratica] {
+    width: 100%;
+    height: 12px;
+    accent-color: var(--pixel-emerald);
+}
+
 @media (max-width: 480px) {
-    .pratica-missoes li, .pratica-historico li { align-items: start; flex-direction: column; gap: .5rem; }
-    .pratica-dialogo-conteudo { padding: .85rem; }
-    .pratica-topo { display: grid; grid-template-columns: minmax(0, 1fr); }
-    .pratica-topo h2 { grid-row: 2; font-size: 1.25rem; line-height: 1.5; }
-    .pratica-topo [data-fechar] { grid-row: 1; justify-self: end; }
-    .dia-missao-item { flex-wrap: wrap; }
+    .pratica-missoes li,
+    .pratica-historico li {
+        align-items: start;
+        flex-direction: column;
+        gap: .5rem;
+    }
+    .pratica-dialogo-conteudo {
+        padding: .85rem;
+    }
+    .pratica-topo {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .pratica-topo h2 {
+        grid-row: 2;
+        font-size: 1.25rem;
+        line-height: 1.5;
+    }
+    .pratica-topo [data-fechar],
+    .pratica-topo [data-fechar-ocorrencias] {
+        grid-row: 1;
+        justify-self: end;
+    }
+    .dia-missao-item {
+        flex-wrap: wrap;
+    }
 }

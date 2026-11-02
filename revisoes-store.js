@@ -83,13 +83,26 @@
                 metaOriginalSegundos: b.metaSegundos ?? (Math.round(meta.metaSegundos*(i+1)/blocos.length)-Math.round(meta.metaSegundos*i/blocos.length)) }));
         }));
         const ativas = [];
+        const preservadas = new Set(dados.replanejamento?.revisoesIds || []);
+        const sessoesAnteriores = new Set(dados.replanejamento?.sessoesIds || []);
+        const creditoAnterior = new Map();
+        sessoes.filter(s => s.projetoId === dados.projetoId && sessoesAnteriores.has(s.id)
+            && !s.blocoExtraId && window.EstudoStore.sessaoEstudoElegivel(s)).forEach(s =>
+            creditoAnterior.set(s.projetoMateriaId, (creditoAnterior.get(s.projetoMateriaId) || 0) + s.duracaoSegundos));
+        // Crédito herdado não cria outra revisão do mesmo estudo. A parte ainda
+        // não estudada do bloco novo conserva a programação normal.
+        for (const origem of origens.values()) {
+            const herdado = Math.min(origem.metaOriginalSegundos, creditoAnterior.get(origem.projetoMateriaId) || 0);
+            creditoAnterior.set(origem.projetoMateriaId, (creditoAnterior.get(origem.projetoMateriaId) || 0) - herdado);
+            origem.metaOriginalSegundos -= herdado;
+        }
         const porDestino = new Map();
         Object.entries(revisoesDoDia).forEach(([diaJornada, grupos]) => {
             const dia = new Map();
             Object.entries(grupos || {}).forEach(([grupoEtapa,grupo]) => Object.entries(grupo || {}).forEach(([diaOrigem, blocos]) => {
                 blocos.forEach(bloco => {
                     const origem = origens.get(bloco.blocoId);
-                    if (!origem || !calendario[diaJornada] || !calendario[diaOrigem]) return;
+                    if (!origem || origem.metaOriginalSegundos <= 0 || !calendario[diaJornada] || !calendario[diaOrigem]) return;
                     const etapa = {revisao1:'R1',revisao2:'R2',revisao3:'R3'}[grupoEtapa];
                     if (!etapa) return;
                     const id = existentes.get(chave(bloco.blocoId,etapa))?.id || chave(bloco.blocoId,etapa);
@@ -112,6 +125,7 @@
                 const diaJornada = Object.keys(calendario).find(dia => calendario[dia] === data);
                 if (!diaJornada) continue;
                 const id = existentes.get(chave(extra.blocoId, etapa))?.id || chave(extra.blocoId, etapa);
+                if (preservadas.has(id)) continue;
                 if (!porDestino.has(diaJornada)) porDestino.set(diaJornada, []);
                 porDestino.get(diaJornada).push({ id, projetoId: dados.projetoId, projetoMateriaId: extra.projetoMateriaId,
                     blocoId: extra.blocoId, blocoExtraId: extra.blocoId, materia, numero: 1,
@@ -121,7 +135,13 @@
             }
         }
         porDestino.forEach(previstas => {
-            const sugestoes = calcularSugestoes(previstas.map(r => r.metaOriginalSegundos), dados.minutosPorDia);
+            const idsNovos = new Set(previstas.map(r => r.id));
+            const data = previstas[0]?.dataPrevista;
+            const reservadoHistorico = [...preservadas].map(id => registro.entidades[id]).filter(r => r && !idsNovos.has(r.id)
+                && r.dataPrevista === data && (!r.blocoExtraId || !window.EstudoExtra?.excluido(r.blocoExtraId, r.projetoId)))
+                .reduce((s, r) => s + r.sugeridaSegundos, 0);
+            const capacidade = Math.max(0, Number(dados.minutosPorDia) - reservadoHistorico / 30);
+            const sugestoes = calcularSugestoes(previstas.map(r => r.metaOriginalSegundos), capacidade);
             previstas.forEach((prevista,i) => {
                 const r = registro.entidades[prevista.id] ||= { ...prevista, idealSegundos: Math.round(prevista.metaOriginalSegundos/8),
                     sugeridaSegundos: sugestoes[i], estado: 'pendente', criadaEm: new Date().toISOString() };
@@ -135,6 +155,20 @@
                 ativas.push(r.id);
             });
         });
+        for (const id of preservadas) {
+            const r = registro.entidades[id];
+            if (!r || r.projetoId !== dados.projetoId || ativas.includes(id)) continue;
+            if (r.blocoExtraId && window.EstudoExtra?.excluido(r.blocoExtraId, r.projetoId)) continue;
+            const origem = dados.replanejamento.origens[r.blocoId];
+            // A origem civil permanece estável para blocos normais e extras.
+            const extra = r.blocoExtraId ? window.EstudoExtra?.listar(dados.projetoId).find(e => e.blocoId === r.blocoExtraId) : null;
+            if (!origem && !extra) continue;
+            r.origemHistorica = true;
+            r.dataOrigem = (origem || extra).dataOrigem;
+            r.diaJornada = Object.keys(calendario).find(d => calendario[d] === r.dataPrevista) || null;
+            reconciliar(r, sessoes);
+            ativas.push(id);
+        }
         registro.ativas = ativas;
         salvar(registro);
         return ativas.map(id => registro.entidades[id]);

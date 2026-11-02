@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script type="application/grimorio" src="icones-pixel.js?v=artes-20261101"></script>
 <meta charset="UTF-8">
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=offline-20261030"></script>
     <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
-    <script type="application/grimorio" src="backup-local.js?v=pomodoro-20261031"></script>
+    <script type="application/grimorio" src="backup-local.js?v=d061-20261101"></script>
     <script type="application/grimorio" src="acessibilidade.js?v=sidebar-global-20261030"></script>
-    <script type="application/grimorio" src="projetos-store.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="praticas-store.js?v=praticas-tipos-20261029"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=d061-20261101"></script><script type="application/grimorio" src="praticas-store.js?v=exclusao-global-20261101"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar projeto de estudos</title>
     <script type="application/grimorio">
@@ -25,8 +26,9 @@
 <link rel="stylesheet" href="css/wizard.css?v=praticas-tipos-20261029">
 
 
-<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"><link rel="stylesheet" href="css/jornada-interface.css?v=sidebar-global-20261030">
-<script type="application/grimorio" src="sidebar.js?v=sidebar-global-20261030"></script>
+<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"><link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
+<script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
+<link rel="stylesheet" href="css/icones-pixel.css?v=artes-maiores-20261101"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101">
 </head>
 
 <body class="criacao-page">
@@ -148,9 +150,9 @@
 <ul id="catalogo-resultados" class="livro-paginas-grid" role="listbox" aria-label="Matérias encontradas no Grimório"></ul>
 </div>
 <footer class="livro-aberto-rodape" id="livro-paginacao" hidden>
-<button type="button" class="btn btn-sm btn-outline-secondary" id="livro-pagina-anterior">◀ Página anterior</button>
+<button type="button" class="btn btn-sm btn-outline-secondary" id="livro-pagina-anterior" aria-label="Página anterior" title="Página anterior"><img class="icone-pixel" src="img/icons/seta-esquerda.png" alt="" width="24" height="24"></button>
 <span id="livro-pagina-info">Página 1 de 1</span>
-<button type="button" class="btn btn-sm btn-outline-secondary" id="livro-pagina-proxima">Próxima página ▶</button>
+<button type="button" class="btn btn-sm btn-outline-secondary" id="livro-pagina-proxima" aria-label="Próxima página" title="Próxima página"><img class="icone-pixel" src="img/icons/seta-direita.png" alt="" width="24" height="24"></button>
 </footer>
 </div>
 </dialog>
@@ -168,29 +170,29 @@
 <button id="wizard-backup-baixar" type="button" class="btn btn-outline-secondary">Baixar JSON</button>
 <button id="wizard-backup-continuar" type="button" class="btn btn-outline-secondary">Continuar sem backup</button>
 </section>
-<div class="wizard-actions"><button type="button" id="wizard-voltar" class="wizard-link" hidden>← Voltar</button><button type="button" id="wizard-avancar" class="btn btn-primary">Continuar →</button></div>
+<div class="wizard-actions"><button type="button" id="wizard-voltar" class="wizard-link" hidden><img class="icone-pixel" src="img/icons/seta-esquerda.png" alt="" aria-hidden="true" width="24" height="24"> Voltar</button><button type="button" id="wizard-avancar" class="btn btn-primary">Continuar <img class="icone-pixel" src="img/icons/seta-direita.png" alt="" aria-hidden="true" width="24" height="24"></button></div>
 </div></main>
 <footer class="site-rodape">
     <img class="site-rodape-borda" src="img/assets/Footer wood.png" alt="" width="1786" height="236" loading="lazy">
     <p><strong>GRIMÓRIO</strong></p>
     <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
 </footer>
-<script type="application/grimorio" src="materias-store.js?v=nomes60-20261022"></script><script type="application/grimorio" src="identidade-store.js?v=2"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
-<script type="application/grimorio" src="materias-busca.js"></script><script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="estudo-store.js?v=praticas-e7-final-20261026"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=nomes60-20261022"></script><script type="application/grimorio" src="catalogo-ui.js?v=estavel-20261023"></script><script type="application/grimorio" src="dados-inicio.js?v=6"></script><script type="application/grimorio" src="praticas-cadastro.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="wizard.js?v=offline-20261030"></script>
+<script type="application/grimorio" src="materias-store.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
+<script type="application/grimorio" src="materias-busca.js"></script><script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="replanejamento.js?v=d061-20261101"></script><script type="application/grimorio" src="estudo-store.js?v=d061-20261101"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="catalogo-ui.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="dados-inicio.js?v=6"></script><script type="application/grimorio" src="praticas-cadastro.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="notas-blocos.js"></script><script type="application/grimorio" src="revisoes-store.js?v=d061-20261101"></script><script type="application/grimorio" src="wizard.js?v=d061-20261101"></script>
 </div></div>
-<dialog id="historico-dialog" aria-labelledby="historico-titulo">
-<header class="historico-cabecalho"><div><h2 id="historico-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
-<details id="historico-filtros-painel" open><summary>Filtrar registros</summary>
-<form id="historico-filtros" class="historico-filtros" role="search">
+<dialog id="historico-dialog" aria-labelledby="historico-modal-titulo">
+<header class="historico-cabecalho"><div><h2 id="historico-modal-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
+<details id="historico-modal-filtros-painel" open><summary>Filtrar registros</summary>
+<form id="historico-modal-filtros" class="historico-filtros" role="search">
 <label>Buscar matéria<input id="historico-busca" type="search" placeholder="Nome da matéria" autocomplete="off"></label>
-<label>Registros<select id="historico-tipo"><option value="">Todos os tipos</option><option value="estudo">Estudos (inclui extras)</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option></select></label>
-<label>Projeto<select id="historico-projeto"><option value="">Todos os projetos</option><option value="atual">Projeto selecionado</option></select></label>
+<label>Registros<select id="historico-modal-tipo"><option value="">Todos os tipos</option><option value="estudo">Estudos (inclui extras)</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option></select></label>
+<label>Projeto<select id="historico-modal-projeto"><option value="">Todos os projetos</option><option value="atual">Projeto selecionado</option></select></label>
 </form></details>
 <p id="historico-resumo" role="status" aria-live="polite"></p>
 <div class="historico-rolagem"><table id="tabela-sessoes-estudo"><caption>Registros mais recentes primeiro.</caption><thead><tr><th scope="col">Data</th><th scope="col">Hora</th><th scope="col">Matéria</th><th scope="col">Tempo estudado</th><th scope="col">Ações</th></tr></thead><tbody id="sessoes-estudo-body"></tbody></table></div>
-<div class="historico-paginacao"><button type="button" id="historico-anterior">Anterior</button><span id="historico-pagina"></span><button type="button" id="historico-proximo">Próxima</button></div>
+<div class="historico-paginacao"><button type="button" id="historico-modal-anterior">Anterior</button><span id="historico-modal-pagina"></span><button type="button" id="historico-modal-proximo">Próxima</button></div>
 </dialog>
-<script type="application/grimorio" src="jornada-interface.js?v=sidebar-global-20261030"></script>
+<script type="application/grimorio" src="jornada-interface.js?v=mobile-historico-20261101"></script>
 </body></html>
 
 

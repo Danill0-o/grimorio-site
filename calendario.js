@@ -10,6 +10,10 @@
         const no = document.createElement(tag);
         if (classe) no.className = classe;
         if (texto !== undefined) no.textContent = texto;
+        if (classe === 'calendario-card-ir') {
+            no.textContent = texto.replace(' →', ' ');
+            no.append(window.IconesPixel.criar('direita'));
+        }
         return no;
     }
     function dataCivil(iso) { return iso ? iso.split('-').reverse().join('/') : 'Data indisponível'; }
@@ -27,6 +31,17 @@
     function resumirTexto(texto, limite = 22) {
         const limpo = String(texto || '').replace(/\s+/g, ' ').trim();
         return limpo.length > limite ? `${limpo.slice(0, limite)}…` : limpo;
+    }
+    function nomesPraticas(missoes) {
+        const lista = elemento('span', 'calendario-dia-praticas');
+        for (const missao of missoes) {
+            const nome = elemento('span', 'calendario-pratica-nome');
+            nome.append(elemento('span', 'calendario-pratica-texto', missao.nome));
+            nome.title = missao.nome;
+            window.QuestMarcadores?.vincular(nome, 'Missao', missao.missaoId);
+            lista.append(nome);
+        }
+        return lista;
     }
     function botaoDia(dia) {
         const botao = elemento('button', 'calendario-dia');
@@ -54,15 +69,13 @@
             const resumoMaterias = nomesEstudo.map(nome => resumirTexto(nome, 24)).join(' · ');
             const spanMaterias = elemento('span', 'calendario-dia-materias', resumirTexto(resumoMaterias, 44));
             spanMaterias.title = nomesTodos.join(' · ');
-            const resumoPraticas = nomesMissoes.map(nome => resumirTexto(nome, 22)).join(' · ');
-            const spanPraticas = elemento('span', 'calendario-dia-praticas', resumirTexto(`Prática: ${resumoPraticas}`, 44));
-            spanPraticas.title = nomesMissoes.join(' · ');
+            const spanPraticas = nomesPraticas(dia.missoes);
             corpo.append(spanMaterias, spanPraticas);
         } else {
             const resumoMaterias = nomesTodos.map(nome => resumirTexto(nome, 24)).join(' · ') || 'Sem matéria prevista';
             const spanMaterias = elemento('span', 'calendario-dia-materias', resumirTexto(resumoMaterias, 44));
             spanMaterias.title = nomesTodos.join(' · ');
-            corpo.append(spanMaterias);
+            corpo.append(nomesMissoes.length ? nomesPraticas(dia.missoes) : spanMaterias);
         }
         botao.append(corpo);
 
@@ -103,7 +116,8 @@
         const nav = elemento('nav', 'calendario-mes-nav');
         nav.id = 'calendario-mes-nav';
         nav.setAttribute('aria-label', 'Navegação entre meses');
-        const btnAnt = elemento('button', 'btn btn-outline-secondary calendario-mes-seta', '◀');
+        const btnAnt = elemento('button', 'btn btn-outline-secondary calendario-mes-seta');
+        btnAnt.append(window.IconesPixel.criar('esquerda'));
         btnAnt.type = 'button';
         btnAnt.id = 'calendario-mes-anterior';
         btnAnt.setAttribute('aria-label', 'Mês anterior');
@@ -115,7 +129,8 @@
         const dica = elemento('small', 'calendario-mes-dica', 'Use as setas ◀ ▶ ou deslize para trocar de mês');
         centro.append(label, dica);
 
-        const btnProx = elemento('button', 'btn btn-outline-secondary calendario-mes-seta', '▶');
+        const btnProx = elemento('button', 'btn btn-outline-secondary calendario-mes-seta');
+        btnProx.append(window.IconesPixel.criar('direita'));
         btnProx.type = 'button';
         btnProx.id = 'calendario-mes-proximo';
         btnProx.setAttribute('aria-label', 'Próximo mês');
@@ -156,15 +171,20 @@
                     li.classList.add('calendario-celula-pratica');
                     // Folga teórica com TAF: consulta própria, fora dos dias lineares da jornada.
                     const nomes = [...new Set(folgasPraticas.get(iso).missoes.map(m => m.nome))];
-                    const folga = elemento('button', 'calendario-folga calendario-folga-pratica', rotuloFolga);
+                    const folga = elemento('button', 'calendario-dia calendario-folga-pratica');
                     folga.type = 'button';
                     folga.dataset.calendarioFolgaData = iso;
                     folga.setAttribute('aria-haspopup', 'dialog');
                     folga.setAttribute('aria-controls', 'calendario-popup');
                     folga.setAttribute('aria-label', `${dataCivil(iso)}: folga teórica com ${nomes.join(', ')}`);
-                    const resumo = elemento('span', 'calendario-dia-materias', resumirTexto(nomes.join(' · '), 44));
-                    resumo.title = nomes.join(' · ');
-                    folga.append(resumo);
+                    const topo = elemento('span', 'calendario-dia-topo');
+                    const data = elemento('time', 'calendario-dia-data', rotuloFolga);
+                    data.dateTime = iso;
+                    topo.append(elemento('strong', 'calendario-dia-numero', 'Atividade Prática'), data);
+                    const corpo = elemento('span', 'calendario-dia-corpo');
+                    const resumo = nomesPraticas(folgasPraticas.get(iso).missoes);
+                    corpo.append(resumo);
+                    folga.append(topo, corpo);
                     folga.addEventListener('click', () => abrirFolga(iso));
                     li.append(folga);
                 } else {
@@ -350,6 +370,7 @@
                 elemento('small', '', estado),
                 elemento('small', 'calendario-card-ir', `Abrir ${diaLinear(dia.numero)} na Jornada →`)
             );
+            if (revisao.origem.foraPlano && revisao.dataPrevista) cardLink.append(elemento('small', '', `Data preservada da revisão: ${dataCivil(revisao.dataPrevista)}`));
             li.append(cardLink);
             return li;
         }, 'Nenhuma revisão prevista neste dia.');
@@ -380,6 +401,10 @@
             return li;
         }, 'Nenhum estudo extra adicionado neste dia.');
         const secoes = [normais, secaoMissoes(dia.missoes || [], dia.numero), revisoes, extras];
+        if (dia.numero === 1) {
+            const historico = window.Replanejamento?.criarHistorico(plano.dados, plano.plano, plano.sessoes);
+            if (historico) secoes.push(historico);
+        }
         document.getElementById('calendario-popup-conteudo').replaceChildren(...secoes);
     }
     const tiposPratica = { redacao: 'Redação', discursiva: 'Discursiva', 'estudo-caso': 'Estudo de caso', peca: 'Peça',
@@ -394,7 +419,9 @@
             card.href = `agenda.html?${numeroDia ? `dia=${numeroDia}&` : ''}missao=${encodeURIComponent(missao.missaoId)}`;
             card.setAttribute('aria-label', `Abrir atividade prática ${missao.nome}${numeroDia ? ` (${diaLinear(numeroDia)})` : ''} na Jornada`);
             const topo = elemento('div', 'livro-card-topo');
-            topo.append(elemento('strong', 'livro-card-nome', missao.nome),
+            const nome = elemento('strong', 'livro-card-nome', missao.nome);
+            window.QuestMarcadores?.vincular(nome, 'Missao', missao.missaoId);
+            topo.append(nome,
                 elemento('span', 'livro-card-nivel', tiposPratica[missao.tipo] || missao.tipo));
             const meta = missao.consomeCargaEstudo
                 ? `Duração planejada · ${duracao(missao.duracaoPlanejadaSegundos || 0)}`

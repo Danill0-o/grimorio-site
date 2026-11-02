@@ -1,0 +1,21 @@
+/* Grade de ícones independente do tamanho/estilo dos botões existentes. */
+img.icone-pixel { display: inline-block; width: 24px; height: 24px; flex: 0 0 24px; object-fit: contain; vertical-align: middle; image-rendering: pixelated; pointer-events: none; }
+img.icone-pixel-anotar { width: 36px; min-width: 36px; height: 36px; flex: 0 0 36px; }
+img.icone-pixel-excluir, .materia-excluir-icone img, .jornada-page .extra-excluir-icone { width: 33.75px; min-width: 33.75px; height: 33.75px; flex: 0 0 33.75px; object-fit: contain; image-rendering: pixelated; filter: none !important; }
+.jornada-page[data-tema-pixel="arcano"] .extra-excluir-icone, [data-tema-pixel="arcano"] .jornada-page .extra-excluir-icone, [data-tema-pixel="arcano"] .materia-excluir-icone img { filter: none !important; }
+summary { list-style: none; }
+summary::-webkit-details-marker { display: none; }
+summary::marker { content: ''; }
+summary::after, .jornada-menu summary::after, .revisao-grupo summary::after {
+    content: ''; display: inline-block; width: 16px; height: 16px; flex: 0 0 16px;
+    margin-inline-start: 8px; padding: 0; vertical-align: middle;
+    background: url('../img/icons/seta-baixo.png') center/contain no-repeat;
+    image-rendering: pixelated; transform: none;
+}
+.jornada-menu summary::after { margin-inline-start: auto; }
+details[open] > summary::after, .jornada-menu details[open] > summary::after, .revisao-grupo[open] summary::after { content: ''; background-image: url('../img/icons/seta-cima.png'); transform: none; }
+select:not([multiple]):not([size]) { appearance: none !important; background-image: url('../img/icons/seta-baixo.png') !important; background-repeat: no-repeat !important; background-size: 16px 16px !important; background-position: right 10px center !important; padding-right: 36px !important; }
+.jornada-page button.info-contextual { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; min-height: 22px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--pixel-ink) !important; border-radius: 50% !important; background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; font: italic 16px Georgia,serif; text-transform: none; box-shadow: none !important; text-shadow: none !important; }
+.jornada-page button.info-contextual:is(:hover,:focus-visible) { background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; }
+.ajuda-contextual[popover] { margin: 0; inset: auto; max-width: min(360px,calc(100vw - 32px)); padding: 16px; background: var(--pixel-surface); color: var(--pixel-ink) !important; border: 2px solid var(--pixel-bronze); box-shadow: 2px 2px 0 var(--pixel-shadow); }
+.praticas-cabecalho-acoes { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }

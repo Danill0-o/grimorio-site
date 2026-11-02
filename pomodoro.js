@@ -116,6 +116,10 @@
                     carregado = true; anterior = timer.estado;
                     // Recuperação nunca conta ausência. Checkpoint de sessão já encerrada é descartável.
                     if (dados.sessaoId && dados.sessaoId !== timer.sessaoId) preparar();
+                    if (dados.ativo && dados.etapa === 'foco' && dados.sessaoId === timer.sessaoId && timer.estado === 'rodando') {
+                        const ausencia = Number.isInteger(dados.observadoSegundos) ? Math.max(0, timer.duracaoSegundos - dados.observadoSegundos) : 0;
+                        iniciarFoco(timer, Math.max(0, dados.restanteSegundos - ausencia));
+                    }
                 } catch (_) {
                     falhou = true;
                     erro('Não foi possível recuperar o Pomodoro. Os dados anteriores foram preservados. Confira o backup antes de tentar novamente.');
@@ -131,6 +135,7 @@
                     else iniciarFoco(timer, dados.sessaoId === timer.sessaoId && dados.etapa === 'foco' ? dados.restanteSegundos : dados.focoSegundos);
                 }
             }
+            if (dados.ativo) dados.observadoSegundos = timer.duracaoSegundos;
             anterior = timer.estado; salvar(timer); renderizar(timer);
         }
         botao.addEventListener('click', () => {
@@ -148,9 +153,39 @@
             if (padrao.checked) { foco.value = '25:00'; pausa.value = '05:00'; }
             foco.setCustomValidity(''); pausa.setCustomValidity('');
         });
-        for (const campo of [foco, pausa]) campo.addEventListener('input', () => {
+        for (const campo of [foco, pausa]) {
+            const aplicar = digitos => {
+                const n = digitos.replace(/\D/g, '').slice(0, 4).padStart(4, '0');
+                campo.value = n.slice(0, 2) + ':' + String(Math.min(59, Number(n.slice(2)))).padStart(2, '0');
+                campo.dispatchEvent(new Event('input', { bubbles: true }));
+            };
+            campo.addEventListener('beforeinput', event => {
+                if (!event.inputType.startsWith('delete') && !(event.inputType === 'insertText' && event.data !== null)) return;
+                event.preventDefault();
+                const inicio = campo.selectionStart, fim = campo.selectionEnd;
+                const indice = pos => Math.min(4, pos - (pos > 2 ? 1 : 0));
+                let a = indice(inicio), b = indice(fim);
+                const digitos = campo.value.replace(/\D/g, '').padStart(4, '0').split('');
+                for (let i = a; i < b; i++) digitos[i] = '0';
+                if (event.inputType.startsWith('delete')) {
+                    if (a === b) { if (event.inputType.includes('Backward')) a = Math.max(0, a - 1); digitos[a] = '0'; }
+                } else {
+                    for (const d of event.data.replace(/\D/g, '')) { if (a < 4) digitos[a++] = d; }
+                }
+                aplicar(digitos.join(''));
+                const cursor = a >= 2 ? a + 1 : a;
+                campo.setSelectionRange(cursor, cursor);
+            });
+            campo.addEventListener('paste', event => {
+                event.preventDefault(); aplicar(event.clipboardData.getData('text'));
+                campo.setSelectionRange(5, 5);
+            });
+            campo.addEventListener('input', () => {
+                const n = campo.value.replace(/\D/g, '').slice(0, 4).padStart(4, '0');
+                campo.value = n.slice(0, 2) + ':' + String(Math.min(59, Number(n.slice(2)))).padStart(2, '0');
             campo.setCustomValidity(''); padrao.checked = foco.value === '25:00' && pausa.value === '05:00';
-        });
+            });
+        }
         el('cancelar').addEventListener('click', () => dialog.close());
         dialog.addEventListener('close', () => botao.focus());
         el('form').addEventListener('submit', event => {

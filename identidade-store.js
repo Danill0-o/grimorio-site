@@ -12,7 +12,7 @@
         const dados = ler('dadosExame', {});
         const projetoId = exigir(dados.projetoId, 'projetoId');
         const dias = Object.entries(plano);
-        const assinatura = JSON.stringify([dados.estudoPorBloco, dados.carga_horaria_disponivel,
+        const assinatura = JSON.stringify([...(dados.planoVersaoId ? [dados.planoVersaoId] : []), dados.estudoPorBloco, dados.carga_horaria_disponivel,
             ler('objetosNormalizados', []).map(m => [chaveMateria(m), m.questoesEmPorcentagem]),
             dias.map(([dia, blocos]) => [dia, blocos.map(b => Number.isInteger(b.metaSegundos) ? [chaveMateria(b), b.metaSegundos] : chaveMateria(b))])]);
         const versoes = ler('planosIdentidadeV1', []);
@@ -38,6 +38,11 @@
             return window.EstudoExtra.vinculosSessao(dados);
         }
         if (String(dados.blocoId || '').startsWith('extra-')) throw new Error('Integridade: blocoExtraId obrigatório');
+        if (dados.tipo === 'revisao' && dados.revisaoId && ler('dadosExame', {}).replanejamento?.origens?.[dados.blocoId]) {
+            const r = window.RevisoesStore?.listar().find(r => r.id === dados.revisaoId);
+            if (!r || r.projetoId !== projetoId || r.projetoMateriaId !== projetoMateriaId || r.blocoId !== dados.blocoId) throw new Error('Integridade: origem da revisão inválida');
+            return { projetoId, projetoMateriaId, blocoId: r.blocoId };
+        }
         const dia = dados.tipo === 'revisao' ? dados.referenciaDia : dados.diaJornada;
         const candidatos = (ler('materiaDoDia', {})[dia] || []).filter(b => b.projetoId === projetoId && b.projetoMateriaId === projetoMateriaId);
         // O vínculo de bloco é opcional em estudo agregado, mas nunca é inferido por nome.

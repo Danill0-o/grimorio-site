@@ -39,7 +39,7 @@
         for (const [id, m] of Object.entries(estado.materiasGlobais)) {
             campos(m, camposGlobal);
             if (!idValido(id, 'materia-global') || id !== m.materiaGlobalId || !texto(m.nomeCanonico) || m.nomeNormalizado !== normalizarNome(m.nomeCanonico) || !texto(m.nomeNormalizado)) falhar('matéria global inválida');
-            if (!['ativa', 'arquivada', 'mesclada'].includes(m.status) || !Number.isFinite(Date.parse(m.criadoEm)) || !Number.isFinite(Date.parse(m.atualizadoEm))) falhar('estado global inválido');
+            if (!['ativa', 'arquivada', 'mesclada', 'excluida'].includes(m.status) || !Number.isFinite(Date.parse(m.criadoEm)) || !Number.isFinite(Date.parse(m.atualizadoEm))) falhar('estado global inválido');
             if (m.status === 'mesclada' ? !idValido(m.mescladaEm, 'materia-global') : m.mescladaEm !== null) falhar('redirecionamento inválido');
             if (m.status === 'ativa') {
                 if (nomes.has(m.nomeNormalizado)) falhar('nome normalizado já existe');
@@ -85,6 +85,37 @@
     function conferirRetry(anterior, entrada) {
         if (Object.keys(entrada).some(k => anterior[k] !== entrada[k])) falhar('ID reutilizado com outro conteúdo');
         return anterior;
+    }
+    function projetoPrecisaReplanejar(id) {
+        const estado = ler();
+        const cadastro = JSON.parse(storage.getItem(`projetoV1:${id}:objetosSalvos`) || '[]');
+        cadastro.push(...Object.values(JSON.parse(storage.getItem(`projetoV1:${id}:materiaDoDia`) || '{}')).flat());
+        return cadastro.some(m => {
+            const p = estado.projetosMaterias[m.projetoMateriaId];
+            return p && resolver(estado, p.materiaGlobalId).status === 'excluida';
+        });
+    }
+    async function excluirMateriaGlobal(id) {
+        if (!navigator.locks) falhar('exclusão exige Web Locks');
+        await navigator.locks.request('projetos:gestao', async () => {
+            window.BackupLocal?.garantirDisponivel();
+            if (storage.getItem('cronometroRegistroV1')) falhar('recupere o registro pendente do cronômetro antes de excluir');
+            const estado = ler(), global = resolver(estado, id);
+            const projetos = [...new Set(Object.values(estado.projetosMaterias).filter(p => resolver(estado,p.materiaGlobalId).materiaGlobalId === global.materiaGlobalId).map(p => p.projetoId))].sort();
+            const travar = async i => {
+                if (i < projetos.length) return navigator.locks.request('cronometro:' + projetos[i], {ifAvailable:true}, lock => {
+                    if (!lock || storage.getItem('cronometroV1:' + projetos[i])) falhar('feche as abas de cronômetro e registre ou zere sessões pendentes antes de excluir');
+                    return travar(i+1);
+                });
+                return escrever(atual => {
+                    const g = resolver(atual,id);
+                    g.status = 'excluida'; g.atualizadoEm = new Date().toISOString();
+                    for (const p of Object.values(atual.projetosMaterias)) if (resolver(atual,p.materiaGlobalId).materiaGlobalId === g.materiaGlobalId) p.removida = true;
+                });
+            };
+            await travar(0);
+        });
+        window.dispatchEvent(new CustomEvent('materias:excluida'));
     }
     function criarMateriaGlobal(dados) {
         campos(dados, ['materiaGlobalId', 'nomeCanonico'], ['nomeCanonico']);
@@ -203,6 +234,7 @@
         });
     }
     window.MateriasStore = Object.freeze({
+        excluirMateriaGlobal, projetoPrecisaReplanejar,
         criarMateriaGlobal, criarProjetoMateria, obterProjetoMateria, salvarCadastro, prepararCopia, corrigirVinculo,
         normalizarNome,
         listarMateriasGlobais() {

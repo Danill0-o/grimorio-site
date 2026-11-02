@@ -43,7 +43,7 @@
         const status = document.getElementById('perfil-status');
         const materiaComFoco = document.activeElement?.closest('#perfil-dominio article')?.dataset.materiaGlobalId;
         try {
-            const materias = EstudoStore.listarDominioGlobal().sort((a, b) => b.segundos - a.segundos
+            const materias = EstudoStore.listarDominioGlobal().filter(m => MateriasStore.resolverMateriaGlobal(m.materiaGlobalId).status !== 'excluida').sort((a, b) => b.segundos - a.segundos
                 || a.nomeCanonico.localeCompare(b.nomeCanonico, 'pt-BR') || a.materiaGlobalId.localeCompare(b.materiaGlobalId));
             const sessoes = EstudoStore.listarSessoes();
             const global = EstudoStore.obterProgressaoGlobal();
@@ -63,9 +63,11 @@
                 reset.disabled = m.pontos <= 0;
                 reset.setAttribute('aria-label', `Zerar domínio de ${m.nomeCanonico}`);
                 reset.addEventListener('click', () => abrirReset(m.materiaGlobalId, m.nomeCanonico));
+                const acoes = elemento('div', undefined, 'materia-card-acoes');
+                acoes.append(reset, window.criarBotaoExcluirMateria(m.materiaGlobalId, m.nomeCanonico));
                 card.append(elemento('h3', m.nomeCanonico), elemento('p', `Nível ${numero(m.nivel)}`, 'perfil-nivel'),
                     elemento('p', m.titulo, 'perfil-titulo'), elemento('p', `${numero(m.pontos)} pontos de conhecimento`),
-                    elemento('p', `${tempo(m.segundos)} de domínio`), avanco, reset);
+                    elemento('p', `${tempo(m.segundos)} de domínio`), avanco, acoes);
                 return card;
             });
             lista.replaceChildren(...cards);
@@ -137,5 +139,5 @@
         });
     });
     document.addEventListener('DOMContentLoaded', renderizar);
-    for (const evento of ['estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'praticas:alteradas', 'storage', 'pageshow']) window.addEventListener(evento, renderizar);
+    for (const evento of ['estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'materias:excluida', 'praticas:alteradas', 'storage', 'pageshow']) window.addEventListener(evento, renderizar);
 })();

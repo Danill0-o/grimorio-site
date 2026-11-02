@@ -91,7 +91,8 @@
     function excluir(id) {
         const r = existente(id);
         semTempoPendente(id);
-        const valores = { [prefixo(id) + 'registro']: JSON.stringify({...r, removido:true}) };
+        const dados = ler(prefixo(id) + 'dadosExame', {});
+        const valores = { [prefixo(id) + 'registro']: JSON.stringify({...r, nome: dados.nomeExame || ler(prefixo(id) + 'wizardProjeto', {})?.valores?.nome_exame || r.nome || 'Projeto', removido:true}) };
         CHAVES.forEach(k => { valores[prefixo(id) + k] = null; });
         gravar(valores,`projetosTransacaoV2:${id}`);
     }
@@ -133,19 +134,36 @@
         },`projetosTransacaoV2:${destino}`);
         return destino;
     }
+    let planoEmPreparacao = null;
+    const chaveReal = chave => CHAVES.has(chave) ? prefixo(selecionado) + chave : chave;
     window.ProjetoStorage = {
-        getItem(chave) { return storage.getItem(CHAVES.has(chave) ? prefixo(selecionado) + chave : chave); },
+        getItem(chave) { const k = chaveReal(chave); return planoEmPreparacao?.has(k) ? planoEmPreparacao.get(k) : storage.getItem(k); },
         setItem(chave, valor) {
             if (CHAVES.has(chave)) validar();
-            storage.setItem(CHAVES.has(chave) ? prefixo(selecionado) + chave : chave, valor);
+            if (planoEmPreparacao) planoEmPreparacao.set(chaveReal(chave), String(valor));
+            else storage.setItem(chaveReal(chave), valor);
         },
         removeItem(chave) {
             if (CHAVES.has(chave)) validar();
-            storage.removeItem(CHAVES.has(chave) ? prefixo(selecionado) + chave : chave);
+            if (planoEmPreparacao) planoEmPreparacao.set(chaveReal(chave), null);
+            else storage.removeItem(chaveReal(chave));
         },
         get length() { return storage.length; }
     };
     window.ProjetosStore = {
+        confirmarPlano(preparar) {
+            return gerenciar(selecionado, () => {
+                if (planoEmPreparacao) throw new Error('Já existe um planejamento em preparação.');
+                const valores = new Map(); planoEmPreparacao = valores;
+                let resultado;
+                try {
+                    resultado = preparar();
+                    if (resultado?.then) throw new Error('A preparação do plano deve ser síncrona.');
+                } finally { planoEmPreparacao = null; }
+                gravar(Object.fromEntries(valores), `projetosTransacaoV2:${selecionado}`);
+                return resultado;
+            }, true);
+        },
         criar, selecionar, validarAtual: validar, temAtual: () => Boolean(selecionado), idAtual: () => selecionado,
         arquivar: id=>gerenciar(id,()=>storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:true})),true),
         restaurar: id=>gerenciar(id,()=>storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:false}))),

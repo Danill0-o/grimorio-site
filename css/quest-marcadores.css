@@ -1,0 +1,35 @@
+.quest-marcador {
+    display: inline-flex;
+    vertical-align: middle;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    margin-inline-start: 6px;
+    cursor: help;
+}
+.quest-marcador img {
+    width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated;
+    animation: quest-pulso 1.6s ease-in-out infinite;
+}
+.quest-marcador:focus-visible { outline: 2px solid var(--pixel-ink); outline-offset: 2px; }
+@keyframes quest-pulso { 0%,100% { transform: scale(.88); } 50% { transform: scale(1.08); } }
+.quest-ajuda {
+    position: fixed; inset: auto; margin: 0; padding: 8px 12px;
+    max-width: calc(100vw - 16px);
+    background: var(--pixel-surface-elevated); color: var(--pixel-ink);
+    border: 1px solid var(--pixel-bronze); border-radius: 0;
+    font: 14px/1.5 sans-serif; text-transform: none; letter-spacing: normal;
+    box-shadow: 1.5px 1.5px 0 var(--pixel-shadow);
+    pointer-events: none;
+}
+.calendario-dia-praticas { display: flex; flex-direction: column; white-space: normal; }
+.calendario-pratica-nome { display: flex; align-items: center; min-width: 0; }
+.calendario-pratica-texto { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.calendario-dia-praticas .quest-marcador { width: 26px; height: 26px; flex-basis: 26px; }
+#calendario-dias .calendario-dia:has(.calendario-dia-praticas) { height: auto; max-height: none; }
+.calendario-dia:has(.calendario-dia-praticas) .calendario-dia-corpo { max-height: none; overflow: visible; }
+#jornada-menu-aberto > summary .quest-marcador { margin-inline-start: 8px; }
+@media (min-width:1100px) { #jornada-menu-aberto > summary .quest-marcador { display: none; } }
+@media (prefers-reduced-motion: reduce) { .quest-marcador img { animation: none; } }

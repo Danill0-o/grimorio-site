@@ -219,7 +219,7 @@
                 const registro = estado.atividades[atividadeId];
                 const fatos = projetarEstadoAtividade(estado, atividadeId);
                 lista.push({ projetoId, atividadeId, nome: registro.atividade.nome, tipo: registro.atividade.tipo,
-                    projetoNome: dados?.nomeExame || `Projeto ${projetoId}`, removida: registro.removida,
+                    projetoNome: dados?.nomeExame || registroProjeto.nome || 'Projeto', removida: registro.removida,
                     projetoArquivado: Boolean(registroProjeto.arquivado), projetoRemovido: Boolean(registroProjeto.removido),
                     tempoRegistradoSegundos: fatos.tempoRegistradoSegundos, ...obterProgressaoEstado(estado, atividadeId) });
             }

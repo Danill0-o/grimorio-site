@@ -30,8 +30,9 @@
             const materias = new Map(), projetosHistoricos = new Map();
             const registros = sessoes.map(s => {
                 const id = EstudoStore.chaveGlobal(s);
-                const nome = MateriasStore.resolverMateriaGlobal(id).nomeCanonico;
-                const projeto = projetos.get(s.projetoId) || `Projeto excluído · ${s.projetoId.slice(-8)}`;
+                const g = MateriasStore.resolverMateriaGlobal(id); const nome = g.nomeCanonico + (g.status === 'excluida' ? ' (matéria excluída)' : '');
+                const removido = JSON.parse(localStorage.getItem(`projetoV1:${s.projetoId}:registro`) || '{}');
+                const projeto = projetos.get(s.projetoId) || `${removido.nome || 'Projeto'} · excluído`;
                 materias.set(id, nome);
                 projetosHistoricos.set(s.projetoId, projeto);
                 return { sessao: s, materiaGlobalId: id, nome, projeto, tipo: tipo(s), inicio: new Date(s.inicio) };

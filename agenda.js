@@ -144,6 +144,13 @@
             sessoesProjeto,
             estudoPorBloco: Math.max(1, Number(dadosExame.estudoPorBloco) || 1)
         });
+        const primeiroCard = document.querySelector('#jornada-cards .dia-card');
+        const historico = window.Replanejamento?.criarHistorico(dadosExame, materiaDoDia, sessoesProjeto, true);
+        if (primeiroCard && historico) primeiroCard.append(historico);
+        const foraPlano = mostrarRevisoes ? revisoes.filter(r => r.origemHistorica && !r.diaJornada) : [];
+        if (primeiroCard && foraPlano.length) adicionarRevisoesComCronometro(primeiroCard, foraPlano, {
+            projetoId, diaJornada: 'historico', sessoesProjeto, anotacoesSessoes, revisoesAbertas: new Set()
+        });
         renderizarRevisoesAtrasadas(mostrarRevisoes ? revisoes : [], projetoId, anotacoesSessoes);
 
     }
@@ -259,13 +266,13 @@
             const cabecalho = document.createElement('div');
             cabecalho.className = 'dia-card-cabecalho';
             cabecalho.append(titulo, badge);
-            if (estado.indice === indiceAtual) {
+            if (estado.atual) {
                 const calendario = document.createElement('span');
-                calendario.className = 'dia-card-calendario';
-                calendario.title = avisoCalendario ? 'Referência do calendário' : 'Hoje';
+                calendario.className = 'dia-card-hoje';
+                calendario.title = 'Hoje';
                 calendario.setAttribute('role', 'img');
                 calendario.setAttribute('aria-label', calendario.title);
-                calendario.append(criarIcone('calendario'));
+                calendario.textContent = 'HOJE';
                 cabecalho.append(calendario);
             }
             const adicionar = document.createElement('button');
@@ -303,6 +310,7 @@
                 globaisPorParticipacao: contexto.globaisPorParticipacao,
                 dominioMaterias: contexto.dominioMaterias,
                 blocosIndependentes: lerObjeto('dadosExame')?.distribuicaoVersao === 3,
+                creditoSequencial: lerObjeto('dadosExame')?.replanejamento?.versao === 1,
                 sessoesProjeto: contexto.sessoesProjeto,
                 anotacoesSessoes: contexto.anotacoesSessoes,
                 blocos: contexto.materiaDoDia[estado.dia] || []
@@ -482,7 +490,7 @@
             estadoMateria.textContent = meta.completo ? 'Meta concluída' : 'Meta pendente';
             if (meta.completo) nome.append(criarIcone('concluir'));
             const progresso = criarIndicadorProgresso('dia', textoTempoRegistrado(meta), meta.pontosAplicadosSegundos,
-                meta.metaSegundos, `Estudo normal registrado de ${meta.materia} neste dia: ${textoTempoRegistrado(meta)}`);
+                meta.metaSegundos, `${contexto.creditoSequencial ? 'Crédito sequencial' : 'Estudo normal registrado'} de ${meta.materia} neste dia: ${textoTempoRegistrado(meta)}`);
             identificacao.append(nome, estadoMateria, progresso);
             const blocos = contexto.blocos.filter(bloco => bloco.projetoMateriaId === meta.projetoMateriaId);
             const notas = document.createElement('span');
@@ -549,7 +557,7 @@
                     estadoBloco.className = 'bloco-estado visually-hidden';
                     estadoBloco.textContent = concluido ? '✓ Concluído' : aplicado > 0 ? 'Em andamento' : 'A estudar';
                     const indicador = criarIndicadorProgresso('bloco', textoTempoRegistrado(progressoBloco), aplicado,
-                        bloco.metaSegundos, `Estudo normal registrado de ${meta.materia}, bloco ${indice + 1}: ${textoTempoRegistrado(progressoBloco)}`);
+                        bloco.metaSegundos, `${contexto.creditoSequencial ? 'Crédito sequencial' : 'Estudo normal registrado'} de ${meta.materia}, bloco ${indice + 1}: ${textoTempoRegistrado(progressoBloco)}`);
                     indicador.querySelector('small').classList.add('bloco-tempo-restante');
                     indicador.querySelector('progress').classList.add('bloco-progresso');
                     linha.append(nomeBloco, estadoBloco, indicador);
@@ -808,6 +816,10 @@
                 item.dataset.diaJornada = contexto.diaJornada;
                 item.dataset.referenciaDia = revisao.diaOrigem;
                 item.dataset.revisaoId = revisao.id;
+                if (revisao.origemHistorica) {
+                    item.dataset.origemHistorica = 'true';
+                    item.dataset.execucaoBloqueada = String(revisao.dataPrevista > window.RevisoesStore.dataLocal());
+                }
                 if (revisao.blocoExtraId) item.dataset.blocoExtraId = revisao.blocoExtraId;
                 item.classList.toggle('revisao-dispensada', revisao.estado === 'dispensada');
                 const rotulo = document.createElement('span');
@@ -819,10 +831,12 @@
                 rotulo.appendChild(texto);
                 const situacao = document.createElement('small');
                 situacao.textContent = `${revisao.estado === 'pendente' ? 'Pendente' : concluida ? 'Concluída' : 'Dispensada'} · Sugestão: ${formatarDuracaoRevisao(revisao.sugeridaSegundos)} · ${revisao.etapa} · D+${revisao.intervalo}`;
+                if (revisao.origemHistorica) situacao.textContent += ` · origem histórica · prevista para ${revisao.dataPrevista.split('-').reverse().join('/')}`;
                 situacao.className = 'visually-hidden';
                 const sugestao = document.createElement('small');
                 sugestao.className = 'revisao-sugestao';
                 sugestao.textContent = `${revisao.etapa} · ${formatarDuracaoRevisao(revisao.sugeridaSegundos)}${revisao.estado === 'dispensada' ? ' · Dispensada' : ''}`;
+                if (revisao.origemHistorica) sugestao.textContent += ` · origem histórica · ${revisao.dataPrevista.split('-').reverse().join('/')}`;
                 sugestao.setAttribute('aria-hidden', 'true');
                 rotulo.append(situacao, sugestao);
                 for (const bloco of [revisao]) {
@@ -846,7 +860,8 @@
                     projetoId: revisao.projetoId,
                     diaJornada: revisao.diaJornada,
                     referenciaDia: revisao.diaOrigem
-                }, concluida ? null : () => executarAcaoRevisao(revisao, 'concluir')));
+                }, concluida || revisao.origemHistorica && revisao.dataPrevista > window.RevisoesStore.dataLocal()
+                    ? null : () => executarAcaoRevisao(revisao, 'concluir')));
                 if (!concluida) {
                     const dispensar = document.createElement('button');
                     dispensar.type = 'button';
@@ -893,12 +908,13 @@
         container.replaceChildren();
         document.getElementById('revisoes-atrasadas').hidden = !atrasadas.length;
         document.getElementById('revisoes-atrasadas-titulo').textContent = `Revisões atrasadas (${atrasadas.length})`;
-        const dias = [...new Set(atrasadas.map(r=>r.diaJornada))];
+        const chaveDestino = r => r.diaJornada || `historico:${r.dataPrevista}`;
+        const dias = [...new Set(atrasadas.map(chaveDestino))];
         dias.forEach(dia => {
             const secao = document.createElement('section');
             const titulo = document.createElement('h3');
-            const revisoesDia = atrasadas.filter(r=>r.diaJornada===dia);
-            titulo.textContent = `${formatarDia(numeroDoDia(dia))} · prevista para ${revisoesDia[0].dataPrevista.split('-').reverse().join('/')}`;
+            const revisoesDia = atrasadas.filter(r=>chaveDestino(r)===dia);
+            titulo.textContent = `${dia.startsWith('historico:') ? 'Origem histórica' : formatarDia(numeroDoDia(dia))} · prevista para ${revisoesDia[0].dataPrevista.split('-').reverse().join('/')}`;
             secao.append(titulo);
             adicionarRevisoesComCronometro(secao,revisoesDia,{projetoId,diaJornada:dia,revisoesAbertas:abertas,anotacoesSessoes});
             container.append(secao);
@@ -937,6 +953,13 @@
     }
 
     function criarIcone(nome) {
+        if (nome === 'registrar' || nome === 'manual') return window.IconesPixel.criar('salvar');
+        if (nome === 'bloqueado' || nome === 'proximo') {
+            const img = document.createElement('img');
+            img.src = nome === 'bloqueado' ? 'img/icons/cadeado-fechado.png' : 'img/icons/cadeado-aberto.png';
+            img.className = 'jornada-cadeado'; img.alt = ''; img.setAttribute('aria-hidden', 'true');
+            img.width = 28; img.height = 28; return img;
+        }
         const desenhos = {
             play: '<path d="m8 5 11 7-11 7Z" fill="currentColor" stroke="none"/>',
             stop: '<rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" stroke="none"/>',
@@ -944,7 +967,7 @@
             manual: '<path d="M5 3h12l4 4v14H3V3h2Zm2 0v6h10V3M7 21v-8h10v8"/>',
             concluir: '<path d="m5 12 4 4L19 6"/>',
             bloqueado: '<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/>',
-            proximo: '<path d="M4 12h15m-6-6 6 6-6 6"/>',
+            proximo: '<rect x="3" y="11" width="12" height="10" rx="2"/><path d="M6 11V6a6 6 0 0 1 12 0v2M9 15v3"/>',
             calendario: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-14 4h3"/>',
             dispensar: '<path d="m6 6 12 12M6 18 18 6"/>',
             reativar: '<path d="M3 10a9 9 0 1 1 1 8M3 4v6h6"/>'

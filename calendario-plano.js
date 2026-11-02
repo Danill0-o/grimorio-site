@@ -27,6 +27,8 @@
         const fim = dados ? window.CalendarioJornada.somarDias(dados.dataFinalF, 0) : null;
         const resultado = { projetoId, nome: String(dados?.nomeExame || 'Seu projeto'), inicio, fim, dias: [], extrasForaPlano: [],
             folgasPraticas: [], aviso: '', revisoesHabilitadas: true };
+        resultado.dados = dados;
+        resultado.plano = plano;
         if (!plano || !Object.keys(plano).length) {
             resultado.aviso = 'Este projeto ainda não possui um cronograma. Conclua o planejamento para consultar o calendário.';
             return resultado;
@@ -78,6 +80,7 @@
         // Os leitores vigentes recuperam journals; não persistimos totais ou um novo plano.
         const sessoes = window.EstudoStore.listarSessoes();
         const sessoesProjeto = sessoes.filter(s => s.projetoId === projetoId);
+        resultado.sessoes = sessoesProjeto;
         const progressoPlano = window.EstudoStore.calcularProgressoPlano({ dados, materiaDoDia: plano,
             distribuicaoMaterias: distribuicao, sessoesProjeto });
         const diasMetas = progressoPlano.dias;
@@ -183,10 +186,11 @@
             dias: diasMetas, sessoes }) : window.RevisoesStore.listar();
         resultado.revisoesHabilitadas = window.RevisoesStore.habilitadas();
         revisoes.forEach(r => {
-            const destino = porDia.get(r.diaJornada), origem = porDia.get(r.diaOrigem);
-            const blocoOrigem = r.blocoExtraId ? porExtra.get(r.blocoExtraId) : blocosPorId.get(r.blocoId);
+            const destino = porDia.get(r.diaJornada) || (r.origemHistorica ? resultado.dias[0] : null), origem = porDia.get(r.diaOrigem);
+            const blocoOrigem = r.blocoExtraId ? porExtra.get(r.blocoExtraId) : r.origemHistorica
+                ? dados.replanejamento?.origens[r.blocoId] : blocosPorId.get(r.blocoId);
             exigir(r.id, 'revisaoId'); exigir(r.projetoMateriaId, 'projetoMateriaId');
-            if (r.projetoId !== projetoId || !destino || (!r.blocoExtraId && !origem) || !blocoOrigem || blocoOrigem.projetoMateriaId !== r.projetoMateriaId
+            if (r.projetoId !== projetoId || !destino || (!r.blocoExtraId && !r.origemHistorica && !origem) || !blocoOrigem || blocoOrigem.projetoMateriaId !== r.projetoMateriaId
                 || !['R1', 'R2', 'R3'].includes(r.etapa) || !['pendente', 'concluida', 'dispensada'].includes(r.estado)
                 || !Number.isInteger(r.sugeridaSegundos) || r.sugeridaSegundos < 0) throw new Error('Integridade: revisão inválida no calendário');
             window.MateriasStore.obterProjetoMateria(r.projetoMateriaId, projetoId);
@@ -197,9 +201,10 @@
                 sugestaoSegundos: r.sugeridaSegundos, estado: r.estado,
                 nivel: dominio.nivel, percentualNivel: dominio.percentual,
                 nota: textoNotaOrigem(r),
-                origem: { dia: r.diaOrigem, numero: r.blocoExtraId ? Number(blocoOrigem.diaJornada.slice(3)) : origem.numero,
-                    dataPrevista: r.blocoExtraId ? blocoOrigem.dataOrigem : origem.dataPrevista,
-                    extra: Boolean(r.blocoExtraId), foraPlano: Boolean(r.blocoExtraId && blocoOrigem.foraPlano) } });
+                dataPrevista: r.dataPrevista,
+                origem: { dia: r.diaOrigem, numero: r.blocoExtraId ? Number(blocoOrigem.diaJornada.slice(3)) : r.origemHistorica ? Number(r.diaOrigem.slice(3)) : origem.numero,
+                    dataPrevista: r.blocoExtraId || r.origemHistorica ? blocoOrigem.dataOrigem : origem.dataPrevista,
+                    extra: Boolean(r.blocoExtraId), foraPlano: Boolean(r.origemHistorica || r.blocoExtraId && blocoOrigem.foraPlano) } });
         });
         return resultado;
     }

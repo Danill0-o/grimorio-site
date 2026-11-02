@@ -475,6 +475,7 @@
                         : 'Nenhum nome alternativo cadastrado.';
 
                     card.append(h3, nivel, titulo, tempo, barra, resumoMem);
+                    card.append(window.criarBotaoExcluirMateria(g.materiaGlobalId, g.nomeCanonico));
                     grid.appendChild(card);
                 }
             } catch (erro) {
@@ -505,6 +506,7 @@
         });
 
         window.addEventListener('memorias:atualizadas', renderizarAcervo);
+        window.addEventListener('materias:excluida', renderizarAcervo);
         window.addEventListener('storage', e => {
             if (['materiasBuscaV1', 'materiasDominioV1', 'sessoesEstudo', 'reiniciosDominio'].includes(e.key) || window.HistoricoRepository?.ehChave(e.key)) {
                 renderizarAcervo();

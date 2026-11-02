@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script type="application/grimorio" src="icones-pixel.js?v=artes-20261101"></script>
 <meta charset="UTF-8">
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=offline-20261030"></script>
     <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
-    <script type="application/grimorio" src="backup-local.js?v=pomodoro-20261031"></script>
+    <script type="application/grimorio" src="backup-local.js?v=d061-20261101"></script>
     <script type="application/grimorio" src="acessibilidade.js?v=sidebar-global-20261030"></script>
-    <script type="application/grimorio" src="projetos-store.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="praticas-store.js?v=praticas-tipos-20261029"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=d061-20261101"></script><script type="application/grimorio" src="praticas-store.js?v=exclusao-global-20261101"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     <link rel="stylesheet" href="css/style.css?v=temas3-20261022">
@@ -16,9 +17,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <title>Planejamento de estudos</title>
-<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"><link rel="stylesheet" href="css/jornada-interface.css?v=sidebar-global-20261030">
-<script type="application/grimorio" src="sidebar.js?v=sidebar-global-20261030"></script>
-</head>
+<link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"><link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
+<script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
+<link rel="stylesheet" href="css/icones-pixel.css?v=artes-maiores-20261101"></head>
 <body class="bg-light planejamento-page">
 <div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Suas matérias e vínculos</a><button type="button" id="abrir-historico" aria-haspopup="dialog" aria-controls="historico-dialog">Histórico de estudos</button><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
     <header class="container py-4">
@@ -29,7 +30,7 @@
         <h1 class="h2 mb-2">Planejamento de estudos</h1>
         <p class="text-secondary mb-0">Consulte a divisão das matérias e sua meta de carga horária sempre que precisar.</p>
         </div>
-        <a href="agenda.html" class="btn btn-success planejamento-abrir-jornada">Abrir jornada de estudos <span aria-hidden="true">→</span></a>
+        <a href="agenda.html" class="btn btn-success planejamento-abrir-jornada">Abrir jornada de estudos <img class="icone-pixel" src="img/icons/seta-direita.png" alt="" aria-hidden="true" width="24" height="24"></a>
         </div>
     </header>
 
@@ -56,35 +57,14 @@
                     Ainda não há matérias salvas. Edite o projeto para montar seu planejamento.
                 </div>
 
-                <section class="card border-0 shadow-sm p-3 mb-4">
-                    <div class="row g-4 align-items-center">
-                        <div class="col-lg-7">
-                            <div class="table-responsive">
-                                <table class="table caption-top table-bordered mb-0">
-                                    <caption>Matérias adicionadas</caption>
-                                    <thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Peso personalizado</th><th scope="col">Peso em porcentagem (%)</th></tr></thead>
-                                    <tbody id="table-body-peso"></tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="col-lg-5">
-                            <div class="grafico-planejamento"><canvas id="graficoPizza"></canvas></div>
-                        </div>
-                    </div>
-                </section>
-
-                <div class="site-divisor" aria-hidden="true"></div>
-                <section class="card border-0 shadow-sm p-3">
-                    <div class="table-responsive">
-                        <table class="table caption-top table-bordered mb-0">
-                            <caption>Distribuição das matérias pela carga horária disponível</caption>
-                            <thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Meta de estudos</th></tr></thead>
-                            <tbody id="table-body-distribuicao"></tbody>
-                        </table>
-                    </div>
-                </section>
+                <section class="card border-0 shadow-sm p-3 mb-4 planejamento-grafico" aria-label="Distribuição dos pesos"><div class="grafico-planejamento"><canvas id="graficoPizza"></canvas></div></section>
             </div>
         </div>
+        <section class="card border-0 shadow-sm p-3 planejamento-tabela" aria-label="Metas de estudo"><table class="table caption-top table-bordered mb-0">
+                                    <caption>Matérias adicionadas</caption>
+                                    <thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Peso (pontos)</th><th scope="col">Peso (%)</th><th scope="col">Meta de Estudos (h)</th></tr></thead>
+                                    <tbody id="table-body-peso"></tbody>
+                                </table></section>
     </main>
 
     <footer class="site-rodape">
@@ -92,26 +72,26 @@
         <p><strong>GRIMÓRIO</strong></p>
         <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
     </footer>
-    <script type="application/grimorio" src="materias-store.js?v=nomes60-20261022"></script><script type="application/grimorio" src="identidade-store.js?v=2"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
-<script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=nomes60-20261022"></script>
+    <script type="application/grimorio" src="materias-store.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
+<script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=exclusao-global-20261101"></script>
     <script type="application/grimorio" src="dados-inicio.js?v=4"></script>
     <script type="application/grimorio" src="divisao-materia.js?v=3"></script>
-    <script type="application/grimorio" src="estudo-store.js?v=praticas-e7-final-20261026"></script>
+    <script type="application/grimorio" src="estudo-store.js?v=d061-20261101"></script>
     <script type="application/grimorio" src="projeto-ui.js?v=3"></script>
 </div></div>
-<dialog id="historico-dialog" aria-labelledby="historico-titulo">
-<header class="historico-cabecalho"><div><h2 id="historico-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
-<details id="historico-filtros-painel" open><summary>Filtrar registros</summary>
-<form id="historico-filtros" class="historico-filtros" role="search">
+<dialog id="historico-dialog" aria-labelledby="historico-modal-titulo">
+<header class="historico-cabecalho"><div><h2 id="historico-modal-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
+<details id="historico-modal-filtros-painel" open><summary>Filtrar registros</summary>
+<form id="historico-modal-filtros" class="historico-filtros" role="search">
 <label>Buscar matéria<input id="historico-busca" type="search" placeholder="Nome da matéria" autocomplete="off"></label>
-<label>Registros<select id="historico-tipo"><option value="">Todos os tipos</option><option value="estudo">Estudos (inclui extras)</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option></select></label>
-<label>Projeto<select id="historico-projeto"><option value="">Todos os projetos</option><option value="atual">Projeto selecionado</option></select></label>
+<label>Registros<select id="historico-modal-tipo"><option value="">Todos os tipos</option><option value="estudo">Estudos (inclui extras)</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option></select></label>
+<label>Projeto<select id="historico-modal-projeto"><option value="">Todos os projetos</option><option value="atual">Projeto selecionado</option></select></label>
 </form></details>
 <p id="historico-resumo" role="status" aria-live="polite"></p>
 <div class="historico-rolagem"><table id="tabela-sessoes-estudo"><caption>Registros mais recentes primeiro.</caption><thead><tr><th scope="col">Data</th><th scope="col">Hora</th><th scope="col">Matéria</th><th scope="col">Tempo estudado</th><th scope="col">Ações</th></tr></thead><tbody id="sessoes-estudo-body"></tbody></table></div>
-<div class="historico-paginacao"><button type="button" id="historico-anterior">Anterior</button><span id="historico-pagina"></span><button type="button" id="historico-proximo">Próxima</button></div>
+<div class="historico-paginacao"><button type="button" id="historico-modal-anterior">Anterior</button><span id="historico-modal-pagina"></span><button type="button" id="historico-modal-proximo">Próxima</button></div>
 </dialog>
-<script type="application/grimorio" src="jornada-interface.js?v=sidebar-global-20261030"></script>
+<script type="application/grimorio" src="jornada-interface.js?v=mobile-historico-20261101"></script>
 </body>
 </html>
 

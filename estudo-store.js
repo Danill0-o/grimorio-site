@@ -234,6 +234,8 @@
         const diasDoPlano = new Set(dias);
         // O volume é integral; cada registro quita somente a meta de seu próprio dia.
         const segundosPorDia = new Map();
+        const sequencial = dados?.replanejamento?.versao === 1;
+        const segundosNormais = new Map();
         let calendarioPorData;
         let calendarioConsultado = false;
         function diaDaSessao(sessao) {
@@ -260,12 +262,16 @@
             return diasDoPlano.has(dia) ? dia : null;
         }
         const pontosPorMateria = (Array.isArray(sessoesProjeto) ? sessoesProjeto : []).reduce((acc, sessao) => {
+            if (sequencial && sessao.projetoId !== dados.projetoId) return acc;
             const chave = chaveMateria(sessao);
             if (!sessaoEstudoElegivel(sessao)) return acc;
             if (!chave) return acc;
             if (!acc[chave]) acc[chave] = { nome: sessao.materia, segundos: 0 };
             const segundos = Math.max(0, Math.round(Number(sessao.duracaoSegundos) || 0));
             acc[chave].segundos += segundos;
+            if (!sessao.blocoExtraId && (!dados?.projetoId || sessao.projetoId === dados.projetoId)) {
+                segundosNormais.set(chave, (segundosNormais.get(chave) || 0) + segundos);
+            }
             const dia = sessao.blocoExtraId ? null : diaDaSessao(sessao);
             if (dia) {
                 if (!segundosPorDia.has(dia)) segundosPorDia.set(dia, new Map());
@@ -336,7 +342,9 @@
                 const necessarioAteSegundos = explicita ? necessarioAntesSegundos + (materiaDoDia[dia] || []).filter(b => chaveMateria(b) === chave).reduce((s,b) => s+b.metaSegundos,0) : Math.round(metaTotalSegundos * processadasAte / totalAparicoes);
                 segundosProcessados[chave] = necessarioAteSegundos;
                 const metaSegundos = necessarioAteSegundos - necessarioAntesSegundos;
-                const pontosAplicadosSegundos = Math.min(metaSegundos, segundosPorDia.get(dia)?.get(chave) || 0);
+                const pontosAplicadosSegundos = Math.min(metaSegundos, sequencial
+                    ? Math.max(0, (segundosNormais.get(chave) || 0) - necessarioAntesSegundos)
+                    : segundosPorDia.get(dia)?.get(chave) || 0);
                 const faltamSegundos = Math.max(0, metaSegundos - pontosAplicadosSegundos);
                 aparicoesProcessadas[chave] = processadasAte;
                 return {

@@ -38,6 +38,7 @@
 
     // Preferência/checkpoint auxiliar: nunca representa tempo estudado ou XP.
     function validarPomodoro(v) {
+        if (objeto(v) && v.observadoSegundos !== undefined && (!Number.isInteger(v.observadoSegundos) || v.observadoSegundos < 0)) return false;
         if (!objeto(v) || v.versao !== 1 || typeof v.ativo !== 'boolean'
             || ![v.focoSegundos, v.pausaSegundos].every(n => Number.isInteger(n) && n >= 1 && n <= 5999)
             || !['pronto', 'foco', 'aguarda-pausa', 'pausa', 'aguarda-foco'].includes(v.etapa)
@@ -151,7 +152,7 @@
         for (const [id, g] of Object.entries(globais)) {
             exigir(objeto(g) && Object.keys(g).every(k => ['materiaGlobalId', 'nomeCanonico', 'nomeNormalizado', 'status', 'mescladaEm', 'criadoEm', 'atualizadoEm'].includes(k))
                 && idValido(id, 'materia-global') && g.materiaGlobalId === id && texto(g.nomeCanonico)
-                && g.nomeNormalizado === normalizar(g.nomeCanonico) && ['ativa', 'arquivada', 'mesclada'].includes(g.status)
+                && g.nomeNormalizado === normalizar(g.nomeCanonico) && ['ativa', 'arquivada', 'mesclada', 'excluida'].includes(g.status)
                 && instante(g.criadoEm) && instante(g.atualizadoEm) && (g.status === 'mesclada' ? idValido(g.mescladaEm, 'materia-global') : g.mescladaEm === null), 'matéria global.');
             if (g.status === 'ativa') { exigir(!nomes.has(g.nomeNormalizado), 'nome global ativo duplicado.'); nomes.add(g.nomeNormalizado); }
             resolver(id);
@@ -193,6 +194,7 @@
             if (k === 'cronometroRegistroV1') { exigir(objeto(v) && v.chave === `cronometroV1:${v.sessao?.projetoId}`, 'journal do cronômetro.'); sessao(v.sessao); }
             if (/(?:^|:)revisoesTransacaoV1$/.test(k) && v.sessoesEstudo) lote(json(k, v.sessoesEstudo));
             if (k.startsWith('cronometroV1:')) {
+                if (v.contagemContinua !== undefined) exigir(v.contagemContinua === true && Number.isFinite(v.salvoEm) && v.salvoEm >= 0, 'referência do cronômetro contínuo.');
                 exigir(objeto(v) && v.versao === 1 && texto(v.id) && k === `cronometroV1:${v.projetoId}` && texto(v.materia)
                     && objeto(v.contexto) && v.contexto.projetoId === v.projetoId && ['rodando', 'parado'].includes(v.estado)
                     && Number.isFinite(v.tempoMs) && v.tempoMs >= 0 && instante(v.inicio), 'checkpoint de cronômetro.');
@@ -210,7 +212,11 @@
             if (p) exigir(chaves.has(nome) || nome === 'registro' || nome === 'pomodoroV1' || /^estudoExtraV1:extra-[\w-]+$/.test(nome), `chave de projeto ${k}.`);
             if (nome === 'pomodoroV1') exigir(Boolean(p) && validarPomodoro(v), 'configuração/checkpoint do Pomodoro.');
             if (nome === 'registro') exigir(objeto(v) && v.id === projetoId && instante(v.criadoEm), 'registro de projeto.');
-            if (nome === 'dadosExame') exigir(objeto(v) && texto(v.projetoId) && (!projetoId || v.projetoId === projetoId), 'dados de projeto.');
+            if (nome === 'dadosExame') {
+                exigir(objeto(v) && texto(v.projetoId) && (!projetoId || v.projetoId === projetoId), 'dados de projeto.');
+                if (v.replanejamento !== undefined) validarReplanejamento(v.replanejamento, v.projetoId);
+            }
+            if (nome === 'wizardProjeto' && v?.origemReplanejamento) validarReplanejamento(v.origemReplanejamento, projetoId);
             if (['objetosSalvos', 'objetosNormalizados', 'lista_distribuicao_materias'].includes(nome)) { exigir(Array.isArray(v), `lista ${k}.`); v.forEach(b => { exigir(objeto(b), `matéria em ${k}.`); vinculo(b.projetoMateriaId, projetoId || participacoes[b.projetoMateriaId]?.projetoId); }); }
             if (nome === 'materiaDoDia') {
                 exigir(objeto(v), 'plano diário.');
@@ -250,6 +256,25 @@
             if (nome === 'listaDiaDaSemana') exigir(Array.isArray(v) && v.every(d => ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].includes(d)), 'dias da semana.');
             if (['wizardProjeto', 'projetosBackupV1', 'identidadesV1', 'identidadesTransacaoV1', 'progressoProjetos'].includes(nome)) exigir(objeto(v), `estrutura ${nome}.`);
             if (['carga_horaria_disponivel', 'totalQuestoes', 'somaDasQuestoesNormalizadas'].includes(nome)) exigir(Number.isFinite(Number(v)) && Number(v) >= 0, `número ${nome}.`);
+        }
+        function validarReplanejamento(r, projetoId) {
+            exigir(objeto(r) && r.versao === 1 && r.projetoId === projetoId && objeto(r.origens)
+                && objeto(r.metasAnteriores) && Array.isArray(r.revisoesIds) && r.revisoesIds.every(texto), 'origens do replanejamento.');
+            if (r.sessoesIds !== undefined) exigir(Array.isArray(r.sessoesIds) && r.sessoesIds.every(texto), 'sessões do replanejamento.');
+            if (r.planoFonteId !== undefined) exigir(r.planoFonteId === null || texto(r.planoFonteId), 'versão de origem do replanejamento.');
+            const estados = parsed[`projetoV1:${projetoId}:revisoesEstadoV1`] || parsed.revisoesEstadoV1;
+            exigir(r.revisoesIds.every(id => estados?.entidades?.[id]?.projetoId === projetoId), 'referência histórica de revisão.');
+            for (const [id, b] of Object.entries(r.origens)) {
+                exigir(objeto(b) && b.blocoId === id && texto(id) && b.projetoId === projetoId
+                    && /^dia[1-9]\d*$/.test(b.diaOrigem) && (b.dataOrigem === null || civil(b.dataOrigem))
+                    && Number.isInteger(b.numero) && b.numero > 0 && Number.isSafeInteger(b.metaSegundos) && b.metaSegundos > 0,
+                    'bloco histórico do replanejamento.');
+                vinculo(b.projetoMateriaId, projetoId);
+            }
+            for (const [id, m] of Object.entries(r.metasAnteriores)) {
+                exigir(objeto(m) && typeof m.materia === 'string' && Number.isSafeInteger(m.metaSegundos) && m.metaSegundos > 0, 'meta histórica do replanejamento.');
+                vinculo(id, projetoId);
+            }
         }
         if (parsed.materiasBuscaV1 !== undefined) {
             const m = parsed.materiasBuscaV1; exigir(objeto(m) && Object.keys(m).every(k => ['versao', 'aliases', 'termos', 'recentes'].includes(k))

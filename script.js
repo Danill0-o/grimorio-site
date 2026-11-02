@@ -58,7 +58,11 @@ if (document.getElementById('cadastroForm') !== null) {
     window.addEventListener("load", escondeBtn);
 };
 document.addEventListener('DOMContentLoaded', function() {
-    const objetosArmazenados = lerArrayLocalStorage('objetosSalvos');
+    const objetosArmazenados = lerArrayLocalStorage('objetosSalvos').filter(m => {
+        if (!document.getElementById('cadastroForm') || !window.MateriasStore) return true;
+        const p = window.MateriasStore.obterProjetoMateria(m.projetoMateriaId, window.ProjetosStore.idAtual());
+        return window.MateriasStore.resolverMateriaGlobal(p.materiaGlobalId).status !== 'excluida';
+    });
     objetosSalvos = objetosArmazenados;
     if (document.getElementById('cadastroForm') !== null) {
         restaurarMateriasSalvas(objetosArmazenados);

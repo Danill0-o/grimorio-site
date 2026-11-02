@@ -16,7 +16,7 @@
     }
     function inicio(valor, grupo) {
         const data = new Date(valor);
-        if (grupo !== 'mes') return valor - ((data.getUTCDay() + 6) % 7) * DIA;
+        if (grupo !== 'mes') return valor - data.getUTCDay() * DIA;
         data.setUTCDate(1); return data.getTime();
     }
     function seguinte(valor, grupo) {

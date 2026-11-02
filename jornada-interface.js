@@ -7,8 +7,8 @@ const criar=(tag,texto)=>{const e=document.createElement(tag);e.textContent=text
 function atualizar(){
  const dialogo=$('historico-dialog');if(!dialogo?.open)return;
  try{
-  const busca=normalizar($('historico-busca').value.trim()),tipo=$('historico-tipo').value;
-  const projeto=$('historico-projeto').value==='atual'?window.ProjetosStore.idAtual():null;
+  const busca=normalizar($('historico-busca').value.trim()),tipo=$('historico-modal-tipo').value;
+  const projeto=$('historico-modal-projeto').value==='atual'?window.ProjetosStore.idAtual():null;
   const nomes=new Map(window.ProjetosStore.listar().map(p=>[p.id,p.dados.nomeExame||p.rascunho?.valores?.nome_exame||'Projeto em preparação']));
   const sessoes=window.EstudoStore.listarSessoes().filter(s=>(!busca||normalizar(s.materia).includes(busca))&&(!projeto||s.projetoId===projeto)&&(!tipo||(tipo==='extra'?s.blocoExtraId:s.tipo===tipo)))
    .sort((a,b)=>Date.parse(b.inicio)-Date.parse(a.inicio)||String(b.id).localeCompare(String(a.id)));
@@ -31,7 +31,7 @@ function atualizar(){
   if(!sessoes.length){const tr=document.createElement('tr'),td=criar('td','Nenhum registro encontrado.');td.colSpan=5;tr.append(td);corpo.append(tr);}
   $('sessoes-estudo-body').replaceChildren(corpo);
   $('historico-resumo').textContent=sessoes.length?`${(pagina-1)*TAMANHO+1}–${Math.min(pagina*TAMANHO,sessoes.length)} de ${sessoes.length} registros`:'Nenhum registro para os filtros escolhidos.';
-  $('historico-pagina').textContent=`Página ${pagina} de ${paginas}`;$('historico-anterior').disabled=pagina===1;$('historico-proximo').disabled=pagina===paginas;
+  $('historico-modal-pagina').textContent=`Página ${pagina} de ${paginas}`;$('historico-modal-anterior').disabled=pagina===1;$('historico-modal-proximo').disabled=pagina===paginas;
  }catch(e){$('historico-resumo').textContent='Não foi possível consultar o histórico. Seus dados foram preservados. '+e.message;}
 }
 window.HistoricoJornada={atualizar};
@@ -39,9 +39,9 @@ document.addEventListener('DOMContentLoaded',()=>{
  const dialogo=$('historico-dialog');if(!dialogo)return;
  $('abrir-historico').addEventListener('click',()=>{dialogo.showModal();atualizar();($('historico-busca').checkVisibility()?$('historico-busca'):$('fechar-historico')).focus();});
  $('fechar-historico').addEventListener('click',()=>dialogo.close());dialogo.addEventListener('close',()=>($('abrir-historico').checkVisibility()?$('abrir-historico'):$('jornada-menu-aberto').querySelector('summary')).focus());
- $('historico-filtros').addEventListener('submit',e=>e.preventDefault());
- for(const id of ['historico-busca','historico-tipo','historico-projeto'])$(id).addEventListener(id==='historico-busca'?'input':'change',()=>{pagina=1;atualizar();});
- $('historico-anterior').addEventListener('click',()=>{pagina--;atualizar();});$('historico-proximo').addEventListener('click',()=>{pagina++;atualizar();});
+ $('historico-modal-filtros').addEventListener('submit',e=>e.preventDefault());
+ for(const id of ['historico-busca','historico-modal-tipo','historico-modal-projeto'])$(id).addEventListener(id==='historico-busca'?'input':'change',()=>{pagina=1;atualizar();});
+ $('historico-modal-anterior').addEventListener('click',()=>{pagina--;atualizar();});$('historico-modal-proximo').addEventListener('click',()=>{pagina++;atualizar();});
  if(!window.CronometroEstudos)for(const evento of ['estudo:registrado','estudo:excluido','storage'])window.addEventListener(evento,atualizar);
  const praticas=$('praticas-painel-dialog');
  $('abrir-praticas')?.addEventListener('click',()=>{praticas.showModal();$('fechar-praticas-painel').focus();});

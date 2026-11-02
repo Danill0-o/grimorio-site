@@ -76,3 +76,20 @@
 .perfil-page .reset-dialogo { background:var(--pixel-surface-elevated); color:var(--pixel-ink); }
 .perfil-grid h3 { overflow-wrap:anywhere; }
 .perfil-grid .materia-level-card { display:flex; flex-direction:column; }
+
+/* Texto e arte em colunas independentes, sem sobreposição. */
+.jornada-hero.perfil-hero { display: grid; grid-template-columns: minmax(0,1fr) 220px; padding: 0 !important; background: var(--pixel-surface-elevated) !important; overflow: hidden; }
+.perfil-hero-conteudo { min-width: 0; padding: clamp(20px, 4vw, 48px); }
+.perfil-hero-conteudo h1 { overflow-wrap: anywhere; }
+.perfil-hero-imagem { width: 100%; height: 100%; min-height: 220px; object-fit: cover; object-position: right center; }
+.perfil-hero::after { display: none; }
+@media(max-width:700px) { .jornada-hero.perfil-hero { grid-template-columns: 1fr; } .perfil-hero-imagem { height: 160px; min-height: 0; object-position: center 40%; } }
+#catalogo-confirmar-alias, #vinculo-revisar { width: auto; justify-self: start; padding: .35rem .6rem; font-size: .68rem; min-height: 44px; }
+
+.perfil-hero-imagem { mask-image: linear-gradient(to right, transparent, black 35%); }
+@media(max-width:700px) { .perfil-hero-imagem { mask-image: linear-gradient(to bottom, transparent, black 25%); } }
+
+/* Ilustração integrada sob o mesmo degradê da Home. */
+.jornada-hero.perfil-hero { display: block; background-image: linear-gradient(90deg,var(--pixel-surface-elevated) 0%,var(--pixel-surface) 74%,rgba(15,10,6,.45) 100%), url('../img/assets/pixel-mage.jpg') !important; background-size: cover, auto 100% !important; background-position: center, right center !important; background-repeat: no-repeat !important; }
+.perfil-hero-conteudo { max-width: 72%; }
+@media(max-width:700px) { .perfil-hero-conteudo { max-width: 100%; } .jornada-hero.perfil-hero { background-image: linear-gradient(90deg,var(--pixel-surface-elevated) 0%,var(--pixel-surface) 78%,rgba(15,10,6,.45) 100%), url('../img/assets/pixel-mage.jpg') !important; } }

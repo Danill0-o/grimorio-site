@@ -35,7 +35,7 @@
         botao.type = 'button';
         botao.className = 'nota-botao';
         botao.dataset.notaBloco = bloco.blocoId;
-        botao.textContent = 'T';
+        botao.append(window.IconesPixel.criar('anotar'));
         const preenchida = Boolean(texto(bloco));
         botao.classList.toggle('nota-preenchida', preenchida);
         botao.title = `${preenchida ? 'Editar anotação de' : 'Anotar'} ${bloco.materia} · ${contexto.diaJornada} · bloco ${contexto.numero}`;

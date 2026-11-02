@@ -425,3 +425,14 @@
 .jornada-page .progresso-legenda-ideal::before {
     background: linear-gradient(180deg, var(--pixel-gold-bright), var(--pixel-gold)) !important;
 }
+
+.jornada-page .dia-card-hoje { display: inline-grid; place-items: center; padding: 3px 6px; border: 1px solid #092519; background: #2de091; color: #092519; font-family: var(--font-body); font-size: .68rem; font-weight: 700; line-height: 1.4; white-space: nowrap; }
+
+.jornada-cadeado { width: 28px; height: 28px; object-fit: contain; image-rendering: pixelated; }
+#revisoes-status[popover] { max-width: min(360px,calc(100vw - 32px)); padding: 16px; background: var(--pixel-surface); color: var(--pixel-ink) !important; border: 2px solid var(--pixel-bronze); }
+.revisoes-info { margin-left: .5rem; min-width: 44px; min-height: 44px; }
+
+.jornada-page .dia-card-cabecalho .dia-card-badge:has(.jornada-cadeado) { padding: 0; }
+.jornada-cadeado { width: 40px; height: 40px; transform: scale(1.2); }
+.jornada-page button.revisoes-info { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; min-height: 22px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--pixel-ink) !important; border-radius: 50% !important; background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; font: italic 16px Georgia,serif; text-transform: none; box-shadow: none !important; text-shadow: none !important; }
+#revisoes-status[popover] { margin: 0; inset: auto; box-shadow: 2px 2px 0 var(--pixel-shadow); }

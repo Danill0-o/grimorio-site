@@ -7,6 +7,7 @@
     let etapa = 0;
     let blocosEscolhidos = null;
     let backupPendente = false;
+    let origemReplanejamento = null;
 
     function atualizarBlocos() {
         const minutos = converterHorasParaMinutos(el('horas-por-dia').value);
@@ -29,7 +30,7 @@
     function guardarRascunho() {
         const valores = Object.fromEntries(campos.map((id) => [id, el(id).value]));
         valores['blocos-por-dia'] = blocosEscolhidos === null ? '' : String(blocosEscolhidos);
-        (window.ProjetoStorage || localStorage).setItem(CHAVE, JSON.stringify({ etapa, valores, dias: selecionados() }));
+        (window.ProjetoStorage || localStorage).setItem(CHAVE, JSON.stringify({ etapa, valores, dias: selecionados(), origemReplanejamento }));
     }
     function erro(texto, campo) {
         el('wizard-erro').textContent = texto;
@@ -96,6 +97,7 @@
             ['Matérias cadastradas', el('table-body').children.length],
             ['Total de questões', el('totalQuestoes').value]
         ];
+        if (origemReplanejamento) pares.push(['Replanejamento', 'Os cards serão reconstruídos desde a data escolhida, inclusive retroativa. Estudos normais preenchem sequencialmente os blocos da mesma matéria; extras ficam separados. Notas, revisões e datas reais são preservadas.']);
         el('wizard-resumo').replaceChildren(...pares.map(([rotulo, valor]) => {
             const linha = document.createElement('div');
             const dt = document.createElement('dt'); const dd = document.createElement('dd');
@@ -154,7 +156,8 @@
             else botao.removeAttribute('aria-current');
         });
         el('wizard-voltar').hidden = etapa === 0;
-        el('wizard-avancar').textContent = etapa === 3 ? 'Criar jornada' : 'Continuar →';
+        el('wizard-avancar').textContent = etapa === 3 ? 'Criar jornada' : 'Continuar ';
+        if (etapa !== 3) el('wizard-avancar').append(window.IconesPixel.criar('direita'));
         el('wizard-erro').textContent = '';
         if (etapa === 3) resumo();
         guardarRascunho();
@@ -198,14 +201,22 @@
             if (window.PraticasStore?.sincronizarMissoesProjeto) {
                 await window.PraticasStore.sincronizarMissoesProjeto(lerObjetoArmazenado('dadosExame'), lerArrayArmazenado('objetosNormalizados'));
             }
-            distribui_materias();
-            if (!sortMaterias()) return erro('Não foi possível gerar a jornada. Confira a rotina e as matérias.');
-            (window.ProjetoStorage || localStorage).removeItem(CHAVE);
+            await window.ProjetosStore.confirmarPlano(() => {
+                if (origemReplanejamento) {
+                    const dados = lerObjetoArmazenado('dadosExame');
+                    dados.replanejamento = window.Replanejamento.preparar(origemReplanejamento, dados);
+                    dados.planoVersaoId = `plano-${crypto.randomUUID()}`;
+                    (window.ProjetoStorage || localStorage).setItem('dadosExame', JSON.stringify(dados));
+                }
+                distribui_materias();
+                if (!sortMaterias()) throw new Error('Não foi possível gerar a jornada. Confira a rotina e as matérias.');
+                (window.ProjetoStorage || localStorage).removeItem(CHAVE);
+            });
             backupPendente = true;
             document.querySelectorAll('.wizard-shell input, .wizard-shell select, .wizard-shell button').forEach(c => { c.disabled = true; });
             await backupDaJornada();
         } catch (e) {
-            erro('Não foi possível salvar. Verifique o armazenamento do navegador e tente novamente.');
+            erro('Não foi possível salvar. ' + e.message);
             console.error(e);
         } finally { el('wizard-avancar').disabled = backupPendente; }
     }
@@ -220,6 +231,9 @@
             dias.forEach(d => { el(`btn-${d}`).checked = (dados.listaDiaDaSemana || []).includes(d); });
         }
         const rascunho = lerObjetoArmazenado(CHAVE);
+        const origemSalva = rascunho?.origemReplanejamento;
+        origemReplanejamento = origemSalva && (origemSalva.planoFonteId || null) === (dados?.planoVersaoId || null)
+            ? origemSalva : window.Replanejamento.capturar();
         blocosEscolhidos = Number(rascunho?.valores?.['blocos-por-dia']) || Number(dados?.blocosPorDia ?? dados?.materiasPorDia) || null;
         if (rascunho) {
             campos.forEach(id => { if (typeof rascunho.valores?.[id] === 'string') el(id).value = rascunho.valores[id]; });
