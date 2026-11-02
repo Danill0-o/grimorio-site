@@ -472,3 +472,49 @@
 #pratica-detalhes > .form-check { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding-left: 0; }
 #pratica-detalhes > .form-check .form-check-input { float: none; margin: 0; flex-shrink: 0; }
 @media (max-width: 600px) { #pratica-detalhes { grid-template-columns: minmax(0, 1fr); } }
+
+.tempo-prova-campo { color: var(--pixel-ink) !important; background: var(--pixel-surface); padding: 8px; }
+
+/* Diálogo de confirmação de remoção de matéria no Wizard */
+.wizard-confirmacao-dialog {
+    box-sizing: border-box;
+    width: min(520px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    border: 4px solid var(--pixel-bronze);
+    border-radius: 0;
+    padding: 24px;
+    background: var(--pixel-surface-elevated);
+    color: var(--pixel-ink);
+    box-shadow: 0 0 0 4px var(--pixel-border-outer), inset 0 0 0 3px var(--pixel-gold), 12px 12px 0 rgb(0 0 0 / .75);
+}
+.wizard-confirmacao-dialog::backdrop {
+    background: rgb(10 6 4 / .8);
+}
+.wizard-confirmacao-dialog h2 {
+    font-size: 1.25rem;
+    line-height: 1.4;
+    color: var(--pixel-ink);
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+.wizard-confirmacao-dialog p {
+    color: var(--pixel-ink);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 8px;
+}
+.wizard-confirmacao-dialog p strong {
+    color: var(--pixel-ink);
+}
+.wizard-confirmacao-aviso {
+    font-size: 0.85rem !important;
+    color: var(--pixel-ink) !important;
+    opacity: 0.9;
+}
+.wizard-confirmacao-acoes {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 20px;
+}

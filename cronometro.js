@@ -152,7 +152,7 @@
                 if (contextoManual && (elementos.materiaManual.value !== contextoManual.projetoMateriaId
                     || elementos.dataManual.value !== contextoManual.dataEstudo)) contextoManual = null;
                 const opcaoManual = elementos.materiaManual.selectedOptions[0];
-                elementos.dataManual.min = opcaoManual?.dataset.dataPrevista || '';
+                elementos.dataManual.min = '';
             };
             elementos.materiaManual.addEventListener('change', soltarContextoManual);
             elementos.dataManual.addEventListener('input', soltarContextoManual);
@@ -270,35 +270,15 @@
         try {
             const { missao, removida } = window.PraticasExecucao.consultar(missaoId);
             const hoje = window.CalendarioJornada?.dataLocal?.() || '';
-            if (removida || (hoje && missao.dataPrevista > hoje)) return false;
+            if (removida || !missao.usaCronometro || (hoje && missao.dataPrevista > hoje)) return false;
             atualizarMaterias(elementos);
             const valor = `pratica:${missao.missaoId}`;
-            if (elementos.materiaManual) {
-                let opManual = Array.from(elementos.materiaManual.options).find(o => o.value === valor);
-                if (!opManual) {
-                    opManual = document.createElement('option');
-                    opManual.value = valor;
-                    opManual.dataset.pratica = 'true';
-                    opManual.dataset.missaoId = missao.missaoId;
-                    opManual.dataset.dataPrevista = missao.dataPrevista || '';
-                    opManual.textContent = `Atividade prática · ${missao.nome}`;
-                    elementos.materiaManual.append(opManual);
-                }
-                elementos.materiaManual.value = valor;
-                if (elementos.dataManual) {
-                    elementos.dataManual.min = missao.dataPrevista || '';
-                    elementos.dataManual.max = hoje;
-                    if (!elementos.dataManual.value || elementos.dataManual.value < missao.dataPrevista) {
-                        elementos.dataManual.value = hoje;
-                    }
-                }
-            }
             const secaoCronometro = document.getElementById('cronometro-estudos') || elementos.display?.closest('.cronometro-card');
             if (missao.usaCronometro) {
                 if (estado === 'ocioso') {
                     selecionarPratica(missao);
                     atualizarControles(elementos);
-                    definirStatus(elementos, `Atividade prática · ${missao.nome} selecionada. Clique em Iniciar ou adicione o tempo manualmente.`);
+                    definirStatus(elementos, `Atividade prática · ${missao.nome} selecionada. Use Iniciar para medir o tempo e Concluir atividade para liberar o XP.`);
                 } else if (contextoSessao.tipo !== 'pratica' || contextoSessao.missaoId !== missaoId) {
                     definirStatus(elementos, 'Registre ou zere a sessão atual antes de iniciar outra sessão.', true);
                 }
@@ -307,14 +287,6 @@
                     block: 'center'
                 });
                 (!elementos.iniciar.disabled ? elementos.iniciar : elementos.materia)?.focus({ preventScroll: true });
-            } else if (elementos.formManual) {
-                elementos.formManual.closest('details').open = true;
-                definirStatusManual(elementos, `Registre o tempo realizado em ${missao.nome}.`);
-                secaoCronometro?.scrollIntoView({
-                    behavior: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
-                    block: 'center'
-                });
-                elementos.minutosManual?.focus({ preventScroll: true });
             }
             return true;
         } catch (_) {
@@ -519,40 +491,7 @@
         }
         const anotacao = elementos.anotacaoManual?.value.trim().slice(0, 140) || '';
         if (projetoMateriaId.startsWith('pratica:')) {
-            const missaoId = projetoMateriaId.slice('pratica:'.length);
-            const duracaoSegundos = Math.round(totalMinutos * 60);
-            if (!Number.isSafeInteger(duracaoSegundos) || duracaoSegundos <= 0) {
-                definirStatusManual(elementos, 'Informe uma duração positiva em segundos inteiros.', true);
-                return;
-            }
-            const dataAlvoPratica = dataEstudo || window.CalendarioJornada.dataLocal();
-            const assinaturaPratica = JSON.stringify([projetoId(), projetoMateriaId, dataAlvoPratica, duracaoSegundos, anotacao]);
-            if (!tentativaManual || tentativaManual.assinatura !== assinaturaPratica) {
-                tentativaManual = { assinatura: assinaturaPratica, id: crypto.randomUUID(), registradoEm: new Date().toISOString() };
-            }
-            registroManualEmCurso = true;
-            const enviarPratica = elementos.formManual.querySelector('button[type="submit"]');
-            enviarPratica.disabled = true;
-            try {
-                await window.PraticasExecucao.registrarManual(missaoId, {
-                    sessaoId: tentativaManual.id,
-                    registradoEm: tentativaManual.registradoEm,
-                    dataEstudo: dataAlvoPratica,
-                    duracaoSegundos,
-                    anotacao
-                });
-            } catch (erro) {
-                definirStatusManual(elementos, erro?.message && !/Quota/i.test(erro.message)
-                    ? erro.message
-                    : 'Não foi possível salvar. Os campos foram preservados; confira o armazenamento e tente novamente.', true);
-                return;
-            } finally {
-                registroManualEmCurso = false;
-                enviarPratica.disabled = false;
-            }
-            tentativaManual = null;
-            elementos.formManual.reset();
-            definirStatusManual(elementos, `${formatarPontos(totalMinutos)} adicionados em ${materia}.`);
+            definirStatusManual(elementos, 'Use a atividade prática para registrar sua conclusão. Este formulário é exclusivo para matérias.', true);
             return;
         }
         const contextual = contextoManual && contextoManual.projetoMateriaId === projetoMateriaId
@@ -624,7 +563,7 @@
         }).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
         let opcoesPraticasCronometro = [];
-        let opcoesPraticasManual = [];
+
         const idProj = projetoId();
         if (idProj && window.PraticasStore?.projetarMissoesProjeto && localStorage.getItem('praticasProjetoV1:' + idProj) !== null) {
             try {
@@ -646,7 +585,7 @@
                         : `Atividade prática · ${m.nome}`
                 });
                 opcoesPraticasCronometro = disponiveis.filter(m => m.usaCronometro).map(formatarOpcao);
-                opcoesPraticasManual = disponiveis.map(formatarOpcao);
+
             } catch (_) {}
         }
 
@@ -656,7 +595,7 @@
             selecionarRevisaoHistorica(p.projetoMateriaId, p.nomeExibicao ?? window.MateriasStore.resolverMateriaGlobal(p.materiaGlobalId).nomeCanonico, contextoSessao);
         }
         if (contextoSessao.tipo === 'pratica') selecionarPratica(window.PraticasExecucao.consultar(contextoSessao.missaoId).missao);
-        if (elementos.materiaManual) preencherSelect(elementos.materiaManual, [...materias, ...opcoesPraticasManual], 'Selecione uma matéria', selecaoManualAtual);
+        if (elementos.materiaManual) preencherSelect(elementos.materiaManual, materias, 'Selecione uma matéria', selecaoManualAtual);
         atualizarControles(elementos);
     }
 

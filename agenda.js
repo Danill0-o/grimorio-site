@@ -92,8 +92,14 @@
         const estadoDias = progressoPlano.dias;
         let missoesPorDia = {};
         try {
-            missoesPorDia = window.PraticasStore?.projetarMissoesProjeto
-                ? window.PraticasStore.projetarMissoesProjeto(projetoId, { dados: dadosExame, materiaDoDia }).missoesPorDiaJornada : {};
+            const praticas = window.PraticasStore?.projetarMissoesProjeto?.(projetoId, { dados: dadosExame, materiaDoDia });
+            missoesPorDia = { ...(praticas?.missoesPorDiaJornada || {}) };
+            const datas = window.CalendarioJornada.mapear(dadosExame, Object.keys(materiaDoDia).length).porDia;
+            for (const folga of praticas?.folgas || []) {
+                const chaves = Object.keys(datas);
+                const destino = chaves.filter(d => datas[d] <= folga.dataPrevista).at(-1) || chaves[0];
+                if (destino) missoesPorDia[destino] = [...(missoesPorDia[destino] || []), ...folga.missoes.filter(m => m.extraAvulsa)];
+            }
         } catch (erro) {
             document.getElementById('cronometro-status').textContent = 'Não foi possível carregar as atividades práticas. Seus dados foram preservados.';
             console.error(erro);
@@ -147,11 +153,8 @@
         const primeiroCard = document.querySelector('#jornada-cards .dia-card');
         const historico = window.Replanejamento?.criarHistorico(dadosExame, materiaDoDia, sessoesProjeto, true);
         if (primeiroCard && historico) primeiroCard.append(historico);
-        const foraPlano = mostrarRevisoes ? revisoes.filter(r => r.origemHistorica && !r.diaJornada) : [];
-        if (primeiroCard && foraPlano.length) adicionarRevisoesComCronometro(primeiroCard, foraPlano, {
-            projetoId, diaJornada: 'historico', sessoesProjeto, anotacoesSessoes, revisoesAbertas: new Set()
-        });
         renderizarRevisoesAtrasadas(mostrarRevisoes ? revisoes : [], projetoId, anotacoesSessoes);
+        window.ProjetoUI?.atualizar?.();
 
     }
 
@@ -159,6 +162,8 @@
         const atual = estadoDias[indiceAtual];
         const concluidos = estadoDias.filter((estado) => estado.concluido).length;
         document.getElementById('jornada-titulo').textContent = dadosExame.nomeExame || 'Sua campanha de estudos';
+        const elNomeProjeto = document.querySelector('[data-projeto-nome]');
+        if (elNomeProjeto) elNomeProjeto.textContent = dadosExame.nomeExame || 'Projeto sem nome';
         document.getElementById('jornada-status').textContent = concluidos >= estadoDias.length
             ? 'Campanha concluída. Você completou todos os dias planejados!'
             : `${concluidos} de ${estadoDias.length} dias concluídos. Continue acumulando conhecimento.`;
@@ -624,7 +629,7 @@
             const identificacao = document.createElement('span');
             identificacao.className = 'dia-materia-identificacao';
             const nome = document.createElement('strong');
-            nome.textContent = `Atividade prática · ${missao.nome}`;
+            nome.textContent = `Atividade prática · ${missao.nome}${missao.extraAvulsa ? " · extra" : ""}${!missao.diaJornada ? " · " + missao.dataPrevista.split("-").reverse().join("/") : ""}`;
             if (missao.concluida) nome.append(criarIcone('concluir'));
             const detalhe = document.createElement('small');
             detalhe.className = 'dia-missao-detalhe';
@@ -678,19 +683,31 @@
             if (!extra.projetoMateriaId) {
                 const seletor = document.createElement('select');
                 seletor.className = 'extra-materia-seletor';
-                seletor.setAttribute('aria-label', 'Matéria do estudo extra');
+                seletor.setAttribute('aria-label', 'Matéria ou atividade do extra');
                 const placeholder = document.createElement('option');
-                placeholder.value = ''; placeholder.textContent = 'Escolha a matéria';
+                placeholder.value = ''; placeholder.textContent = 'Escolha a matéria ou atividade';
                 seletor.append(placeholder);
                 Object.keys(contexto.progressoMaterias).forEach(id => {
                     const option = document.createElement('option');
                     option.value = id; option.textContent = window.IdentidadeStore.nomeMateria(id);
                     seletor.append(option);
                 });
+                for (const registro of window.PraticasStore?.listarAtividades(contexto.projetoId) || []) {
+                    const a = registro.atividade || registro;
+                    const option = document.createElement('option'); option.value = `pratica:${a.atividadeId}`;
+                    option.textContent = `Atividade prática · ${a.nome}`; seletor.append(option);
+                }
                 seletor.addEventListener('change', async () => {
                     if (!seletor.value) return;
                     seletor.disabled = true;
                     try {
+                        if (seletor.value.startsWith('pratica:')) {
+                            await window.PraticasStore.criarMissao(contexto.projetoId, seletor.value.slice(8), {
+                                missaoId: `pratica-extra-${extra.blocoId}`, dataPrevista: extra.dataOrigem
+                            });
+                            await window.EstudoExtra.excluir(extra.blocoId, contexto.projetoId);
+                            return;
+                        }
                         await window.EstudoExtra.escolherMateria(extra.blocoId, seletor.value, contexto.projetoId);
                         document.querySelector(`.estudo-extra[data-bloco-extra-id="${extra.blocoId}"] [data-nota-bloco]`)?.focus({ preventScroll: true });
                     } catch (erro) { document.getElementById('cronometro-status').textContent = erro.message; seletor.disabled = false; }
@@ -719,6 +736,7 @@
                 diaJornada: extra.diaJornada, registroManual: contexto.estado.situacaoTemporal === 'passado', dataEstudo: extra.dataOrigem });
             const bloco = { ...extra, materia };
             acoes.prepend(window.NotasBlocos.criarBotao(bloco, { diaJornada: extra.diaJornada, numero: 1 }));
+            acoes.append(item.querySelector('.extra-excluir'));
             const textoNota = window.NotasBlocos.texto(bloco);
             const tempo = document.createElement('small'); tempo.className = 'extra-tempo-registrado';
             tempo.textContent = ((contexto.segundosExtrasPorBloco.get(extra.blocoId) || 0) / 60).toLocaleString('pt-BR', {maximumFractionDigits:2}) + ' min estudados';

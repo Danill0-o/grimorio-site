@@ -26,4 +26,20 @@
         for (const b of document.querySelectorAll('[data-ajuda-contextual]')) ajuda(b, document.getElementById(b.getAttribute('popovertarget')));
     });
     window.IconesPixel = Object.freeze({ criar, ajuda });
+    function atualizarFechar() {
+        for (const b of document.querySelectorAll('button:not(.pixel-fechar)')) {
+            const nome = b.getAttribute('aria-label') || b.textContent.trim();
+            if (!(/^fechar\b/i.test(nome) || /^[×✕✖Xx]$/.test(nome) || b.classList.contains('btn-close'))) continue;
+            const janela = b.closest('dialog, [popover], .modal-content');
+            if (!janela) continue;
+            if (!b.getAttribute('aria-label')) b.setAttribute('aria-label', /^fechar\b/i.test(nome) ? nome : 'Fechar janela');
+            b.title ||= b.getAttribute('aria-label');
+            b.classList.add('pixel-fechar');
+            if (b.parentElement !== janela) janela.append(b);
+        }
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+        atualizarFechar();
+        new MutationObserver(atualizarFechar).observe(document.body, {childList:true, subtree:true});
+    });
 })();

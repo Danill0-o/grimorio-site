@@ -7,7 +7,10 @@
         'lista_distribuicao_materias', 'totalQuestoes', 'objetosSalvos', 'objetosNormalizados',
         'somaDasQuestoesNormalizadas', 'materiaDoDia', 'revisoesDoDia', 'planosIdentidadeV1', 'revisoesEstadoV1', 'revisoesTransacaoV1']);
     const prefixo = id => `projetoV1:${id}:`;
-    const ler = (chave, padrao = null) => JSON.parse(storage.getItem(chave) || JSON.stringify(padrao));
+    const ler = (chave, padrao = null) => {
+        const raw = storage.getItem(chave) || JSON.stringify(padrao), nome = /^projetoV1:[^:]+:(.+)$/.exec(chave)?.[1];
+        return JSON.parse(nome && window.MateriasStore?.projetarNomes ? window.MateriasStore.projetarNomes(nome, raw) : raw);
+    };
     const registro = id => ler(prefixo(id) + 'registro');
     const uuid = () => `projeto-${crypto.randomUUID()}`;
     function recuperar(journal) {
@@ -137,7 +140,10 @@
     let planoEmPreparacao = null;
     const chaveReal = chave => CHAVES.has(chave) ? prefixo(selecionado) + chave : chave;
     window.ProjetoStorage = {
-        getItem(chave) { const k = chaveReal(chave); return planoEmPreparacao?.has(k) ? planoEmPreparacao.get(k) : storage.getItem(k); },
+        getItem(chave) {
+            const k = chaveReal(chave), raw = planoEmPreparacao?.has(k) ? planoEmPreparacao.get(k) : storage.getItem(k);
+            return window.MateriasStore?.projetarNomes ? window.MateriasStore.projetarNomes(chave, raw) : raw;
+        },
         setItem(chave, valor) {
             if (CHAVES.has(chave)) validar();
             if (planoEmPreparacao) planoEmPreparacao.set(chaveReal(chave), String(valor));

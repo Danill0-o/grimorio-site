@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script type="application/grimorio" src="icones-pixel.js?v=artes-20261101"></script>
+<script type="application/grimorio" src="icones-pixel.js?v=controles-20261102"></script>
 <meta charset="UTF-8">
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=offline-20261030"></script>
     <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
-    <script type="application/grimorio" src="backup-local.js?v=d061-20261101"></script>
+    <script type="application/grimorio" src="backup-local.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="acessibilidade.js?v=sidebar-global-20261030"></script>
     <link rel="stylesheet" href="css/relatorios.css?v=temas3-20261022">
-    <script type="application/grimorio" src="projetos-store.js?v=d061-20261101"></script><script type="application/grimorio" src="praticas-store.js?v=exclusao-global-20261101"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="praticas-store.js?v=pratica-extra-20261102"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jornada de estudos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
@@ -21,11 +21,11 @@
     <link rel="stylesheet" href="css/revisoes.css?v=temas3-20261022">
 <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
     <link rel="stylesheet" href="css/jornada-cards.css?v=info-20261101">
-    <link rel="stylesheet" href="css/praticas-execucao.css?v=praticas-modais-20261031">
+    <link rel="stylesheet" href="css/praticas-execucao.css?v=fusao-xp-20261102">
 <link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
 <link rel="stylesheet" href="css/pomodoro.css?v=resumo-20261101">
 <script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
-<link rel="stylesheet" href="css/quest-marcadores.css?v=quest-20261101"><script type="application/grimorio" src="quest-marcadores.js?v=quest-20261101"></script><link rel="stylesheet" href="css/icones-pixel.css?v=artes-maiores-20261101"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101">
+<link rel="stylesheet" href="css/quest-marcadores.css?v=quest-20261101"><script type="application/grimorio" src="quest-marcadores.js?v=quest-20261101"></script><link rel="stylesheet" href="css/icones-pixel.css?v=artes-cascata-20261102"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101">
 </head>
 <body class="jornada-page">
 <div class="jornada-shell">
@@ -94,7 +94,7 @@
                         <button type="button" id="pomodoro-alternar" aria-label="Ativar Pomodoro" aria-pressed="false" aria-controls="pomodoro-dialog" title="Ativar Pomodoro" disabled><span aria-hidden="true"></span></button>
                     </div>
                     <label for="cronometro-materia" class="form-label fw-semibold">Matéria</label>
-                    <select class="form-select" id="cronometro-materia" aria-describedby="cronometro-ajuda">
+                    <select class="form-select" id="cronometro-materia" aria-describedby="cronometro-ajuda cronometro-praticas-ajuda">
                         <option value="">Selecione uma matéria</option>
                     </select>
                     <div class="form-text" id="cronometro-ajuda">Escolha a matéria desta sessão.</div>
@@ -112,6 +112,7 @@
                         <button type="button" class="btn btn-danger" id="cronometro-parar" disabled>Pausa</button>
                         <button type="button" class="btn btn-success" id="cronometro-registrar" disabled>Registrar</button>
                     </div>
+                    <p id="cronometro-praticas-ajuda" class="pratica-regra-xp">Nas atividades práticas de resolução, conclua a ocorrência para liberar o XP. O cronômetro mede a duração e não conclui a atividade. A inserção manual abaixo é exclusiva para matérias.</p>
                     <p class="mt-3 mb-0 small cronometro-status" id="cronometro-status" role="status" aria-live="polite">Pronto para começar.</p>
 
                     <details class="registro-manual mt-3">
@@ -242,18 +243,18 @@
 <div class="historico-paginacao"><button type="button" id="historico-modal-anterior">Anterior</button><span id="historico-modal-pagina"></span><button type="button" id="historico-modal-proximo">Próxima</button></div>
 </dialog>
 <script type="application/grimorio" src="jornada-interface.js?v=mobile-historico-20261101"></script>
-    <script type="application/grimorio" src="materias-store.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
-<script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=exclusao-global-20261101"></script>
+    <script type="application/grimorio" src="materias-store.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
+<script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="projeto-ui.js?v=3"></script>
 
-    <script type="application/grimorio" src="replanejamento.js?v=d061-20261101"></script><script type="application/grimorio" src="estudo-store.js?v=d061-20261101"></script>
-    <script type="application/grimorio" src="revisoes-store.js?v=d061-20261101"></script>
+    <script type="application/grimorio" src="replanejamento.js?v=extras-historico-20261102"></script><script type="application/grimorio" src="estudo-store.js?v=extras-historico-20261102"></script>
+    <script type="application/grimorio" src="revisoes-store.js?v=extras-historico-20261102"></script>
     <script type="application/grimorio" src="praticas-execucao.js?v=praticas-e7-final-20261026"></script>
-    <script type="application/grimorio" src="cronometro.js?v=d061-20261101"></script>
+    <script type="application/grimorio" src="cronometro.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="pomodoro.js?v=mobile-historico-20261101"></script>
-    <script type="application/grimorio" src="praticas-execucao-ui.js?v=artes-20261101"></script>
+    <script type="application/grimorio" src="praticas-execucao-ui.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="notas-blocos.js?v=artes-20261101"></script>
-    <script type="application/grimorio" src="agenda.js?v=d061-20261101"></script>
+    <script type="application/grimorio" src="agenda.js?v=controles-20261102"></script>
     <script type="application/grimorio" src="relatorios-store.js?v=domingo-20261101"></script>
     <script type="application/grimorio" src="relatorios-ui.js"></script>
     <script type="application/grimorio" src="relatorio-projeto.js"></script>

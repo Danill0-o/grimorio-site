@@ -39,7 +39,6 @@
         }
 
         iniciarLivroWizard();
-        iniciarGestaoMemorias();
         iniciarAcervoPagina();
     });
 
@@ -347,78 +346,6 @@
         atualizarBannerVinculo();
     }
 
-    function iniciarGestaoMemorias() {
-        const gerenciar = document.getElementById('catalogo-gerenciar');
-        const destino = document.getElementById('catalogo-memorias-lista');
-        const memoriaStatus = document.getElementById('catalogo-memorias-status');
-        const btnConfirmar = document.getElementById('catalogo-confirmar-alias');
-        const inputAlias = document.getElementById('catalogo-alias');
-        const detailsMemorias = document.querySelector('.catalogo-memorias');
-
-        if (!gerenciar || !destino || !btnConfirmar || !inputAlias) return;
-
-        function memorias() {
-            destino.replaceChildren();
-            if (!gerenciar.value) return;
-            for (const m of window.MateriasBusca.listarMemorias(gerenciar.value)) {
-                const li = document.createElement('li');
-                const texto = document.createElement('span');
-                const remover = document.createElement('button');
-                texto.textContent = `${m.tipo === 'aliases' ? 'Nome confirmado' : 'Busca lembrada'}: ${m.texto}`;
-                remover.type = 'button';
-                remover.className = 'btn btn-sm btn-outline-secondary';
-                remover.textContent = 'Remover';
-                remover.setAttribute('aria-label', `Remover ${m.texto}`);
-                remover.addEventListener('click', async () => {
-                    try {
-                        await window.MateriasBusca.remover(m.tipo, m.materiaGlobalId, m.normalizado);
-                        memorias();
-                        window.dispatchEvent(new CustomEvent('memorias:atualizadas'));
-                        memoriaStatus.textContent = 'Memória removida. Matéria e histórico preservados.';
-                        gerenciar.focus();
-                    } catch (erro) {
-                        memoriaStatus.textContent = erro.message;
-                    }
-                });
-                li.append(texto, remover);
-                destino.appendChild(li);
-            }
-        }
-
-        function atualizarGestao() {
-            try {
-                const id = gerenciar.value;
-                gerenciar.replaceChildren(...window.MateriasStore.listarMateriasGlobais().map(m => new Option(m.nomeCanonico, m.materiaGlobalId)));
-                if ([...gerenciar.options].some(o => o.value === id)) gerenciar.value = id;
-                btnConfirmar.disabled = !gerenciar.value;
-                memorias();
-            } catch (erro) {
-                if (memoriaStatus) memoriaStatus.textContent = erro.message;
-            }
-        }
-
-        gerenciar.addEventListener('change', memorias);
-        btnConfirmar.addEventListener('click', async () => {
-            try {
-                await window.MateriasBusca.confirmarAlias(gerenciar.value, inputAlias.value);
-                inputAlias.value = '';
-                memorias();
-                window.dispatchEvent(new CustomEvent('memorias:atualizadas'));
-                if (memoriaStatus) memoriaStatus.textContent = 'Nome alternativo confirmado por você.';
-            } catch (erro) {
-                if (memoriaStatus) memoriaStatus.textContent = erro.message;
-            }
-        });
-
-        detailsMemorias?.addEventListener('toggle', atualizarGestao);
-        window.addEventListener('memorias:atualizadas', atualizarGestao);
-        window.addEventListener('storage', e => {
-            if (['materiasBuscaV1', 'materiasDominioV1'].includes(e.key)) atualizarGestao();
-        });
-
-        atualizarGestao();
-    }
-
     function iniciarAcervoPagina() {
         const grid = document.getElementById('catalogo-acervo-grid');
         const formNova = document.getElementById('catalogo-nova-global-form');
@@ -467,14 +394,7 @@
                     barra.value = Math.round(dom.percentual || 0);
                     barra.setAttribute('aria-label', `Avanço de ${g.nomeCanonico}`);
 
-                    const mems = window.MateriasBusca ? window.MateriasBusca.listarMemorias(g.materiaGlobalId) : [];
-                    const resumoMem = document.createElement('p');
-                    resumoMem.className = 'small text-secondary mt-2 mb-0';
-                    resumoMem.textContent = mems.length
-                        ? `Nomes/buscas associados: ${mems.map(m => m.texto).join(', ')}`
-                        : 'Nenhum nome alternativo cadastrado.';
-
-                    card.append(h3, nivel, titulo, tempo, barra, resumoMem);
+                    card.append(h3, nivel, titulo, tempo, barra);
                     card.append(window.criarBotaoExcluirMateria(g.materiaGlobalId, g.nomeCanonico));
                     grid.appendChild(card);
                 }

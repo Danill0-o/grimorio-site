@@ -336,6 +336,7 @@
             projetoId: atividade.projetoId,
             planejadas,
             concluidas,
+            pendentes: planejadas - concluidas,
             percentual: planejadas ? concluidas / planejadas * 100 : 0,
             importanciaPercentual: atividade.importanciaProva === null ? null
                 : atividade.importanciaProva.pontos / atividade.importanciaProva.total * 100,

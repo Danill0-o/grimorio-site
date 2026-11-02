@@ -162,7 +162,8 @@
                 && idValido(id, 'projeto-materia') && p.projetoMateriaId === id && texto(p.projetoId)
                 && (p.nomeExibicao === null || texto(p.nomeExibicao)) && typeof p.removida === 'boolean' && instante(p.criadoEm)
                 && Number.isInteger(p.Nquestoes) && p.Nquestoes >= 0 && Number.isFinite(p.peso) && p.peso >= 0 && [0.5, 1, 1.5].includes(p.afinidade), 'participação.');
-            const chave = JSON.stringify([p.projetoId, resolver(p.materiaGlobalId)]);
+            resolver(p.materiaGlobalId);
+            const chave = JSON.stringify([p.projetoId, p.materiaGlobalId]);
             if (!p.removida) { exigir(!unicas.has(chave), 'participação ativa duplicada.'); unicas.add(chave); }
         }
         function vinculo(id, projetoId) { exigir(texto(id) && participacoes[id]?.projetoId === projetoId, 'projetoMateriaId ausente ou pertencente a outro projeto.'); }
@@ -214,6 +215,7 @@
             if (nome === 'registro') exigir(objeto(v) && v.id === projetoId && instante(v.criadoEm), 'registro de projeto.');
             if (nome === 'dadosExame') {
                 exigir(objeto(v) && texto(v.projetoId) && (!projetoId || v.projetoId === projetoId), 'dados de projeto.');
+                if (v.duracaoProvaSegundos !== undefined) exigir(Number.isSafeInteger(v.duracaoProvaSegundos) && v.duracaoProvaSegundos > 0 && v.duracaoProvaSegundos % 60 === 0, 'duração da prova.');
                 if (v.replanejamento !== undefined) validarReplanejamento(v.replanejamento, v.projetoId);
             }
             if (nome === 'wizardProjeto' && v?.origemReplanejamento) validarReplanejamento(v.origemReplanejamento, projetoId);

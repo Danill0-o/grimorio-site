@@ -54,7 +54,7 @@
             if (p.nomeExibicao !== null && !texto(p.nomeExibicao)) falhar('nome de exibição inválido');
             if (!Number.isInteger(p.Nquestoes) || p.Nquestoes < 0 || !Number.isFinite(p.peso) || p.peso < 0 || ![0.5, 1, 1.5].includes(p.afinidade)) falhar('campos de planejamento inválidos');
             const final = resolver(estado, p.materiaGlobalId);
-            const chave = JSON.stringify([p.projetoId, final.materiaGlobalId]);
+            const chave = JSON.stringify([p.projetoId, p.materiaGlobalId]);
             if (!p.removida) {
                 if (participacoes.has(chave)) falhar('participação ativa duplicada');
                 participacoes.add(chave);
@@ -145,6 +145,7 @@
                 return conferirRetry(anterior, entrada);
             }
             if (final.status !== 'ativa') falhar('novo vínculo exige matéria global ativa');
+            if (Object.values(estado.projetosMaterias).some(p => !p.removida && p.projetoId === entrada.projetoId && resolver(estado, p.materiaGlobalId).materiaGlobalId === final.materiaGlobalId)) falhar('participação ativa duplicada');
             if (entrada.nomeExibicao !== null && entrada.nomeExibicao !== final.nomeCanonico) validarNomeNovo(entrada.nomeExibicao);
             const registro = JSON.parse(storage.getItem(`projetoV1:${entrada.projetoId}:registro`) || 'null');
             if (!registro || registro.id !== entrada.projetoId || registro.removido || registro.arquivado) falhar('novo vínculo exige projeto ativo existente');
@@ -189,7 +190,10 @@
             if (!preservarNomes && item.Materia !== nomeAnterior) validarNomeNovo(item.Materia);
             if (p && p.projetoId !== projetoId) falhar('participação pertence a outro projeto');
             if (p && item.materiaGlobalId !== undefined && resolver(estado, item.materiaGlobalId).materiaGlobalId !== resolver(estado, p.materiaGlobalId).materiaGlobalId) falhar('cadastro não pode alterar vínculo global');
-            if (p?.removida && resolver(estado, p.materiaGlobalId).status !== 'ativa') falhar('reativação exige matéria global ativa');
+            if (p?.removida) {
+                if (resolver(estado, p.materiaGlobalId).status !== 'ativa') falhar('reativação exige matéria global ativa');
+                if (!preservarNomes && Object.values(estado.projetosMaterias).some(outro => !outro.removida && outro.projetoMateriaId !== p.projetoMateriaId && outro.projetoId === projetoId && resolver(estado, outro.materiaGlobalId).materiaGlobalId === resolver(estado, p.materiaGlobalId).materiaGlobalId)) falhar('participação ativa duplicada');
+            }
             if (!p) {
                 const globalId = item.materiaGlobalId;
                 if (!idValido(globalId, 'materia-global')) falhar('ID global obrigatório na criação');
@@ -200,7 +204,8 @@
                 }
                 const final = resolver(estado, globalId);
                 if (final.status !== 'ativa') falhar('novo vínculo exige matéria global ativa');
-                p = { projetoMateriaId: id, projetoId, materiaGlobalId: final.materiaGlobalId, criadoEm: new Date().toISOString(), removida: false };
+                if (!preservarNomes && Object.values(estado.projetosMaterias).some(outro => !outro.removida && outro.projetoId === projetoId && resolver(estado, outro.materiaGlobalId).materiaGlobalId === final.materiaGlobalId)) falhar('participação ativa duplicada');
+                p = { projetoMateriaId: id, projetoId, materiaGlobalId: preservarNomes ? globalId : final.materiaGlobalId, criadoEm: new Date().toISOString(), removida: false };
                 estado.projetosMaterias[id] = p;
             }
             Object.assign(p, { nomeExibicao: item.Materia, Nquestoes: item.Nquestoes, peso: item.peso, afinidade: item.afinidade, removida: false });
@@ -226,14 +231,71 @@
                 const p = estado.projetosMaterias[item.projetoMateriaId];
                 if (!p || p.projetoId !== origemId) falhar('origem da cópia inválida');
                 if (item.Materia !== (p.nomeExibicao ?? resolver(estado, p.materiaGlobalId).nomeCanonico)) validarNomeNovo(item.Materia);
-                const globalId = resolver(estado, p.materiaGlobalId).materiaGlobalId;
+                const globalId = p.materiaGlobalId;
                 const anterior = Object.values(estado.projetosMaterias).find(x => x.projetoId === destinoId && x.materiaGlobalId === globalId);
                 return { ...item, projetoMateriaId: anterior?.projetoMateriaId || novoId('projeto-materia'), materiaGlobalId: globalId };
             });
             return cadastro(estado, destinoId, entradas, true);
         });
     }
+    function projetoTemFusao(projetoId) {
+        const estado = ler();
+        const destinos = new Set(Object.values(estado.materiasGlobais).filter(g => g.status === 'mesclada').map(g => resolver(estado, g.materiaGlobalId).materiaGlobalId));
+        return Object.values(estado.projetosMaterias).some(p => p.projetoId === projetoId && destinos.has(resolver(estado, p.materiaGlobalId).materiaGlobalId));
+    }
+    function projetarNomes(chave, raw) {
+        if (!raw || !['objetosSalvos','objetosNormalizados','lista_distribuicao_materias','materiaDoDia','revisoesDoDia','revisoesEstadoV1'].includes(chave)) return raw;
+        const estado = ler();
+        const destinos = new Set(Object.values(estado.materiasGlobais).filter(g => g.status === 'mesclada').map(g => resolver(estado, g.materiaGlobalId).materiaGlobalId));
+        if (!destinos.size) return raw;
+        const visitar = valor => {
+            if (!valor || typeof valor !== 'object') return;
+            const p = estado.projetosMaterias[valor.projetoMateriaId];
+            if (p) {
+                const g = resolver(estado, p.materiaGlobalId);
+                if (destinos.has(g.materiaGlobalId)) for (const campo of ['Materia','materia']) if (Object.hasOwn(valor, campo)) valor[campo] = g.nomeCanonico;
+            }
+            Object.values(valor).forEach(visitar);
+        };
+        const valor = JSON.parse(raw); visitar(valor); return JSON.stringify(valor);
+    }
+    async function mesclarMaterias({ origemId, destinoId }) {
+        if (!navigator.locks) falhar('fusão exige Web Locks');
+        if (origemId === destinoId) falhar('escolha duas matérias diferentes');
+        await window.BackupLocal?.pronta;
+        const resultado = await navigator.locks.request('projetos:gestao', async () => {
+            window.BackupLocal?.garantirDisponivel();
+            if (storage.getItem('cronometroRegistroV1') || storage.getItem('projetosTransacaoV1') || Object.keys(storage).some(k => k.startsWith('projetosTransacaoV2:'))) falhar('recupere os registros pendentes antes de mesclar');
+            const estado = ler();
+            const alvo = resolver(estado, destinoId), origem = estado.materiasGlobais[origemId];
+            if (!origem || alvo.materiaGlobalId !== destinoId || alvo.status !== 'ativa') falhar('as matérias mudaram; confira a seleção');
+            if (origem.status === 'mesclada' && resolver(estado, origemId).materiaGlobalId === destinoId) return alvo;
+            if (origem.status !== 'ativa') falhar('selecione duas matérias ativas');
+            const afetadas = Object.values(estado.projetosMaterias).filter(p => [origemId,destinoId].includes(resolver(estado, p.materiaGlobalId).materiaGlobalId));
+            const projetos = [...new Set(afetadas.map(p => p.projetoId))].sort();
+            const travar = async indice => {
+                if (indice < projetos.length) return navigator.locks.request('cronometro:' + projetos[indice], { ifAvailable:true }, lock => {
+                    if (!lock || storage.getItem('cronometroV1:' + projetos[indice])) falhar('feche as abas de cronômetro dos projetos envolvidos e registre ou zere o tempo pendente');
+                    return travar(indice + 1);
+                });
+                return escrever(atual => {
+                    const a = atual.materiasGlobais[origemId], b = atual.materiasGlobais[destinoId];
+                    if (a.status !== 'ativa' || b.status !== 'ativa') falhar('as matérias mudaram; confira a seleção');
+                    const participacoes = Object.values(atual.projetosMaterias).filter(p => [origemId,destinoId].includes(resolver(atual, p.materiaGlobalId).materiaGlobalId));
+                    a.status = 'mesclada'; a.mescladaEm = destinoId;
+                    a.atualizadoEm = b.atualizadoEm = new Date().toISOString();
+                    participacoes.forEach(p => { p.nomeExibicao = b.nomeCanonico; });
+                    return b;
+                });
+            };
+            return travar(0);
+        });
+        window.dispatchEvent(new CustomEvent('materias:mescladas'));
+        window.dispatchEvent(new CustomEvent('memorias:atualizadas'));
+        return resultado;
+    }
     window.MateriasStore = Object.freeze({
+        mesclarMaterias, projetarNomes, projetoTemFusao,
         excluirMateriaGlobal, projetoPrecisaReplanejar,
         criarMateriaGlobal, criarProjetoMateria, obterProjetoMateria, salvarCadastro, prepararCopia, corrigirVinculo,
         normalizarNome,

@@ -309,6 +309,19 @@
         atualizarAgendamentoUI();
         atualizarPresetUI();
         atualizarDuracaoReferencia();
+        atualizarTempoProva();
+    }
+    function atualizarTempoProva() {
+        const check = el('pratica-tempo-prova'), grupo = el('pratica-tempo-prova-grupo');
+        const simulado = el('pratica-tipo').value === 'simulado';
+        grupo.hidden = !simulado;
+        const minutos = Number(el('duracao-prova').value);
+        const valido = Number.isSafeInteger(minutos * 60) && minutos > 0 && el('duracao-prova').checkValidity();
+        check.disabled = ocupado || !leituraValida || !valido;
+        check.title = valido ? '' : 'Informe a duração da prova na etapa Projeto para usar esta opção.';
+        if (!simulado || !valido) check.checked = false;
+        if (check.checked) el('pratica-duracao').value = String(minutos);
+        el('pratica-duracao').readOnly = check.checked;
     }
     function duracaoTexto(segundos) {
         if (segundos === null) return 'Duração não informada';
@@ -659,6 +672,7 @@
         el('pratica-cancelar').addEventListener('click', () => { if (!ocupado) { fechar(); limparErro(); focar(el('pratica-adicionar')); } });
         el('pratica-recarregar').addEventListener('click', () => { limparErro(); carregar(); });
         el('pratica-form').addEventListener('submit', salvar);
+        el('duracao-prova').addEventListener('input', atualizarTempoProva);
         el('pratica-form').addEventListener('input', evento => {
             limparErro();
             if (evento.target.id === 'pratica-estagio-preset' && evento.target.value !== 'personalizado') {

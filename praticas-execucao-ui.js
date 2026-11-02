@@ -98,6 +98,27 @@
         const resumo = el('p', '', 'form-text mb-3'); resumo.dataset.ocorrenciasResumo = '';
         const lista = el('ul', '', 'pratica-missoes'); lista.dataset.listaOcorrencias = '';
         corpo.append(topo, resumo, lista);
+        const extra = el('form', '', 'pratica-extra-form'); extra.id = 'pratica-extra-form';
+        extra.append(el('h3', 'Adicionar ocorrência extra'), el('p', 'Usa a duração e a referência desta atividade, sem alterar a frequência normal ou o tempo das matérias.'));
+        const dataExtra = campo(extra, 'pratica-extra-data', 'Data da ocorrência extra', 'date', { required: true });
+        const erroExtra = el('p'); erroExtra.id = 'pratica-extra-status'; erroExtra.setAttribute('role', 'status');
+        const adicionar = el('button', 'Adicionar extra', 'btn btn-primary'); adicionar.type = 'submit';
+        extra.append(erroExtra, adicionar); corpo.append(extra);
+        let salvandoExtra = false, tentativaExtra = null;
+        extra.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (salvandoExtra || !extra.reportValidity()) return;
+            const projetoId = window.EstudoStore.obterProjetoAtualId(), atividadeId = atividadeAtual, dataPrevista = dataExtra.value;
+            const assinatura = JSON.stringify([projetoId, atividadeId, dataPrevista]);
+            if (tentativaExtra?.assinatura !== assinatura) tentativaExtra = { assinatura, missaoId: `pratica-extra-${crypto.randomUUID()}` };
+            salvandoExtra = true; adicionar.disabled = true; fechar.disabled = true; dataExtra.disabled = true; erroExtra.textContent = '';
+            try {
+                await window.PraticasStore.criarMissao(projetoId, atividadeId, { missaoId: tentativaExtra.missaoId, dataPrevista });
+                atualizarOcorrencias(); tentativaExtra = null; erroExtra.textContent = 'Ocorrência extra adicionada.';
+            } catch (erro) { erroExtra.textContent = erro.message; }
+            finally { salvandoExtra = false; adicionar.disabled = false; fechar.disabled = false; dataExtra.disabled = false; }
+        });
+        dialogoOcorrencias.addEventListener('cancel', e => { if (salvandoExtra) e.preventDefault(); });
         dialogoOcorrencias.append(corpo);
         document.body.append(dialogoOcorrencias);
         dialogoOcorrencias.addEventListener('close', () => {
@@ -132,7 +153,8 @@
         const resumo = el('p', '', 'visually-hidden'); resumo.dataset.resumo = '';
         const xp = el('p', '', 'pratica-xp-linha mb-1'); xp.dataset.xp = '';
         const aviso = el('p', '', 'form-text mb-0'); aviso.dataset.aviso = '';
-        secaoResumo.append(grade, resumo, xp, aviso);
+        const regraXp = el('p', '', 'pratica-regra-xp'); regraXp.dataset.regraXp = '';
+        secaoResumo.append(grade, resumo, xp, aviso, regraXp);
         conteudo.append(secaoResumo);
 
         const acoesPrincipais = el('div', '', 'pratica-acoes-principais');
@@ -159,6 +181,16 @@
 
         acoesPrincipais.append(btnAbrirCronometro, btnConcluir);
         conteudo.append(acoesPrincipais);
+        const formTaf = formulario('Registrar tempo de treino do TAF', 'taf', fs => {
+            campo(fs, 'pratica-taf-data', 'Data do treino', 'date', {required:true});
+            campo(fs, 'pratica-taf-minutos', 'Duração do treino (minutos)', 'number', {required:true, min:'1', step:'1'});
+            fs.append(el('p', 'O TAF possui progressão própria pelo tempo de treino registrado.', 'pratica-regra-xp'));
+        }, form => {
+            const payload = {dataEstudo:form.elements['pratica-taf-data'].value, duracaoSegundos:Number(form.elements['pratica-taf-minutos'].value)*60};
+            const t = tentativa('taf', payload);
+            return api().registrarManual(missaoAtual, {...payload, sessaoId:t.id, registradoEm:t.registradoEm});
+        });
+        formTaf.hidden = true;
 
         formulario('Classificar XP desta atividade prática', 'preset', fs => {
             const label = el('label', 'Tipo de produção escrita', 'pratica-campo'); label.htmlFor = 'pratica-missao-preset';
@@ -225,6 +257,15 @@
         if (!missaoAtual) return;
         contexto = api().consultar(missaoAtual);
         const m = contexto.missao;
+        dialogo.querySelector('[data-regra-xp]').textContent = m.tipo === 'taf'
+            ? 'O TAF mantém sua progressão por tempo de treino registrado.'
+            : 'O XP é liberado ao concluir a atividade. O cronômetro mede a duração; contar ou registrar tempo não conclui a ocorrência.';
+        dialogo.querySelector('[data-abrir-cronometro]').hidden = !m.usaCronometro;
+        const formTaf = dialogo.querySelector('#pratica-form-taf');
+        formTaf.hidden = m.tipo !== 'taf';
+        const dataTaf = formTaf.querySelector('#pratica-taf-data');
+        dataTaf.min = m.dataPrevista; dataTaf.max = api().hoje();
+        if (!dataTaf.value) dataTaf.value = api().hoje();
         const p = m.progressao;
         const zonas = {
             'abaixo-piso': 'Tempo abaixo do piso: 1 XP por minuto real.',
@@ -294,7 +335,7 @@
             const info = el('div', '', 'pratica-ocorrencia-info');
             const cabecalho = el('div', '', 'pratica-ocorrencia-topo');
             cabecalho.append(
-                el('strong', `${data(m.dataPrevista)}${m.diaJornada ? ` · Dia ${m.diaJornada.replace(/\D/g, '').padStart(2, '0')}` : ' · Dia de folga'}`),
+                el('strong', `${data(m.dataPrevista)}${m.diaJornada ? ` · Dia ${m.diaJornada.replace(/\D/g, '').padStart(2, '0')}` : ' · Dia de folga'}${m.extraAvulsa ? ' · Extra' : ''}`),
                 el('span', m.concluida ? 'Concluída' : 'Pendente', `pratica-status-badge ${m.concluida ? 'pratica-status-concluida' : 'pratica-status-pendente'}`)
             );
             const detalhes = el('small', `${m.duracaoPlanejadaSegundos ? `Previsão: ${tempo(m.duracaoPlanejadaSegundos)} · ` : ''}Utilizado: ${tempo(m.tempoRegistradoSegundos)}${m.progressao ? ` · ${m.progressao.xp.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} XP` : ''}`);
@@ -309,6 +350,8 @@
     function abrirOcorrencias(atividadeId, origem = document.activeElement) {
         if (!dialogoOcorrencias) criarDialogoOcorrencias();
         atividadeAtual = atividadeId;
+        dialogoOcorrencias.querySelector('#pratica-extra-data').value = window.CalendarioJornada.dataLocal();
+        dialogoOcorrencias.querySelector('#pratica-extra-status').textContent = '';
         origemFocoOcorrencias = origem;
         atualizarOcorrencias();
         if (!dialogoOcorrencias.open) dialogoOcorrencias.showModal();

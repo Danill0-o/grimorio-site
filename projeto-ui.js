@@ -116,6 +116,6 @@
         }
     }
 
-    window.ProjetoUI = { obterProjetoId };
+    window.ProjetoUI = { obterProjetoId, atualizar: iniciarResumoProjeto };
 })();
 

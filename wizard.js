@@ -2,7 +2,7 @@
 (function () {
     const CHAVE = 'wizardProjeto';
     const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-    const campos = ['nome_exame', 'dataInicio', 'dataFinal', 'horas-por-dia', 'blocos-por-dia', 'materia', 'Nquestoes', 'peso', 'afinidade'];
+    const campos = ['nome_exame', 'dataInicio', 'dataFinal', 'duracao-prova', 'horas-por-dia', 'blocos-por-dia', 'materia', 'Nquestoes', 'peso', 'afinidade'];
     const el = (id) => document.getElementById(id);
     let etapa = 0;
     let blocosEscolhidos = null;
@@ -40,6 +40,8 @@
     function validar(numero, exibir = true) {
         const falhar = (texto, campo) => exibir ? erro(texto, campo) : false;
         if (numero === 0) {
+            const tempo = el('duracao-prova');
+            if (tempo.value && (!tempo.checkValidity() || !Number.isSafeInteger(Number(tempo.value) * 60))) return falhar('Informe a duração da prova em minutos inteiros maiores que zero.', tempo);
             if (!el('nome_exame').value.trim()) return falhar('Informe o nome do projeto.', el('nome_exame'));
             for (const id of ['dataInicio', 'dataFinal']) {
                 if (!el(id).value || !el(id).checkValidity()) return falhar('Informe as duas datas válidas.', el(id));
@@ -83,6 +85,8 @@
             (window.ProjetoStorage || localStorage).setItem('carga_horaria_disponivel', JSON.stringify(carga_horaria_disponivel));
         }
         window.IdentidadeStore?.garantirProjeto(dados);
+        if (el('duracao-prova').value) dados.duracaoProvaSegundos = Number(el('duracao-prova').value) * 60;
+        else delete dados.duracaoProvaSegundos;
         (window.ProjetoStorage || localStorage).setItem('dadosExame', JSON.stringify(dados));
     }
     function resumo() {
@@ -97,6 +101,7 @@
             ['Matérias cadastradas', el('table-body').children.length],
             ['Total de questões', el('totalQuestoes').value]
         ];
+        if (el('duracao-prova').value) pares.push(['Duração da prova', `${el('duracao-prova').value} min`]);
         if (origemReplanejamento) pares.push(['Replanejamento', 'Os cards serão reconstruídos desde a data escolhida, inclusive retroativa. Estudos normais preenchem sequencialmente os blocos da mesma matéria; extras ficam separados. Notas, revisões e datas reais são preservadas.']);
         el('wizard-resumo').replaceChildren(...pares.map(([rotulo, valor]) => {
             const linha = document.createElement('div');
@@ -209,7 +214,7 @@
                     (window.ProjetoStorage || localStorage).setItem('dadosExame', JSON.stringify(dados));
                 }
                 distribui_materias();
-                if (!sortMaterias()) throw new Error('Não foi possível gerar a jornada. Confira a rotina e as matérias.');
+                if (!sortMaterias({ reconstruir:true })) throw new Error('Não foi possível gerar a jornada. Confira a rotina e as matérias.');
                 (window.ProjetoStorage || localStorage).removeItem(CHAVE);
             });
             backupPendente = true;
@@ -225,6 +230,7 @@
         const dados = lerObjetoArmazenado('dadosExame');
         if (dados) {
             el('nome_exame').value = dados.nomeExame || '';
+            el('duracao-prova').value = dados.duracaoProvaSegundos ? String(dados.duracaoProvaSegundos / 60) : '';
             el('dataInicio').value = converterDataBrasileiraParaISO(dados.dataInicioF);
             el('dataFinal').value = converterDataBrasileiraParaISO(dados.dataFinalF);
             el('horas-por-dia').value = dados.horasPorDia || converterMinutosParaHoras(dados.minutosPorDia || 0);

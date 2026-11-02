@@ -16,3 +16,11 @@
  .materias-page :is(.catalogo-memorias-corpo,.vinculo-painel-corpo) { padding: 14px 4px; }
  .materias-page .perfil-grid { grid-template-columns: minmax(0,1fr); }
 }
+
+.fusao-painel { background: var(--pixel-surface); color: var(--pixel-ink); padding: 20px; }
+.fusao-painel :is(h2,p,label) { color: var(--pixel-ink) !important; text-shadow: none; }
+.fusao-painel :is(input,select,button) { background: var(--pixel-surface-alt); color: var(--pixel-ink); padding: 10px; margin-block: 8px; border: 2px solid var(--pixel-bronze); }
+#fusao-dialog { max-width: min(650px,calc(100vw - 32px)); max-height: 85vh; overflow: auto; }
+#fusao-dialog::backdrop { background: rgb(0 0 0 / 60%); }
+
+.materias-page main > section.fusao-painel, #fusao-dialog { background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; }

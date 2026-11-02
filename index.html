@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script type="application/grimorio" src="icones-pixel.js?v=artes-20261101"></script>
+<script type="application/grimorio" src="icones-pixel.js?v=controles-20261102"></script>
 <meta charset="UTF-8">
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=offline-20261030"></script>
     <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
-    <script type="application/grimorio" src="backup-local.js?v=d061-20261101"></script>
+    <script type="application/grimorio" src="backup-local.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="acessibilidade.js?v=sidebar-global-20261030"></script>
-    <script type="application/grimorio" src="projetos-store.js?v=d061-20261101"></script><script type="application/grimorio" src="praticas-store.js?v=exclusao-global-20261101"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="praticas-store.js?v=pratica-extra-20261102"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar projeto de estudos</title>
     <script type="application/grimorio">
@@ -23,12 +23,12 @@
     <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
     <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
 
-<link rel="stylesheet" href="css/wizard.css?v=praticas-tipos-20261029">
+<link rel="stylesheet" href="css/wizard.css?v=tempo-prova-20261102">
 
 
 <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"><link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
 <script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
-<link rel="stylesheet" href="css/icones-pixel.css?v=artes-maiores-20261101"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101">
+<link rel="stylesheet" href="css/icones-pixel.css?v=artes-cascata-20261102"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101">
 </head>
 
 <body class="criacao-page">
@@ -46,6 +46,7 @@
 <label class="project-name" for="nome_exame">Nome do projeto<input class="form-control" id="nome_exame" required></label>
 <label for="dataInicio">Data de início<input class="form-control" type="date" id="dataInicio" required></label>
 <label for="dataFinal">Data da prova<input class="form-control" type="date" id="dataFinal" required></label>
+<label class="tempo-prova-campo" for="duracao-prova">Duração da prova (minutos, opcional)<input class="form-control" type="number" id="duracao-prova" min="1" step="1" inputmode="numeric"></label>
 </div></section>
 <section data-painel="1" aria-labelledby="titulo-rotina" hidden>
 <p class="wizard-chapter">Etapa 2 de 4</p><h2 id="titulo-rotina" tabindex="-1">Seu ritmo de estudo</h2><p>Reserve um espaço para o conhecimento na sua semana.</p>
@@ -80,7 +81,7 @@
 <select id="materia-catalogo" hidden aria-hidden="true"><option value="">Criar nova matéria</option></select>
 <form id="cadastroForm" class="subject-fields">
 <label for="materia">Matéria<input class="form-control" id="materia" maxlength="60" aria-describedby="materia-limite" required><small id="materia-limite">Máximo de 60 caracteres.</small></label>
-<label for="Nquestoes">Questões<input class="form-control" type="number" id="Nquestoes" min="0" max="99" required></label>
+<label for="Nquestoes">Questões<input class="form-control" type="number" id="Nquestoes" min="1" max="99" required></label>
 <label for="peso">Peso<input class="form-control" type="number" id="peso" min="1" max="99" value="1" required></label>
 <label for="afinidade">Afinidade<input type="range" class="form-range" id="afinidade" min="0.5" max="1.5" step="0.5" value="1"><span class="affinity-labels"><span>Baixa</span><span>Média</span><span>Alta</span></span></label>
 <button type="submit" class="btn btn-primary">Adicionar matéria</button></form>
@@ -101,6 +102,7 @@
 <label id="pratica-nome-grupo" hidden for="pratica-nome">Nome da atividade<input id="pratica-nome" class="form-control" autocomplete="off" placeholder="Nome da atividade"></label>
 <label for="pratica-duracao"><span id="pratica-duracao-rotulo">Duração planejada (minutos)</span><input id="pratica-duracao" class="form-control" type="number" min="0" step="any" inputmode="decimal" aria-describedby="pratica-duracao-ajuda"><small id="pratica-duracao-ajuda">Informe sua estimativa. A duração não será reservada no cronograma nesta etapa.</small></label>
 <label class="form-check" for="pratica-duracao-referencia"><input class="form-check-input" id="pratica-duracao-referencia" type="checkbox">Usar a duração ideal da referência de linhas/tempo</label>
+<label class="form-check tempo-prova-campo" id="pratica-tempo-prova-grupo" for="pratica-tempo-prova" hidden><input class="form-check-input" id="pratica-tempo-prova" type="checkbox">Usar o tempo da prova</label>
 <label for="pratica-preset-xp">Referência de extensão da atividade<select id="pratica-preset-xp" class="form-select" aria-describedby="pratica-preset-xp-ajuda"></select><small id="pratica-preset-xp-ajuda"></small></label>
 <div id="pratica-xp-personalizado" hidden>
 <label for="pratica-xp-linhas" id="pratica-xp-linhas-grupo">Extensão de referência (linhas)<input id="pratica-xp-linhas" class="form-control" type="number" min="0.5" step="any"></label>
@@ -177,8 +179,8 @@
     <p><strong>GRIMÓRIO</strong></p>
     <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
 </footer>
-<script type="application/grimorio" src="materias-store.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
-<script type="application/grimorio" src="materias-busca.js"></script><script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="replanejamento.js?v=d061-20261101"></script><script type="application/grimorio" src="estudo-store.js?v=d061-20261101"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="catalogo-ui.js?v=exclusao-global-20261101"></script><script type="application/grimorio" src="dados-inicio.js?v=6"></script><script type="application/grimorio" src="praticas-cadastro.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="notas-blocos.js"></script><script type="application/grimorio" src="revisoes-store.js?v=d061-20261101"></script><script type="application/grimorio" src="wizard.js?v=d061-20261101"></script>
+<script type="application/grimorio" src="materias-store.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script><script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
+<script type="application/grimorio" src="materias-busca.js"></script><script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="replanejamento.js?v=extras-historico-20261102"></script><script type="application/grimorio" src="estudo-store.js?v=extras-historico-20261102"></script><script type="application/grimorio" src="distribuicao.js"></script><script type="application/grimorio" src="script.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="catalogo-ui.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="dados-inicio.js?v=6"></script><script type="application/grimorio" src="praticas-cadastro.js?v=tempo-prova-20261102"></script><script type="application/grimorio" src="notas-blocos.js"></script><script type="application/grimorio" src="revisoes-store.js?v=extras-historico-20261102"></script><script type="application/grimorio" src="wizard.js?v=fusao-xp-20261102"></script>
 </div></div>
 <dialog id="historico-dialog" aria-labelledby="historico-modal-titulo">
 <header class="historico-cabecalho"><div><h2 id="historico-modal-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
@@ -191,6 +193,18 @@
 <p id="historico-resumo" role="status" aria-live="polite"></p>
 <div class="historico-rolagem"><table id="tabela-sessoes-estudo"><caption>Registros mais recentes primeiro.</caption><thead><tr><th scope="col">Data</th><th scope="col">Hora</th><th scope="col">Matéria</th><th scope="col">Tempo estudado</th><th scope="col">Ações</th></tr></thead><tbody id="sessoes-estudo-body"></tbody></table></div>
 <div class="historico-paginacao"><button type="button" id="historico-modal-anterior">Anterior</button><span id="historico-modal-pagina"></span><button type="button" id="historico-modal-proximo">Próxima</button></div>
+</dialog>
+<dialog id="wizard-remover-materia-dialog" class="wizard-confirmacao-dialog" aria-labelledby="wizard-remover-titulo" aria-describedby="wizard-remover-descricao">
+    <button type="button" class="pixel-fechar" aria-label="Fechar janela" data-cancelar>Fechar</button>
+    <div class="wizard-confirmacao-conteudo">
+        <h2 id="wizard-remover-titulo">Remover matéria do planejamento?</h2>
+        <p id="wizard-remover-descricao">A matéria <strong id="wizard-remover-nome"></strong> será removida do planejamento deste projeto.</p>
+        <p class="wizard-confirmacao-aviso">O histórico de estudos, revisões e todo o XP acumulado serão preservados com segurança.</p>
+        <div class="wizard-confirmacao-acoes">
+            <button type="button" class="btn btn-secondary" data-cancelar autofocus>Cancelar</button>
+            <button type="button" class="btn btn-danger acao-perigosa" data-confirmar>Remover matéria</button>
+        </div>
+    </div>
 </dialog>
 <script type="application/grimorio" src="jornada-interface.js?v=mobile-historico-20261101"></script>
 </body></html>

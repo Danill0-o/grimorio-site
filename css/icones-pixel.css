@@ -19,3 +19,36 @@ select:not([multiple]):not([size]) { appearance: none !important; background-ima
 .jornada-page button.info-contextual:is(:hover,:focus-visible) { background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; }
 .ajuda-contextual[popover] { margin: 0; inset: auto; max-width: min(360px,calc(100vw - 32px)); padding: 16px; background: var(--pixel-surface); color: var(--pixel-ink) !important; border: 2px solid var(--pixel-bronze); box-shadow: 2px 2px 0 var(--pixel-shadow); }
 .praticas-cabecalho-acoes { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
+
+button.pixel-fechar {
+ position: absolute !important; top: 10px !important; right: 10px !important;
+ width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important;
+ padding: 0 !important; border: 0 !important; box-shadow: none !important;
+ background: transparent url('../img/icons/fechar.png') center/contain no-repeat !important;
+ color: transparent !important; font-size: 0 !important; text-shadow: none !important;
+ z-index: 5;
+}
+button.pixel-fechar::before, button.pixel-fechar::after { display: none !important; }
+button.pixel-fechar:focus-visible { outline: 3px solid var(--pixel-ink) !important; outline-offset: 3px; }
+dialog:has(.pixel-fechar) { padding-top: 64px; }
+button.materia-excluir-icone { background: transparent !important; border: 0 !important; box-shadow: none !important; }
+.jornada-page .estudo-extra button.extra-excluir { position: static !important; margin-left: auto; }
+.jornada-page .estudo-extra .materia-cronometro-acoes { display: flex; width: 100%; align-items: center; }
+
+/* Supera a skin global de .btn inclusive nos estados interativos. */
+html body button.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar,
+html body button.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar:is(:hover,:focus,:active) {
+ background: transparent url('../img/icons/fechar.png') center / contain no-repeat !important;
+ border: 0 !important; box-shadow: none !important;
+ filter: drop-shadow(3px 4px 0 rgb(0 0 0 / 45%));
+ transition: transform 120ms ease, filter 120ms ease;
+}
+html body button.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar:hover { transform: translateY(-3px); filter: drop-shadow(4px 7px 0 rgb(0 0 0 / 50%)); }
+html body button.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar:active { transform: translateY(1px); filter: drop-shadow(1px 2px 0 rgb(0 0 0 / 45%)); }
+html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone,
+html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone:is(:hover,:focus,:active) {
+ background: transparent !important; border: 0 !important; box-shadow: none !important;
+}
+html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone::before,
+html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone::after { display: none !important; }
+@media(prefers-reduced-motion:reduce) { html body button.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar { transition: none; } }

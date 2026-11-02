@@ -119,7 +119,8 @@ if (document.getElementById('cadastroForm') !== null) {
         const materia = escolhida?.nomeCanonico || document.getElementById("materia").value.trim();
         if (!materia) return;
         if (!escolhida && materia.length > 60) throw new Error('O nome da matéria deve ter no máximo 60 caracteres.');
-        const Nquestoes = parseInt(document.getElementById("Nquestoes").value);
+        const Nquestoes = parseInt(document.getElementById("Nquestoes").value, 10);
+        if (!Number.isInteger(Nquestoes) || Nquestoes < 1) throw new Error('A matéria deve ter pelo menos 1 questão.');
         const peso = parseFloat(document.getElementById("peso").value);
         const afinidade = document.getElementById("afinidade").value;
         totalQuestoes += Nquestoes;
@@ -236,36 +237,79 @@ function removerLinhaTabela(tabela, novaLinha) { // Add um botão que remove a l
     const botaoRemover = document.createElement("button");
     botaoRemover.classList.add("border-0");
     botaoRemover.type = "button";
-    botaoRemover.setAttribute("aria-label", "Excluir " + novaLinha.children[1].textContent);
+    const nomeMateria = novaLinha.children[1].textContent;
+    botaoRemover.setAttribute("aria-label", "Excluir " + nomeMateria);
     const iconeSVG = document.createElement("img");
     iconeSVG.src = "img/trash-10-24.ico";
     iconeSVG.alt = "X"; 
     // Adicione o ícone SVG ao botão
     botaoRemover.appendChild(iconeSVG);
-    botaoRemover.addEventListener("click", async function() {
-        if (!window.confirm(`Excluir matéria ${novaLinha.children[1].textContent} do planejamento? O histórico de estudo será preservado.`)) return;
+
+    async function executarExclusaoLinha() {
         //trecho responsável por armazenar o valor de Nquestoes numa variável para exluí-la do campo "Total de questões:"
-        const valorNquestoes = parseInt(novaLinha.querySelector("td[data-nquestoes]").dataset.nquestoes);
+        const valorNquestoes = parseInt(novaLinha.querySelector("td[data-nquestoes]").dataset.nquestoes, 10) || 0;
         questoesRemovidasDaLinha = valorNquestoes; //até aqui.
-        //console.log(questoesRemovidasDaLinha, "NoN")
-        //removeTotalQuestoes(questoesRemovidasDaLinha)
         totalQuestoes = objetosSalvos.reduce((total, objeto) => total + objeto.Nquestoes, 0);
-        totalQuestoes -= questoesRemovidasDaLinha
+        totalQuestoes -= questoesRemovidasDaLinha;
         document.getElementById("totalQuestoes").value = totalQuestoes;
-        const celulaIndice = novaLinha.querySelector(".indice-cell");
         // Remova a linha correspondente quando o botão for clicado
         tabela.removeChild(novaLinha);
         try { await salvarObjetos(); } catch (erro) { document.getElementById('wizard-erro').textContent = erro.message; }
         // Atualiza os números de índice nas células restantes
         const todasLinhas = tabela.querySelectorAll("tr");
         todasLinhas.forEach((linha, index) => {
-        const celulaIndice = linha.querySelector(".indice-cell");
+            const celulaIndice = linha.querySelector(".indice-cell");
             if (celulaIndice) {
                 celulaIndice.textContent = index + 1; // Atualiza o número de índice
             }
         });
         indice--;
         (tabela.querySelector('button') || document.getElementById('materia'))?.focus();
+    }
+
+    botaoRemover.addEventListener("click", function() {
+        const dialog = document.getElementById('wizard-remover-materia-dialog');
+        if (!dialog) {
+            if (window.confirm(`Excluir matéria ${nomeMateria} do planejamento? O histórico de estudo será preservado.`)) {
+                executarExclusaoLinha();
+            }
+            return;
+        }
+        const nomeEl = document.getElementById('wizard-remover-nome');
+        if (nomeEl) nomeEl.textContent = `"${nomeMateria}"`;
+        const btnConfirmar = dialog.querySelector('[data-confirmar]');
+        const btnsCancelar = dialog.querySelectorAll('[data-cancelar]');
+
+        function fechar() {
+            dialog.close();
+            limpar();
+            if (botaoRemover.isConnected) botaoRemover.focus();
+            else (tabela.querySelector('button') || document.getElementById('materia'))?.focus();
+        }
+
+        async function onConfirmar() {
+            dialog.close();
+            limpar();
+            await executarExclusaoLinha();
+        }
+
+        function onCancel(e) {
+            fechar();
+        }
+
+        function limpar() {
+            btnConfirmar?.removeEventListener('click', onConfirmar);
+            btnsCancelar.forEach(b => b.removeEventListener('click', fechar));
+            dialog.removeEventListener('cancel', onCancel);
+        }
+
+        btnConfirmar?.addEventListener('click', onConfirmar, { once: true });
+        btnsCancelar.forEach(b => b.addEventListener('click', fechar, { once: true }));
+        dialog.addEventListener('cancel', onCancel, { once: true });
+
+        dialog.showModal();
+        const focoCancelar = dialog.querySelector('button[data-cancelar]:not(.pixel-fechar)') || btnsCancelar[0];
+        focoCancelar?.focus();
     });
     // Adicione o botão "Remover" à célula da linha
     celulaRemover.appendChild(botaoRemover);
@@ -493,10 +537,14 @@ function capitalize(materia) {
  * da visualização atual para poder ser evoluída futuramente sem alterar o
  * cálculo de pesos e a tabela do planejamento.
  */
-function sortMaterias() {
+function sortMaterias({ reconstruir = false } = {}) {
     const materiasNormalizadas = lerArrayLocalStorage('objetosNormalizados');
     const dadosExame = lerObjetoLocalStorage('dadosExame');
     if (!materiasNormalizadas.length || !dadosExame) return false;
+    if (!reconstruir && window.MateriasStore?.projetoTemFusao?.(dadosExame.projetoId)) {
+        const materiaDoDia = lerObjetoLocalStorage('materiaDoDia');
+        if (materiaDoDia && Object.keys(materiaDoDia).length) return { materiaDoDia, revisoesDoDia: lerObjetoLocalStorage('revisoesDoDia') || {} };
+    }
 
     if (dadosExame.distribuicaoVersao === 2 || dadosExame.distribuicaoVersao === 3) {
         const cap = dadosExame.distribuicaoVersao === 3 ? window.PraticasStore?.planejarProjeto?.(dadosExame, materiasNormalizadas) : null;

@@ -138,6 +138,7 @@
             const idsNovos = new Set(previstas.map(r => r.id));
             const data = previstas[0]?.dataPrevista;
             const reservadoHistorico = [...preservadas].map(id => registro.entidades[id]).filter(r => r && !idsNovos.has(r.id)
+                && (!dados.replanejamento || !window.MateriasStore.obterProjetoMateria(r.projetoMateriaId, dados.projetoId).removida)
                 && r.dataPrevista === data && (!r.blocoExtraId || !window.EstudoExtra?.excluido(r.blocoExtraId, r.projetoId)))
                 .reduce((s, r) => s + r.sugeridaSegundos, 0);
             const capacidade = Math.max(0, Number(dados.minutosPorDia) - reservadoHistorico / 30);
@@ -169,9 +170,9 @@
             reconciliar(r, sessoes);
             ativas.push(id);
         }
-        registro.ativas = ativas;
+        registro.ativas = ativas.filter(id => !dados.replanejamento || !window.MateriasStore.obterProjetoMateria(registro.entidades[id].projetoMateriaId, dados.projetoId).removida);
         salvar(registro);
-        return ativas.map(id => registro.entidades[id]);
+        return registro.ativas.map(id => registro.entidades[id]);
     }
     function listar() { const reg=ler(); return reg.ativas.map(id=>reg.entidades[id]).filter(r=>!r.blocoExtraId||!window.EstudoExtra?.excluido(r.blocoExtraId,r.projetoId)); }
     function notificar() { window.dispatchEvent(new Event('revisoes:alteradas')); }

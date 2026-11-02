@@ -294,3 +294,8 @@
         flex-wrap: wrap;
     }
 }
+
+.pratica-extra-form { margin-top: 20px; padding: 12px; border: 1px solid var(--pixel-bronze); background: var(--pixel-surface); color: var(--pixel-ink); }
+.pratica-extra-form :is(h3,p,label) { color: var(--pixel-ink) !important; text-shadow: none; }
+
+.pratica-regra-xp { padding: 10px; background: var(--pixel-surface); color: var(--pixel-ink) !important; text-shadow: none; }

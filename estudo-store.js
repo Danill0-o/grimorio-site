@@ -363,7 +363,7 @@
             });
             const metaTotalDia = metas.reduce((total, meta) => total + meta.metaSegundos, 0);
             const pontosDia = metas.reduce((total, meta) => total + meta.pontosAplicadosSegundos, 0);
-            const missoesDia = missoesPorDia[dia] || [];
+            const missoesDia = (missoesPorDia[dia] || []).filter(m => !m.extraAvulsa);
             const semBlocoTeoricoComPratica = metas.length === 0 && missoesDia.length > 0;
             const missoesConcluidas = semBlocoTeoricoComPratica ? missoesDia.filter(m => m.concluida).length : 0;
             return {
@@ -541,6 +541,7 @@
         calcularProgressoPlano,
         contextoDataEstudo,
         sessaoEstudoElegivel,
+        sessaoXpElegivel,
         obterProjetoAtualId,
         chaveGlobal,
         prepararSessao: normalizarSessao
