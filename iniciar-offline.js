@@ -4,7 +4,7 @@
 window.GrimorioPronto=false;
 const iniciar=async()=>{
  const protecao=document.createElement('div');protecao.id='grimorio-carregando';protecao.setAttribute('role','status');protecao.textContent='Carregando seus projetos…';
- Object.assign(protecao.style,{position:'fixed',inset:'0',zIndex:'99999',background:'#fff8e8',color:'#302414',padding:'2rem'});document.body.append(protecao);
+ Object.assign(protecao.style,{position:'fixed',inset:'0',zIndex:'99999',background:'var(--pixel-surface)',color:'var(--texto-comum, var(--pixel-ink))',padding:'2rem'});document.body.append(protecao);
  document.body.inert=true;
  try{
   await window.ProjetosOffline.pronta;

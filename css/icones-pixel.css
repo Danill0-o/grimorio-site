@@ -52,3 +52,6 @@ html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-ico
 html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone::before,
 html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone.materia-excluir-icone::after { display: none !important; }
 @media(prefers-reduced-motion:reduce) { html body button.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar.pixel-fechar { transition: none; } }
+
+/* O fechamento absoluto não ocupa espaço no cabeçalho: reserve sua linha. */
+#praticas-painel-dialog:has(.pixel-fechar) { padding-top: 74px; }
