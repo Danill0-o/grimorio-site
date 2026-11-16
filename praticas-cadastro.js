@@ -3,13 +3,15 @@
     'use strict';
     const tipos = { peca: 'Peça prática (cadastro existente)', redacao: 'Redação', discursiva: 'Questões discursivas', 'estudo-caso': 'Estudo de caso',
         sentenca: 'Sentença', parecer: 'Parecer', simulado: 'Simulado', taf: 'TAF', outra: 'Outra atividade prática' };
+    const presetsPadraoPorTipo = { redacao: 'redacao-dissertativa-v2', discursiva: 'discursiva-curta-v2', 'estudo-caso': 'estudo-caso-parecer-v2',
+        parecer: 'estudo-caso-parecer-v2', peca: 'peca-pratica-v2', sentenca: 'peca-pratica-v2' };
     const nomesPeriodicidade = { semanal: 'Semanal', quinzenal: 'Quinzenal (14 dias)', mensal: 'Mensal (28 dias)' };
     const ordemDias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
     const rotuloDia = dia => dia === 'Sab' ? 'Sáb' : dia;
     const el = id => document.getElementById(id);
     let projetoId, estado, edicao = null, novoId = null, ocupado = false, leituraValida = false;
     let diasSelecionados = new Set(), materiasEstagioSelecionadas = new Set();
-    let modoAnterior = '', referenciaAnterior = false, duracaoManualAnterior = '';
+    let tipoAnterior = '', modoAnterior = '', referenciaAnterior = false, duracaoManualAnterior = '';
     const visivel = elemento => elemento && !elemento.closest('[hidden]');
     const focar = elemento => { if (visivel(elemento)) elemento.focus(); };
 
@@ -19,6 +21,10 @@
         if (campo) {
             campo.setAttribute('aria-invalid', 'true');
             campo.setAttribute('aria-describedby', [...new Set((campo.getAttribute('aria-describedby') || '').split(' ').filter(Boolean).concat('pratica-erro'))].join(' '));
+            if (typeof campo.setCustomValidity === 'function') {
+                campo.setCustomValidity(textoMsg);
+                if (typeof campo.reportValidity === 'function') campo.reportValidity();
+            }
         }
         focar(campo || el('pratica-erro'));
         return false;
@@ -27,6 +33,7 @@
         el('pratica-erro').textContent = '';
         el('pratica-form').querySelectorAll('[aria-invalid]').forEach(campo => {
             campo.removeAttribute('aria-invalid');
+            if (typeof campo.setCustomValidity === 'function') campo.setCustomValidity('');
             const descricao = (campo.getAttribute('aria-describedby') || '').split(' ').filter(id => id && id !== 'pratica-erro').join(' ');
             if (descricao) campo.setAttribute('aria-describedby', descricao); else campo.removeAttribute('aria-describedby');
         });
@@ -145,10 +152,17 @@
             botao.setAttribute('aria-pressed', String(ativo));
             botao.disabled = el('pratica-periodicidade').value === 'automatica' || !agendamentoAtivo || ocupado || !leituraValida || !permitido;
         });
+        const checkTodos = el('pratica-dias-marcar-todos');
+        if (checkTodos) {
+            const desabilitar = el('pratica-periodicidade').value === 'automatica' || !agendamentoAtivo || ocupado || !leituraValida;
+            checkTodos.checked = ordemDias.every(d => diasSelecionados.has(d));
+            checkTodos.indeterminate = diasSelecionados.size > 0 && diasSelecionados.size < ordemDias.length;
+            checkTodos.disabled = desabilitar;
+        }
         if (el('pratica-dias-ajuda')) {
             el('pratica-dias-ajuda').textContent = taf
                 ? 'O TAF pode ser agendado em qualquer dia da semana, inclusive em folgas da rotina teórica.'
-                : 'Você também pode escolher dias de folga das matérias.';
+                : '';
         }
     }
     function renderizarBotoesMateriasEstagio() {
@@ -172,6 +186,7 @@
                     else materiasEstagioSelecionadas.add(m.projetoMateriaId);
                     limparErro();
                     renderizarBotoesMateriasEstagio();
+                    atualizarSugestaoFrequencia();
                 });
                 return botao;
             }));
@@ -184,6 +199,13 @@
             botao.setAttribute('aria-pressed', String(selecionado));
             botao.disabled = !modoEstagio || ocupado || !leituraValida;
         });
+        const checkTodas = el('pratica-estagio-marcar-todas');
+        if (checkTodas) {
+            const selecionadasValidas = materias.filter(m => materiasEstagioSelecionadas.has(m.projetoMateriaId)).length;
+            checkTodas.checked = materias.length > 0 && selecionadasValidas === materias.length;
+            checkTodas.indeterminate = selecionadasValidas > 0 && selecionadasValidas < materias.length;
+            checkTodas.disabled = !modoEstagio || !materias.length || ocupado || !leituraValida;
+        }
         if (el('pratica-estagio-ajuda')) {
             const orfas = [...materiasEstagioSelecionadas].filter(id => !idsDisponiveis.has(id));
             el('pratica-estagio-ajuda').textContent = !materias.length
@@ -201,8 +223,7 @@
         if (automatico && modoAnterior !== periodicidade) {
             el('pratica-duracao-referencia').checked = el('pratica-tipo').value !== 'simulado';
             if (!el('pratica-preset-xp').value) {
-                const sugeridos = {redacao:'redacao-dissertativa-v2',discursiva:'discursiva-curta-v2','estudo-caso':'estudo-caso-parecer-v2',parecer:'estudo-caso-parecer-v2',peca:'peca-pratica-v2',sentenca:'peca-pratica-v2'};
-                el('pratica-preset-xp').value = sugeridos[el('pratica-tipo').value] || '';
+                el('pratica-preset-xp').value = presetsPadraoPorTipo[el('pratica-tipo').value] || '';
             }
         }
         modoAnterior = periodicidade;
@@ -211,9 +232,10 @@
         el('pratica-total-grupo').hidden = automatico;
         el('pratica-total').disabled = ocupado || !leituraValida || automatico;
         el('pratica-pontos').required = automatico;
-        el('pratica-importancia-ajuda').textContent = automatico
-            ? 'Informe os pontos totais desta atividade na prova. O denominador será calculado com todas as matérias e práticas na revisão; não é necessário informar o total.'
-            : 'Informe os dois valores ou deixe ambos em branco. A pontuação não define o tempo de estudo.';
+        if (el('pratica-importancia-ajuda')) {
+            el('pratica-importancia-ajuda').hidden = true;
+            el('pratica-importancia-ajuda').textContent = '';
+        }
         const agendamentoAtivo = Boolean(periodicidade);
         const modoInicio = el('pratica-inicio-modo')?.value || 'inicio';
         const { dataInicio, dataFinal } = obterDatasProjeto();
@@ -251,12 +273,17 @@
         if (check.checked && !referenciaAnterior) duracaoManualAnterior = input.value;
         if (!check.checked && referenciaAnterior) input.value = duracaoManualAnterior;
         referenciaAnterior = check.checked;
-        input.disabled = ocupado || !leituraValida || check.checked;
-        if (!check.checked) return;
+        input.disabled = ocupado || !leituraValida;
+        if (!check.checked) {
+            el('pratica-duracao-ajuda').textContent = taf
+                ? 'O TAF é externo à carga de estudo. A estimativa é opcional e não ativa cronômetro.'
+                : 'Informe sua estimativa.';
+            return;
+        }
         try {
             input.value = String(window.PraticasRecomendacoes.duracaoReferencia(dadosReferencia())/60);
-            el('pratica-duracao-ajuda').textContent = 'Duração ideal aplicada à reserva de capacidade. O tempo real será registrado separadamente; desmarque para ajustar a estimativa.';
-        } catch (_) { input.value = ''; el('pratica-duracao-ajuda').textContent = 'Escolha uma referência de linhas ou tempo ideal abaixo para aplicar a duração da tabela.'; }
+            el('pratica-duracao-ajuda').textContent = 'Duração sugerida aplicada. Desmarque ou altere o campo para ajustar a estimativa.';
+        } catch (_) { input.value = ''; el('pratica-duracao-ajuda').textContent = 'Escolha um tamanho ou modelo de atividade acima para aplicar a duração da tabela.'; }
     }
     function atualizarPresetUI() {
         const select = el('pratica-preset-xp');
@@ -275,8 +302,8 @@
         el('pratica-preset-xp-ajuda').textContent = p
             ? p.extensao + '. Escolha a referência que melhor corresponde à atividade.'
             : el('pratica-tipo').value === 'taf' ? 'Registre o tempo após o treinamento.'
-            : semRegra ? 'Informe acima a duração da prova que deseja simular.'
-            : 'Escolha uma referência de extensão ou informe o tempo estimado.';
+            : semRegra ? 'Informe abaixo a duração da prova que deseja simular.'
+            : 'Escolha um tamanho ou modelo de atividade ou informe o tempo estimado.';
     }
     function perfilDoFormulario() {
         return el('pratica-preset-xp').value === 'linhas'
@@ -285,6 +312,8 @@
     }
     function atualizarTipo() {
         const tipoEscolhido=el('pratica-tipo').value;
+        const mudouTipo = tipoEscolhido !== tipoAnterior;
+        tipoAnterior = tipoEscolhido;
         const nomeLivre=tipoEscolhido==='outra';
         el('pratica-detalhes').hidden=!tipoEscolhido;
         el('pratica-nome-grupo').hidden=!nomeLivre;
@@ -296,13 +325,25 @@
         el('pratica-pontos').closest('fieldset').hidden=tipoEscolhido==='taf';
         if(tipoEscolhido==='taf') { el('pratica-pontos').value=''; el('pratica-total').value=''; }
         if(tipoEscolhido==='simulado') { el('pratica-duracao-referencia').checked=false; }
+        if (mudouTipo) {
+            const presetPadrao = presetsPadraoPorTipo[tipoEscolhido];
+            if (presetPadrao) {
+                el('pratica-preset-xp').value = presetPadrao;
+                el('pratica-duracao-referencia').checked = true;
+            } else if (tipoEscolhido === 'outra') {
+                el('pratica-preset-xp').value = '';
+                el('pratica-duracao-referencia').checked = true;
+                el('pratica-duracao').value = '';
+                duracaoManualAnterior = '';
+            }
+        }
 
         const taf = el('pratica-tipo').value === 'taf';
         el('pratica-duracao').required = !taf;
         el('pratica-duracao-rotulo').textContent = taf ? 'Duração estimada (minutos, opcional)' : 'Duração planejada (minutos)';
         el('pratica-duracao-ajuda').textContent = taf
             ? 'O TAF é externo à carga de estudo. A estimativa é opcional e não ativa cronômetro.'
-            : 'Informe sua estimativa. Na prévia de capacidade, práticas internas reservam tempo antes dos blocos teóricos.';
+            : 'Informe sua estimativa.';
         const possuiMissoes = edicao && Object.values(estado?.missoes || {}).some(m => m.atividadeId === edicao.atividade.atividadeId);
         el('pratica-tipo').disabled = Boolean(possuiMissoes);
         el('pratica-tipo-ajuda').textContent = possuiMissoes ? 'O tipo é preservado porque esta atividade já possui atividades práticas.' : '';
@@ -322,6 +363,7 @@
         if (!simulado || !valido) check.checked = false;
         if (check.checked) el('pratica-duracao').value = String(minutos);
         el('pratica-duracao').readOnly = check.checked;
+        atualizarSugestaoFrequencia();
     }
     function duracaoTexto(segundos) {
         if (segundos === null) return 'Duração não informada';
@@ -397,22 +439,21 @@
         }
         const { previa } = resultado;
         const r = previa.resumo;
+        const tempoPlanejado = previa.atividades.reduce((total, atividade) => total + atividade.tempoPlanejadoTotalSegundos, 0);
         const itens = previa.atividades.filter(a => a.agendada).map(a => {
             const inicioInfo = a.diaJornadaInicio
                 ? `${dataTextoBR(a.dataInicioAtiva)} (${a.diaJornadaInicio.replace('dia', 'Dia ')})`
                 : dataTextoBR(a.dataInicioAtiva);
             const cargaInfo = a.consomeCargaEstudo
-                ? ` · reserva ${duracaoTexto(a.tempoPlanejadoTotalSegundos)}`
+                ? ` · duração total: ${duracaoTexto(a.tempoPlanejadoTotalSegundos)}`
                 : ' · externo à carga teórica';
-            const rec = a.recomendacao;
-            const comparacao = rec?.manual ? ` · sugestão: ${rec.quantidade} vezes no período` : '';
-            return texto('li', `${a.nome}: ${a.totalMissoes} ${a.totalMissoes === 1 ? 'atividade prevista' : 'atividades previstas'} a partir de ${inicioInfo}${cargaInfo}${comparacao}`);
+            return texto('li', `${a.nome}: ${a.totalMissoes} ${a.totalMissoes === 1 ? 'atividade prevista' : 'atividades previstas'} · agendamento ativo desde ${inicioInfo}${cargaInfo}`);
         });
         const listaMissoes = document.createElement('ul');
         listaMissoes.append(...itens);
         const elementos = [
             texto('h4', 'Como ficam suas atividades'),
-            texto('p', `Tempo reservado para atividades no período: ${duracaoTexto(r.tempoTotalReservadoPraticasSegundos)}. Os demais horários serão usados para as matérias.`),
+            texto('p', `Tempo planejado para atividades no período: ${duracaoTexto(tempoPlanejado)}.`),
             listaMissoes
         ];
         if (r.diasComExcessoPraticas > 0) {
@@ -480,6 +521,7 @@
         el('pratica-nome').value = a?.nome || '';
         if (a?.tipo === 'peca' && !el('pratica-tipo').querySelector('[value=peca]')) { const legada=texto('option','Peça prática (cadastro existente)'); legada.value='peca'; el('pratica-tipo').append(legada); }
         el('pratica-tipo').value = a?.tipo || '';
+        tipoAnterior = el('pratica-tipo').value;
         if (a?.presetXpId && ![...el('pratica-preset-xp').options].some(o=>o.value===a.presetXpId)) {
             const p = window.PraticasProgressao.obterPreset(a.presetXpId), option = texto('option',`${p.nome} (parâmetros anteriores)`);
             option.value = a.presetXpId; el('pratica-preset-xp').append(option);
@@ -495,7 +537,7 @@
         el('pratica-total').value = a?.importanciaProva?.total ?? '';
         el('pratica-periodicidade').value = ag?.modo === 'automatico' ? 'automatica' : ag?.periodicidade || '';
         modoAnterior = el('pratica-periodicidade').value;
-        el('pratica-duracao-referencia').checked = a?.duracaoModo === 'referencia';
+        el('pratica-duracao-referencia').checked = a ? a.duracaoModo === 'referencia' : true;
         referenciaAnterior = el('pratica-duracao-referencia').checked; duracaoManualAnterior = el('pratica-duracao').value;
         diasSelecionados = new Set(ag?.diasSemana || []);
         const modoInicio = ag?.inicio?.modo || 'inicio';
@@ -513,8 +555,66 @@
         edicao = null; novoId = null;
         diasSelecionados.clear(); materiasEstagioSelecionadas.clear();
         el('pratica-form').reset(); el('pratica-editor').hidden = true;
-        modoAnterior = ''; referenciaAnterior = false; duracaoManualAnterior = '';
+        tipoAnterior = ''; modoAnterior = ''; referenciaAnterior = false; duracaoManualAnterior = '';
         atualizarTipo(); controles();
+    }
+    function lerInicioAgendamento(invalidar) {
+        const modoInicio = el('pratica-inicio-modo').value;
+        let inicio = { modo: 'inicio' };
+        if (modoInicio === 'data') {
+            const dataEscolhida = el('pratica-inicio-data').value;
+            if (!dataEscolhida) return invalidar('Informe a data planejada de início da atividade.', el('pratica-inicio-data'));
+            const { dataInicio, dataFinal } = obterDatasProjeto();
+            if ((dataInicio && dataEscolhida < dataInicio) || (dataFinal && dataEscolhida > dataFinal)) {
+                return invalidar('A data planejada de início deve estar dentro do período do projeto.', el('pratica-inicio-data'));
+            }
+            inicio = { modo: 'data', dataInicio: dataEscolhida };
+        } else if (modoInicio === 'estagio') {
+            const percentual = Number(el('pratica-estagio-percentual').value);
+            if (!Number.isFinite(percentual) || percentual <= 0 || percentual > 100) {
+                return invalidar('Informe um percentual de estágio planejado entre 1 e 100.', el('pratica-estagio-percentual'));
+            }
+            const materiasValidas = obterMateriasProjeto().map(m => m.projetoMateriaId).filter(id => materiasEstagioSelecionadas.has(id));
+            if (!materiasValidas.length) {
+                return invalidar('Selecione ao menos uma matéria de referência para o estágio planejado.',
+                    el('pratica-estagio-materias').querySelector('button:not(:disabled)') || el('pratica-inicio-modo'));
+            }
+            inicio = { modo: 'estagio', percentual, projetoMateriaIds: materiasValidas };
+        }
+        return inicio;
+    }
+    function atualizarSugestaoFrequencia() {
+        const sugestao = el('pratica-sugestao-frequencia');
+        sugestao.hidden = true;
+        const tipo = el('pratica-tipo').value;
+        const pontos = el('pratica-pontos');
+        const diaRotina = obterDiasRotina()[0];
+        if (el('pratica-editor').hidden || !leituraValida || !tipo || tipo === 'taf'
+            || pontos.value === '' || !pontos.validity.valid || !diaRotina || !obterMateriasProjeto().length) return;
+        const duracao = Number(el('pratica-duracao').value) * 60;
+        const segundos = Math.round(duracao);
+        if (!Number.isSafeInteger(segundos) || segundos <= 0 || Math.abs(duracao - segundos) > 1e-7) return;
+        const inicio = lerInicioAgendamento(() => null);
+        if (!inicio) return;
+        const atividadeId = edicao?.atividade.atividadeId || novoId;
+        try {
+            // A referência de frequência depende da janela ativa e do peso, mesmo sem dias manuais escolhidos.
+            const atividade = window.AtividadesPraticas.criarAtividade({
+                projetoId, atividadeId, tipo, nome: tipos[tipo] || 'Atividade prática',
+                pesoProva: Number(pontos.value), duracaoPlanejadaSegundos: segundos,
+                agendamento: { periodicidade: 'semanal', diasSemana: [diaRotina], inicio }
+            });
+            const atividades = Object.values(estado.atividades)
+                .filter(r => !r.removida && r.atividade.atividadeId !== atividadeId).map(r => r.atividade);
+            const resultado = calcularPreviaCapacidadeAtual([...atividades, atividade]);
+            const quantidade = resultado?.previa?.atividades.find(a => a.atividadeId === atividadeId)?.recomendacao?.quantidade;
+            if (quantidade == null) return;
+            const destaque = sugestao.querySelector('strong');
+            if (destaque.textContent !== String(quantidade)) destaque.textContent = quantidade;
+            sugestao.hidden = false;
+        } catch (_) {
+            // A sugestão fica indisponível enquanto os dados do rascunho forem insuficientes.
+        }
     }
     function dadosDoFormulario() {
         const automatico = el('pratica-periodicidade').value === 'automatica';
@@ -524,7 +624,12 @@
             catch (erro) { return mensagem(erro.message,el('pratica-preset-xp')); }
         }
         for (const campo of el('pratica-form').querySelectorAll('input, select')) {
-            if (!campo.disabled && !campo.checkValidity()) return mensagem('Confira o valor deste campo.', campo);
+            if (!campo.disabled && !campo.checkValidity()) {
+                if (campo.id === 'pratica-pontos') {
+                    return mensagem('Informe a pontuação máxima dessa atividade na prova.', campo);
+                }
+                return mensagem('Confira o valor deste campo.', campo);
+            }
         }
         const tipo = el('pratica-tipo').value;
         const nome = tipo === 'outra' ? el('pratica-nome').value.trim() : (tipos[tipo] || edicao?.atividade.nome);
@@ -542,7 +647,7 @@
         const pontos = el('pratica-pontos').value, total = el('pratica-total').value;
         let importanciaProva = null;
         if (automatico) {
-            if (pontos === '' || !Number.isFinite(Number(pontos)) || Number(pontos)<0) return mensagem('Informe os pontos da atividade na prova.',el('pratica-pontos'));
+            if (pontos === '' || !Number.isFinite(Number(pontos)) || Number(pontos)<0) return mensagem('Informe a pontuação máxima dessa atividade na prova.',el('pratica-pontos'));
         } else if (pontos !== '' || total !== '') {
             if (pontos === '' || total === '') return mensagem('Preencha os pontos da atividade e o total da prova, ou deixe ambos em branco.', el(pontos === '' ? 'pratica-pontos' : 'pratica-total'));
             importanciaProva = { pontos: Number(pontos), total: Number(total) };
@@ -561,28 +666,8 @@
                 return mensagem('Selecione pelo menos um dia da semana para o agendamento.',
                     el('pratica-dias-semana').querySelector('button:not(:disabled)') || el('pratica-periodicidade'));
             }
-            const modoInicio = el('pratica-inicio-modo').value;
-            let inicio = { modo: 'inicio' };
-            if (modoInicio === 'data') {
-                const dataEscolhida = el('pratica-inicio-data').value;
-                if (!dataEscolhida) return mensagem('Informe a data planejada de início da atividade.', el('pratica-inicio-data'));
-                const { dataInicio, dataFinal } = obterDatasProjeto();
-                if ((dataInicio && dataEscolhida < dataInicio) || (dataFinal && dataEscolhida > dataFinal)) {
-                    return mensagem('A data planejada de início deve estar dentro do período do projeto.', el('pratica-inicio-data'));
-                }
-                inicio = { modo: 'data', dataInicio: dataEscolhida };
-            } else if (modoInicio === 'estagio') {
-                const percentual = Number(el('pratica-estagio-percentual').value);
-                if (!Number.isFinite(percentual) || percentual <= 0 || percentual > 100) {
-                    return mensagem('Informe um percentual de estágio planejado entre 1 e 100.', el('pratica-estagio-percentual'));
-                }
-                const materiasValidas = obterMateriasProjeto().map(m => m.projetoMateriaId).filter(id => materiasEstagioSelecionadas.has(id));
-                if (!materiasValidas.length) {
-                    return mensagem('Selecione ao menos uma matéria de referência para o estágio planejado.',
-                        el('pratica-estagio-materias').querySelector('button:not(:disabled)') || el('pratica-inicio-modo'));
-                }
-                inicio = { modo: 'estagio', percentual, projetoMateriaIds: materiasValidas };
-            }
+            const inicio = lerInicioAgendamento(mensagem);
+            if (!inicio) return;
             try {
                 agendamento = window.AtividadesPraticas.validarAgendamento(automatico ? {modo:'automatico',inicio} : { periodicidade, diasSemana, inicio });
             } catch (erro) {
@@ -673,8 +758,34 @@
         el('pratica-recarregar').addEventListener('click', () => { limparErro(); carregar(); });
         el('pratica-form').addEventListener('submit', salvar);
         el('duracao-prova').addEventListener('input', atualizarTempoProva);
+        el('pratica-estagio-marcar-todas')?.addEventListener('change', evento => {
+            limparErro();
+            const materias = obterMateriasProjeto();
+            if (evento.target.checked) {
+                materias.forEach(m => materiasEstagioSelecionadas.add(m.projetoMateriaId));
+            } else {
+                materiasEstagioSelecionadas.clear();
+            }
+            renderizarBotoesMateriasEstagio();
+            atualizarSugestaoFrequencia();
+        });
+        el('pratica-dias-marcar-todos')?.addEventListener('change', evento => {
+            limparErro();
+            if (evento.target.checked) {
+                ordemDias.forEach(d => diasSelecionados.add(d));
+            } else {
+                diasSelecionados.clear();
+            }
+            renderizarBotoesDias();
+        });
         el('pratica-form').addEventListener('input', evento => {
             limparErro();
+            if (evento.target.id === 'pratica-estagio-marcar-todas' || evento.target.id === 'pratica-dias-marcar-todos') return;
+            if (evento.target.id === 'pratica-duracao') {
+                el('pratica-duracao-referencia').checked = false;
+                referenciaAnterior = false;
+                duracaoManualAnterior = el('pratica-duracao').value;
+            }
             if (evento.target.id === 'pratica-estagio-preset' && evento.target.value !== 'personalizado') {
                 el('pratica-estagio-percentual').value = evento.target.value;
             } else if (evento.target.id === 'pratica-estagio-percentual') {
@@ -683,7 +794,11 @@
             }
             atualizarTipo();
         });
-        el('pratica-form').addEventListener('change', () => { limparErro(); atualizarTipo(); });
+        el('pratica-form').addEventListener('change', evento => {
+            if (evento.target.id === 'pratica-estagio-marcar-todas' || evento.target.id === 'pratica-dias-marcar-todos') return;
+            limparErro();
+            atualizarTipo();
+        });
         window.addEventListener('catalogo:atualizado', () => { if (leituraValida && !ocupado) renderizar(); });
         window.addEventListener('storage', evento => { if (evento.key === `praticasProjetoV1:${projetoId}` || evento.key === null) carregar(); });
         window.addEventListener('focus', () => { if (!ocupado) carregar(); });

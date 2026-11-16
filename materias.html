@@ -3,11 +3,12 @@
 <head>
 <script type="application/grimorio" src="icones-pixel.js?v=controles-20261102"></script>
 <meta charset="UTF-8">
-<script src="tema-inicial.js?v=tema-inicial-20261102"></script>
+<script src="tema-inicial.js?v=arcano-padrao"></script>
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=tema-inicial-20261102"></script>
     <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
-    <script type="application/grimorio" src="backup-local.js?v=fusao-xp-20261102"></script>
+    <script type="application/grimorio" src="reagendamento-schema.js?v=r2-20261103"></script>
+    <script type="application/grimorio" src="backup-local.js?v=revisoes-configuraveis-20261112"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Matérias e Vínculos — Grimório</title>
     <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
@@ -15,49 +16,53 @@
     <link rel="stylesheet" href="css/perfil.css?v=fade-integrado-20261101">
     <link rel="stylesheet" href="css/wizard.css?v=praticas-tipos-20261029">
     <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
-    <script type="application/grimorio" src="projetos-store.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="praticas-store.js?v=pratica-extra-20261102"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=revisoes-configuraveis-20261112"></script><script type="application/grimorio" src="praticas-store.js?v=carga-diaria-4-20261114"></script>
     <script type="application/grimorio" src="materias-store.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script>
     <script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
-    <script type="application/grimorio" src="calendario-jornada.js?v=2"></script>
+    <script type="application/grimorio" src="calendario-jornada.js?v=revisoes-intervalos-20261115"></script>
     <script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script>
-    <script type="application/grimorio" src="estudo-store.js?v=extras-historico-20261102"></script>
+    <script type="application/grimorio" src="estudo-store.js?v=carga-diaria-4-20261114"></script>
     <script type="application/grimorio" src="materias-busca.js"></script>
     <script type="application/grimorio" src="catalogo-ui.js?v=fusao-xp-20261102" defer></script>
     <script type="application/grimorio" src="materias-fusao-ui.js" defer></script>
-    <script type="application/grimorio" src="acessibilidade.js?v=sidebar-global-20261030" defer></script>
+    <script type="application/grimorio" src="acessibilidade.js?v=arcano-padrao" defer></script>
 <link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
 <script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
 <link rel="stylesheet" href="css/materias.css?v=fusao-xp-20261102">
 <link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102"></head>
 <body class="perfil-page materias-page">
-<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Suas matérias e vínculos</a><button type="button" id="abrir-historico" aria-haspopup="dialog" aria-controls="historico-dialog">Histórico de estudos</button><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
+<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Catálogo de matérias</a><a href="historico.html">Histórico de estudos</a><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
     <header class="container">
 
         <section class="jornada-hero perfil-hero" aria-labelledby="materias-pagina-titulo"><div class="perfil-hero-conteudo">
-            <p class="jornada-kicker">CATÁLOGO E IDENTIDADE DO GRIMÓRIO</p>
-            <h1 id="materias-pagina-titulo">Suas matérias e vínculos</h1>
-            <p>Consulte suas matérias, níveis e horas acumuladas. Mescle cadastros duplicados para reunir a experiência em uma única matéria em todos os projetos.</p>
+            <p class="jornada-kicker">GRIMÓRIO</p>
+            <h1 id="materias-pagina-titulo">Catálogo de matérias</h1>
+            <p>Veja o tempo estudado e o nível de cada matéria, e faça a manutenção do catálogo em todos os seus projetos.</p>
         </div></section>
     </header>
     <main class="container">
         <section class="jornada-panel mb-4 p-4" aria-labelledby="acervo-titulo">
-            <p class="jornada-kicker">ACERVO GLOBAL</p>
-            <h2 id="acervo-titulo">Matérias cadastradas no seu Grimório</h2>
-            <p>Estas matérias podem ser escolhidas com um clique no livro de matérias ao criar ou editar qualquer projeto, preservando seu nível e histórico acumulado.</p>
+            <p class="jornada-kicker">SEU CATÁLOGO</p>
+            <h2 id="acervo-titulo">Matérias cadastradas</h2>
+            <p>Use essas matérias em qualquer plano com o nível e o histórico que você já tem.</p>
             <form id="catalogo-nova-global-form" class="catalogo-nova-global-form" novalidate>
                 <label for="catalogo-nova-global-nome">Cadastrar nova matéria no catálogo<input id="catalogo-nova-global-nome" class="form-control" maxlength="60" placeholder="Ex.: Direito Constitucional" required></label>
                 <button type="submit" class="btn">Cadastrar matéria</button>
             </form>
             <p id="catalogo-nova-global-status" role="status"></p>
+            <div class="catalogo-acoes">
+                <button type="button" class="btn btn-outline-secondary" id="reiniciar-dominio">Reiniciar níveis das matérias</button>
+            </div>
+            <p id="dominio-status" role="status"></p>
             <div id="catalogo-acervo-grid" class="perfil-grid"></div>
         </section>
 
         <section class="jornada-panel fusao-painel" aria-labelledby="fusao-titulo">
             <h2 id="fusao-titulo">Mesclar matérias duplicadas</h2>
-            <p>Escolha duas matérias que representam o mesmo assunto. A experiência elegível será reunida e o nível recalculado. Os blocos e o progresso de cada projeto permanecem nas posições atuais.</p>
-            <label for="fusao-origem">Matéria a incorporar</label><select id="fusao-origem"></select>
-            <label for="fusao-destino">Matéria cujo nome será mantido</label><select id="fusao-destino"></select>
+            <p>Escolha dois cadastros do mesmo assunto para reunir o progresso e recalcular o nível. O cronograma de cada projeto continua como está.</p>
+            <label for="fusao-origem">Cadastro a juntar</label><select id="fusao-origem"></select>
+            <label for="fusao-destino">Cadastro que mantém o nome</label><select id="fusao-destino"></select>
             <button type="button" id="fusao-revisar">Revisar fusão</button>
             <p id="fusao-status" role="status"></p>
         </section>
@@ -66,24 +71,25 @@
     <dialog id="fusao-dialog" class="fusao-painel" aria-labelledby="fusao-dialog-titulo">
         <h2 id="fusao-dialog-titulo">Confirmar fusão de matérias</h2>
         <p id="fusao-resumo"></p>
-        <p>A fusão vale para todos os projetos e não possui desfazer. Registre ou zere o tempo pendente e feche as abas de cronômetro dos projetos envolvidos antes de confirmar.</p>
+        <p>A união é definitiva e vale para todos os projetos. Antes de confirmar, salve ou zere o tempo pendente e feche as outras abas dos projetos envolvidos.</p>
         <label for="fusao-confirmacao">Digite MESCLAR para confirmar</label><input id="fusao-confirmacao" autocomplete="off" spellcheck="false">
         <p id="fusao-erro" role="alert"></p>
         <div class="dialogo-acoes"><button type="button" id="fusao-cancelar" autofocus>Cancelar</button><button type="button" id="fusao-confirmar" disabled>Mesclar matérias</button></div>
     </dialog>
+    <dialog class="reset-dialogo" id="reset-dominio-dialogo" aria-labelledby="reset-dominio-alvo" aria-describedby="reset-dominio-descricao">
+        <form id="reset-dominio-form">
+            <p class="jornada-kicker">Um novo começo</p>
+            <h2 id="reset-dominio-alvo">Reiniciar nível?</h2>
+            <p id="reset-dominio-descricao">Os pontos, níveis e títulos selecionados voltarão ao início. Seu histórico, suas metas e seu XP do perfil continuam salvos. A mudança é definitiva.</p>
+            <label for="reset-dominio-confirmacao">Digite <strong>ZERAR</strong> para confirmar.</label>
+            <input id="reset-dominio-confirmacao" autocomplete="off" spellcheck="false" required>
+            <p id="reset-dominio-erro" role="alert"></p>
+            <div class="dialogo-acoes">
+                <button type="button" class="btn btn-outline-secondary" id="reset-dominio-cancelar">Cancelar</button>
+                <button type="submit" class="btn acao-perigosa" id="reset-dominio-executar" disabled>Zerar domínio</button>
+            </div>
+        </form>
+    </dialog>
 </div></div>
-<dialog id="historico-dialog" aria-labelledby="historico-modal-titulo">
-<header class="historico-cabecalho"><div><h2 id="historico-modal-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
-<details id="historico-modal-filtros-painel" open><summary>Filtrar registros</summary>
-<form id="historico-modal-filtros" class="historico-filtros" role="search">
-<label>Buscar matéria<input id="historico-busca" type="search" placeholder="Nome da matéria" autocomplete="off"></label>
-<label>Registros<select id="historico-modal-tipo"><option value="">Todos os tipos</option><option value="estudo">Estudos (inclui extras)</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option></select></label>
-<label>Projeto<select id="historico-modal-projeto"><option value="">Todos os projetos</option><option value="atual">Projeto selecionado</option></select></label>
-</form></details>
-<p id="historico-resumo" role="status" aria-live="polite"></p>
-<div class="historico-rolagem"><table id="tabela-sessoes-estudo"><caption>Registros mais recentes primeiro.</caption><thead><tr><th scope="col">Data</th><th scope="col">Hora</th><th scope="col">Matéria</th><th scope="col">Tempo estudado</th><th scope="col">Ações</th></tr></thead><tbody id="sessoes-estudo-body"></tbody></table></div>
-<div class="historico-paginacao"><button type="button" id="historico-modal-anterior">Anterior</button><span id="historico-modal-pagina"></span><button type="button" id="historico-modal-proximo">Próxima</button></div>
-</dialog>
-<script type="application/grimorio" src="jornada-interface.js?v=mobile-historico-20261101"></script>
 </body>
 </html>

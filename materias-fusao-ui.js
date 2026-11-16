@@ -19,7 +19,7 @@
                 const a = MateriasStore.resolverMateriaGlobal(origemId), b = MateriasStore.resolverMateriaGlobal(destinoId);
                 const total = EstudoStore.obterDominioMateria(origemId).segundos + EstudoStore.obterDominioMateria(destinoId).segundos;
                 comando = { origemId, destinoId };
-                el('resumo').textContent = `Mesclar “${a.nomeCanonico}” em “${b.nomeCanonico}”. Nome mantido: ${b.nomeCanonico}. Experiência elegível reunida: ${(total / 60).toLocaleString('pt-BR', {maximumFractionDigits:2})} pontos de conhecimento. O nível e seu avanço serão recalculados pela dedicação acumulada; reinícios e registros excluídos continuam respeitados.`;
+                el('resumo').textContent = `“${a.nomeCanonico}” será unida a “${b.nomeCanonico}”. O cadastro fica com o nome “${b.nomeCanonico}” e terá ${(total / 60).toLocaleString('pt-BR', {maximumFractionDigits:2})} pontos de conhecimento. O nível será recalculado.`;
                 el('confirmacao').value = ''; el('erro').textContent = ''; el('confirmar').disabled = true;
                 el('dialog').showModal(); el('cancelar').focus();
             } catch (e) { el('status').textContent = e.message; }

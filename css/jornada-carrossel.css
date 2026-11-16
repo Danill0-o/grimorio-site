@@ -12,6 +12,7 @@
 }
 .jornada-trilha { width: max-content; padding-bottom: 22px; }
 #jornada-cards {
+    align-items: flex-start;
     position: static;
     width: max-content;
     overflow: visible;

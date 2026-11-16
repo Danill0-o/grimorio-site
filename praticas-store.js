@@ -108,7 +108,10 @@
             const atualizada = dominio.validarAtividade({ ...registro.atividade, ...alteracoes });
             if (igual(atualizada, registro.atividade)) return registro;
             if (atualizada.tipo !== registro.atividade.tipo
-                && Object.values(estado.missoes).some(m => m.atividadeId === atividadeId)) falhar('não altere o tipo de uma atividade com atividades práticas; crie outra atividade');
+                && (Object.values(estado.missoes).some(m => m.atividadeId === atividadeId)
+                    || window.ProjetosStore?.temReagendamentoAtivo?.(lerJsonProjeto(projetoId, 'dadosExame', { projetoId }), atividadeId))) {
+                falhar('não altere o tipo de uma atividade com atividades práticas; crie outra atividade');
+            }
             revisar(registro, revisaoEsperada);
             registro.atividade = atualizada;
             return registro;
@@ -337,13 +340,75 @@
         return { previa, temReservaInterna, dadosDistribuicao };
     }
     function ehMissaoAgendadaAutomatica(missao) {
-        return Boolean(missao && missao.missaoId === `missao-${missao.atividadeId}-${missao.dataPrevista}`);
+        if (!missao) return false;
+        const prefixo = `missao-${missao.atividadeId}-`;
+        if (missao.missaoId === prefixo + missao.dataPrevista) return true;
+        const original = missao.missaoId.slice(-10);
+        if (missao.missaoId !== prefixo + original || !/^\d{4}-\d{2}-\d{2}$/.test(original)) return false;
+        const raw = storage.getItem(`projetoV1:${missao.projetoId}:reagendamentoV1`);
+        return Boolean(raw && window.ReagendamentoSchema.validar(JSON.parse(raw), missao.projetoId).operacoes
+            .some(op => op.praticas.some(m => m.missaoId === missao.missaoId && m.dataPrevista === original)));
+    }
+    function programacaoReagendada(projetoId, dados) {
+        const raw = storage.getItem(`projetoV1:${projetoId}:reagendamentoV1`);
+        const resultado = new Map();
+        if (!raw || !dados) return resultado;
+        const ledger = window.ReagendamentoSchema.validar(JSON.parse(raw), projetoId);
+        for (const op of ledger.operacoes) {
+            if (op.planoVersaoId !== (dados.planoVersaoId ?? null)) continue;
+            const snapshots = new Map(op.praticas.map(m => [m.missaoId, m]));
+            op.depois.forEach((lista, i) => lista.forEach((item, ordem) => {
+                if (!item.startsWith('pratica:')) return;
+                const snapshot = snapshots.get(item.slice(8));
+                const { tipo, ...missao } = snapshot;
+                if (missao.presetXpId === null) delete missao.presetXpId;
+                if (missao.perfilXp === null) delete missao.perfilXp;
+                resultado.set(missao.missaoId, { missao: { versao: 1, ...missao, dataPrevista: op.datas[i] }, ordem });
+            }));
+        }
+        return resultado;
+    }
+    function prepararReagendada(projetoId, missaoId) {
+        if (!programacaoReagendada(projetoId, lerJsonProjeto(projetoId, 'dadosExame')).has(missaoId)) return null;
+        return escrever(projetoId, estado => {
+            const dados = lerJsonProjeto(projetoId, 'dadosExame');
+            const entrada = programacaoReagendada(projetoId, dados).get(missaoId);
+            if (!entrada) return null;
+            const registro = obterAtividade(estado, entrada.missao.atividadeId, true);
+            const atual = estado.missoes[missaoId];
+            const temFatos = ['sessoes', 'conclusoes', 'avaliacoes'].some(c => Object.values(estado[c]).some(f => f.missaoId === missaoId));
+            if (temFatos || missaoEmCronometro(estado) === missaoId) return atual;
+            const missao = dominio.validarMissao(entrada.missao, registro.atividade);
+            if (missao.dataPrevista > window.CalendarioJornada.dataLocal()) falhar('atividade prática prevista para uma data futura');
+            estado.missoes[missaoId] = missao;
+            return missao;
+        });
+    }
+    function prepararAntecipacao(projetoId, snapshot, data, segundos, operacaoId, registradoEm) {
+        const estado = ler(projetoId);
+        const registro = obterAtividade(estado, snapshot.atividadeId, true);
+        const { tipo, ...campos } = snapshot;
+        if (campos.presetXpId === null) delete campos.presetXpId;
+        if (campos.perfilXp === null) delete campos.perfilXp;
+        const missao = dominio.validarMissao({ versao: 1, ...campos, dataPrevista: data }, registro.atividade);
+        if (['conclusoes', 'sessoes', 'avaliacoes'].some(c => Object.values(estado[c]).some(f => f.missaoId === missao.missaoId))) {
+            falhar('atividade prática já possui registro');
+        }
+        estado.missoes[missao.missaoId] = missao;
+        inserir(estado.conclusoes, 'conclusaoId', dominio.criarConclusao(registro.atividade, missao, {
+            conclusaoId: 'antecipacao-' + operacaoId, registradoEm, dataRealizacao: data
+        }));
+        if (segundos !== null) inserir(estado.sessoes, 'sessaoId', dominio.criarSessao(registro.atividade, missao, {
+            sessaoId: 'antecipacao-' + operacaoId, inicio: new Date(data + 'T12:00:00').toISOString(),
+            duracaoSegundos: segundos, origem: 'manual', dataEstudo: data, precisaoInicio: 'dia', registradoEm
+        }));
+        return [chave(projetoId), JSON.stringify(schema.validar(estado, projetoId))];
     }
     function missoesProtegidas(estado,atividades) {
         const emCronometro = missaoEmCronometro(estado);
         return Object.values(estado.missoes).filter(m=>atividades.some(a=>a.atividadeId===m.atividadeId && a.agendamento?.modo==='automatico')
             && ehMissaoAgendadaAutomatica(m) && (['conclusoes','sessoes','avaliacoes'].some(c=>Object.values(estado[c]).some(f=>f.missaoId===m.missaoId))
-                || emCronometro===m.missaoId));
+                || emCronometro===m.missaoId)).map(m => ({ ...m, dataPrevista: m.missaoId.slice(-10) }));
     }
     function missaoEmCronometro(estado) {
         const raw = storage.getItem(`cronometroV1:${estado.projetoId}`);
@@ -403,7 +468,16 @@
         if (!Array.isArray(missoesPlanejadas)) return Promise.reject(new Error('Práticas: lista de atividades práticas inválida'));
         const lista = copiarEntrada(missoesPlanejadas);
         if (storage.getItem(chave(projetoId)) === null && !lista.length) return Promise.resolve([]);
-        return escrever(projetoId, estado => aplicarSincronizacaoMissoes(estado, lista));
+        return escrever(projetoId, estado => {
+            aplicarSincronizacaoMissoes(estado, lista);
+            for (const [id, { missao }] of programacaoReagendada(projetoId, lerJsonProjeto(projetoId, 'dadosExame'))) {
+                const registro = estado.atividades[missao.atividadeId];
+                if (!registro || registro.removida || missaoEmCronometro(estado) === id
+                    || ['sessoes', 'conclusoes', 'avaliacoes'].some(c => Object.values(estado[c]).some(f => f.missaoId === id))) continue;
+                estado.missoes[id] = dominio.validarMissao(missao, registro.atividade);
+            }
+            return Object.values(estado.missoes);
+        });
     }
     function sincronizarMissoesProjeto(dados = null, materiasNormalizadas = null) {
         const projetoId = dados?.projetoId || window.ProjetosStore?.idAtual?.();
@@ -420,6 +494,8 @@
         if (!projetoId || storage.getItem(chave(projetoId)) === null) return vazio;
         const estado = ler(projetoId);
         const dados = opcoes.dados ?? lerJsonProjeto(projetoId, 'dadosExame', null);
+        const incluirNaCarga = opcoes.base || dados?.cargaDiariaVersao !== 1 || dados.cargaDiaria?.incluirPraticas !== false;
+        const remanejadas = opcoes.base ? new Map() : programacaoReagendada(projetoId, dados);
         const materiaDoDia = opcoes.materiaDoDia ?? lerJsonProjeto(projetoId, 'materiaDoDia', null);
         const materiasNormalizadas = opcoes.materiasNormalizadas ?? lerJsonProjeto(projetoId, 'objetosNormalizados', []);
         const planejamento = dados ? planejarProjeto(dados, materiasNormalizadas) : null;
@@ -428,7 +504,9 @@
             ? Object.keys(materiaDoDia).length : Number(dados?.diasEstudoPraProva) || 0;
         let datasEstudo = { porDia: {}, porData: {} };
         if (dados && totalDiasPlano > 0 && window.CalendarioJornada?.mapear) {
-            try { datasEstudo = window.CalendarioJornada.mapear(dados, totalDiasPlano); } catch (_) {}
+            const datasEfetivas = !opcoes.base && window.ProjetosStore?.idAtual() === projetoId
+                ? window.ReagendamentoStore?.lerPlanoEfetivo(projetoId, 'dadosExame') : null;
+            try { datasEstudo = window.CalendarioJornada.mapear(datasEfetivas ? JSON.parse(datasEfetivas) : dados, totalDiasPlano); } catch (_) {}
         }
         const conclusoesAtivas = Object.values(estado.conclusoes).filter(c => !Object.hasOwn(estado.exclusoes.conclusoes, c.conclusaoId));
         const sessoesAtivas = Object.values(estado.sessoes).filter(s => !Object.hasOwn(estado.exclusoes.sessoes, s.sessaoId));
@@ -457,6 +535,11 @@
                 missaoId: planejada.missaoId,
                 dataPrevista: planejada.dataPrevista
             }));
+        }
+        for (const [missaoId, { missao }] of remanejadas) {
+            const registro = estado.atividades[missao.atividadeId];
+            if (!registro || registro.removida || comFatosHistoricos.has(missaoId)) continue;
+            missoesEfetivasPorId.set(missaoId, dominio.validarMissao(missao, registro.atividade));
         }
         const missoes = [];
         const missoesPorDiaJornada = {};
@@ -494,7 +577,7 @@
                     nome: registro.atividade.nome,
                     tipo: registro.atividade.tipo,
                     extraAvulsa: m.missaoId.startsWith('pratica-extra-'),
-                    consomeCargaEstudo: !m.missaoId.startsWith('pratica-extra-') && regras.consomeCargaEstudo,
+                    consomeCargaEstudo: incluirNaCarga && !m.missaoId.startsWith('pratica-extra-') && regras.consomeCargaEstudo,
                     usaCronometro: regras.usaCronometro,
                     importanciaProva: clonar(registro.atividade.importanciaProva),
                     dataPrevista: m.dataPrevista,
@@ -520,6 +603,7 @@
             }
         }
         const ordenarMissoes = lista => lista.sort((a, b) => a.dataPrevista.localeCompare(b.dataPrevista)
+            || (remanejadas.get(a.missaoId)?.ordem ?? Infinity) - (remanejadas.get(b.missaoId)?.ordem ?? Infinity)
             || a.nome.localeCompare(b.nome, 'pt-BR')
             || a.missaoId.localeCompare(b.missaoId));
         ordenarMissoes(missoes);
@@ -562,7 +646,7 @@
         }
         return { [chave(destinoId)]: JSON.stringify(schema.validar(destino, destinoId)) };
     }
-    window.PraticasStore = Object.freeze({ criarAtividade, editarAtividade, removerAtividade, criarMissao,
+    window.PraticasStore = Object.freeze({ criarAtividade, editarAtividade, removerAtividade, criarMissao, prepararReagendada, prepararAntecipacao,
         registrarConclusao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'conclusoes'),
         registrarSessao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'sessoes'),
         registrarAvaliacao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'avaliacoes'),

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" shape-rendering="crispEdges">
+  <!-- Livro Tier 1: Iniciante (caderno simples fechado) -->
+  <rect x="6" y="4" width="12" height="15" fill="#1a120b"/>
+  <!-- Capa -->
+  <rect x="7" y="5" width="10" height="12" fill="#8b5a2b"/>
+  <rect x="9" y="6" width="7" height="10" fill="#a47148"/>
+  <!-- Lombada simples -->
+  <rect x="7" y="5" width="2" height="13" fill="#5c3a1e"/>
+  <!-- Bloco de folhas -->
+  <rect x="9" y="17" width="8" height="1" fill="#f3e5c0"/>
+  <rect x="17" y="6" width="1" height="12" fill="#e6d3a3"/>
+  <!-- Rótulo simples na capa -->
+  <rect x="11" y="9" width="4" height="2" fill="#d9c29c"/>
+</svg>

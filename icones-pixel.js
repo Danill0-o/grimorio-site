@@ -35,7 +35,7 @@
             if (!b.getAttribute('aria-label')) b.setAttribute('aria-label', /^fechar\b/i.test(nome) ? nome : 'Fechar janela');
             b.title ||= b.getAttribute('aria-label');
             b.classList.add('pixel-fechar');
-            if (b.parentElement !== janela) janela.append(b);
+            if (b.parentElement !== janela && !b.closest('.calendario-popup-cabecalho, .livro-aberto-topo, .pratica-topo')) janela.append(b);
         }
     }
     document.addEventListener('DOMContentLoaded', () => {

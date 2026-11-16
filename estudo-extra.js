@@ -5,7 +5,7 @@
     let recuperando = false;
     function validar(extra, projetoId, blocoId) {
         if (!extra || extra.versao !== 1 || extra.projetoId !== projetoId || extra.blocoId !== blocoId
-            || !/^extra-[\w-]+$/.test(blocoId) || !/^dia[1-9]\d*$/.test(extra.diaJornada)
+            || !/^extra-[\w-]+$/.test(blocoId) || (!/^dia[1-9]\d*$/.test(extra.diaJornada) && extra.diaJornada !== 'folga-' + extra.dataOrigem)
             || window.CalendarioJornada.somarDias(extra.dataOrigem, 0) !== extra.dataOrigem
             || !Number.isFinite(new Date(extra.criadoEm).getTime())
             || (extra.projetoMateriaId !== null && (typeof extra.projetoMateriaId !== 'string' || !extra.projetoMateriaId))) {
@@ -37,8 +37,9 @@
             .sort((a, b) => a.criadoEm.localeCompare(b.criadoEm) || a.blocoId.localeCompare(b.blocoId));
     }
     function contextoDia(projetoId, diaJornada) {
-        const dados = JSON.parse(localStorage.getItem(`projetoV1:${projetoId}:dadosExame`) || 'null');
-        const plano = JSON.parse(localStorage.getItem(`projetoV1:${projetoId}:materiaDoDia`) || '{}');
+        const ler = (campo, padrao) => JSON.parse(window.ReagendamentoStore?.lerPlanoEfetivo(projetoId, campo)
+            ?? localStorage.getItem(`projetoV1:${projetoId}:${campo}`) ?? padrao);
+        const dados = ler('dadosExame', 'null'), plano = ler('materiaDoDia', '{}');
         const dataOrigem = dados && Object.hasOwn(plano, diaJornada)
             ? window.CalendarioJornada.mapear(dados, Object.keys(plano).length).porDia[diaJornada] : null;
         if (!dataOrigem) throw new Error('Calendário indisponível para estudo extra');

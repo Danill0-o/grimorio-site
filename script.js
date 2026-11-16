@@ -235,15 +235,11 @@ function removerLinhaTabela(tabela, novaLinha) { // Add um botão que remove a l
     // const novaLinha = document.createElement("tr");
     const celulaRemover = document.createElement("td");
     const botaoRemover = document.createElement("button");
-    botaoRemover.classList.add("border-0");
+    botaoRemover.classList.add("materia-excluir-icone");
     botaoRemover.type = "button";
     const nomeMateria = novaLinha.children[1].textContent;
     botaoRemover.setAttribute("aria-label", "Excluir " + nomeMateria);
-    const iconeSVG = document.createElement("img");
-    iconeSVG.src = "img/trash-10-24.ico";
-    iconeSVG.alt = "X"; 
-    // Adicione o ícone SVG ao botão
-    botaoRemover.appendChild(iconeSVG);
+    botaoRemover.appendChild(window.IconesPixel.criar("excluir"));
 
     async function executarExclusaoLinha() {
         //trecho responsável por armazenar o valor de Nquestoes numa variável para exluí-la do campo "Total de questões:"
@@ -537,20 +533,31 @@ function capitalize(materia) {
  * da visualização atual para poder ser evoluída futuramente sem alterar o
  * cálculo de pesos e a tabela do planejamento.
  */
-function sortMaterias({ reconstruir = false } = {}) {
+function sortMaterias({ reconstruir = false, cargaPlanejada = null } = {}) {
     const materiasNormalizadas = lerArrayLocalStorage('objetosNormalizados');
     const dadosExame = lerObjetoLocalStorage('dadosExame');
     if (!materiasNormalizadas.length || !dadosExame) return false;
-    if (!reconstruir && window.MateriasStore?.projetoTemFusao?.(dadosExame.projetoId)) {
+    const reorganizado = !reconstruir && window.ProjetosStore?.temReagendamentoAtivo?.(dadosExame);
+    const editando = !reconstruir && window.location?.pathname?.endsWith('/index.html')
+        && lerObjetoLocalStorage('wizardProjeto')?.origemReplanejamento;
+    if (!reconstruir && (dadosExame.cargaDiariaVersao === 1 || editando || reorganizado || window.MateriasStore?.projetoTemFusao?.(dadosExame.projetoId))) {
         const materiaDoDia = lerObjetoLocalStorage('materiaDoDia');
-        if (materiaDoDia && Object.keys(materiaDoDia).length) return { materiaDoDia, revisoesDoDia: lerObjetoLocalStorage('revisoesDoDia') || {} };
+        if (materiaDoDia && (reorganizado || Object.keys(materiaDoDia).length)) return { materiaDoDia, revisoesDoDia: lerObjetoLocalStorage('revisoesDoDia') || {} };
+        if (reorganizado) throw new Error('Plano base do reagendamento indisponível');
+        if (dadosExame.cargaDiariaVersao === 1) throw new Error('Plano integrado de carga diária indisponível.');
     }
 
     if (dadosExame.distribuicaoVersao === 2 || dadosExame.distribuicaoVersao === 3) {
-        const cap = dadosExame.distribuicaoVersao === 3 ? window.PraticasStore?.planejarProjeto?.(dadosExame, materiasNormalizadas) : null;
-        const plano = window.DistribuicaoEstudos.gerar(cap ? cap.dadosDistribuicao : dadosExame, materiasNormalizadas);
+        const dadosDistribuicao = cargaPlanejada
+            ? window.RevisoesProjecao.dadosDistribuicao({ dados: dadosExame, ...cargaPlanejada })
+            : dadosExame.distribuicaoVersao === 3
+                ? window.PraticasStore?.planejarProjeto?.(dadosExame, materiasNormalizadas)?.dadosDistribuicao ?? dadosExame
+                : dadosExame;
+        const plano = window.DistribuicaoEstudos.gerar(dadosDistribuicao, materiasNormalizadas);
         window.IdentidadeStore?.identificarPlano(plano.materiaDoDia);
-        const revisoesDoDia = revisoes(Object.entries(plano.materiaDoDia).map(([dia, blocos]) => ({ [dia]: blocos })));
+        const revisoesDoDia = cargaPlanejada
+            ? confirmarCargaDiaria(dadosExame, plano.materiaDoDia, cargaPlanejada)
+            : revisoes(Object.entries(plano.materiaDoDia).map(([dia, blocos]) => ({ [dia]: blocos })));
         (window.ProjetoStorage || localStorage).setItem('lista_distribuicao_materias', JSON.stringify(plano.distribuicaoMaterias));
         (window.ProjetoStorage || localStorage).setItem('materiaDoDia', JSON.stringify(plano.materiaDoDia));
         return { materiaDoDia: plano.materiaDoDia, revisoesDoDia };
@@ -637,18 +644,74 @@ function sortMaterias({ reconstruir = false } = {}) {
     return { materiaDoDia: todasMateriasPorDia, revisoesDoDia: revisoesDoDia };
 }
 
+function confirmarCargaDiaria(dados, materiaDoDia, { carga, projecao, missoes, politica }) {
+    const storage = window.ProjetoStorage || localStorage;
+    const calendario = window.CalendarioJornada;
+    const mapa = calendario.mapear(dados, Object.keys(materiaDoDia).length);
+    const porIdProvisorio = new Map();
+    const revisoesDoDia = {};
+    for (const [dia, blocos] of Object.entries(materiaDoDia)) {
+        const data = mapa.porDia[dia];
+        if (!data) throw new Error('Data da sessão teórica inválida.');
+        revisoesDoDia[dia] = {};
+        blocos.forEach((bloco, posicao) => {
+            bloco.metaNominalSegundos = carga.duracaoNormalBlocoSegundos;
+            porIdProvisorio.set(window.RevisoesProjecao.idOrigem(data, posicao), bloco);
+        });
+    }
+
+    function itemRevisao(bloco, chavePeriodo, duracaoSegundos) {
+        return { id: JSON.stringify([dados.projetoId, bloco.blocoId, chavePeriodo]), blocoId: bloco.blocoId, duracaoSegundos };
+    }
+    let grupos = [];
+    if (dados.cargaDiaria.incluirRevisoes && projecao.temReservaCapacidade) {
+        grupos = projecao.grupos.map(grupo => ({
+            ...grupo,
+            itens: grupo.itens.map(item => {
+                const bloco = porIdProvisorio.get(item.blocoId);
+                if (!bloco?.blocoId) throw new Error('Origem da reserva de revisão inválida.');
+                return itemRevisao(bloco, grupo.chavePeriodo, item.duracaoSegundos);
+            })
+        }));
+    } else if (politica.ativadas) {
+        for (const [dia, blocos] of Object.entries(materiaDoDia)) {
+            if (!blocos.length) continue;
+            const dataOrigem = mapa.porDia[dia];
+            for (const { chavePeriodo, etapa, data } of calendario.projetarPeriodosRevisao(dataOrigem, dados, politica)) {
+                const itens = blocos.map(bloco => itemRevisao(bloco, chavePeriodo, Math.round(bloco.metaNominalSegundos / 8)));
+                grupos.push({ dataOrigem, chavePeriodo, etapa, dataNominal: data, dataOperacional: data, estado: 'reservada',
+                    duracaoSegundos: itens.reduce((total, item) => total + item.duracaoSegundos, 0), itens });
+            }
+        }
+    }
+    for (const grupo of grupos) {
+        if (grupo.estado !== 'reservada') continue;
+        const origem = mapa.porData[grupo.dataOrigem], destino = mapa.porData[grupo.dataOperacional];
+        if (!origem || !destino) throw new Error('Datas da reserva de revisão inválidas.');
+        const ids = new Set(grupo.itens.map(item => item.blocoId));
+        const blocos = materiaDoDia[origem].filter(bloco => ids.has(bloco.blocoId));
+        (revisoesDoDia[destino][calendario.grupoRevisao(grupo.chavePeriodo)] ||= {})[origem] = blocos;
+    }
+    dados.cargaDiariaPlano = { grupos, praticas: missoes };
+    storage.setItem('dadosExame', JSON.stringify(dados));
+    storage.setItem('revisoesDoDia', JSON.stringify(revisoesDoDia));
+    return revisoesDoDia;
+}
+
 function revisoes(arrayObjetosDivisaoPorDia, dados = JSON.parse((window.ProjetoStorage || localStorage).getItem('dadosExame') || '{}')) {
     const revisoesDoDia = {};
     const plano = Object.assign({}, ...arrayObjetosDivisaoPorDia);
     const calendario = window.CalendarioJornada;
     const mapa = calendario.mapear(dados, arrayObjetosDivisaoPorDia.length);
-    Object.keys(plano).forEach(dia => { revisoesDoDia[dia] = {revisao1:null,revisao2:null,revisao3:null}; });
+    Object.keys(plano).forEach(dia => {
+        revisoesDoDia[dia] = dados.revisoesPolitica ? {} : {revisao1:null,revisao2:null,revisao3:null};
+    });
     Object.entries(plano).forEach(([origem, blocos]) => {
         if (!mapa.porDia[origem] || !Array.isArray(blocos) || !blocos.length) return;
-        calendario.projetarRevisoes(mapa.porDia[origem], dados).forEach(({etapa,data}) => {
+        calendario.projetarPeriodosRevisao(mapa.porDia[origem], dados).forEach(({ chavePeriodo, data }) => {
             const destino = mapa.porData[data];
             if (!destino || !revisoesDoDia[destino]) return;
-            const grupo = revisoesDoDia[destino][`revisao${etapa.slice(1)}`] ||= {};
+            const grupo = revisoesDoDia[destino][calendario.grupoRevisao(chavePeriodo)] ||= {};
             grupo[origem] = blocos;
         });
     });

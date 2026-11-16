@@ -23,7 +23,9 @@
         const sem = Number.isNaN(d.getTime()) ? '' : ` ${diasSemanaAbrev[d.getUTCDay()]}`;
         return `${iso.slice(-2)}${sem}`;
     }
-    function diaLinear(numero) { return `Dia ${String(numero).padStart(2, '0')}`; }
+    function diaLinear(numero) {
+        return String(numero).startsWith('folga-') ? dataCivil(String(numero).slice(6)) : `Dia ${String(numero).padStart(2, '0')}`;
+    }
     function duracao(segundos) {
         const horas = Math.floor(segundos / 3600), minutos = Math.floor(segundos % 3600 / 60), resto = segundos % 60;
         return [horas ? `${horas}h` : '', minutos ? `${minutos} min` : '', resto ? `${resto} s` : ''].filter(Boolean).join(' ') || '0 min';
@@ -176,7 +178,7 @@
                     folga.dataset.calendarioFolgaData = iso;
                     folga.setAttribute('aria-haspopup', 'dialog');
                     folga.setAttribute('aria-controls', 'calendario-popup');
-                    folga.setAttribute('aria-label', `${dataCivil(iso)}: folga teórica com ${nomes.join(', ')}`);
+                    folga.setAttribute('aria-label', `${dataCivil(iso)}: dia sem matérias, com ${nomes.join(', ')}`);
                     const topo = elemento('span', 'calendario-dia-topo');
                     const data = elemento('time', 'calendario-dia-data', rotuloFolga);
                     data.dateTime = iso;
@@ -327,13 +329,13 @@
             }
             const rodape = elemento('div', 'calendario-card-rodape');
             rodape.append(
-                elemento('small', '', `Bloco ${materia.numero}`),
+                elemento('small', '', `Sessão ${materia.numero}`),
                 elemento('small', 'calendario-card-ir', `Abrir ${diaLinear(dia.numero)} na Jornada →`)
             );
             cardLink.append(rodape);
             li.append(cardLink);
             return li;
-        }, 'Nenhum estudo normal previsto neste dia.');
+        }, 'Nenhuma matéria agendada para este dia.');
 
         const revisoes = secaoPopup('Revisões previstas', dia.revisoes, revisao => {
             const li = elemento('li', 'calendario-popup-item calendario-popup-revisao');
@@ -401,6 +403,7 @@
             return li;
         }, 'Nenhum estudo extra adicionado neste dia.');
         const secoes = [normais, secaoMissoes(dia.missoes || [], dia.numero), revisoes, extras];
+        if (dia.carga) secoes.unshift(window.CargaDiaria.painel(dia.carga));
         if (dia.numero === 1) {
             const historico = window.Replanejamento?.criarHistorico(plano.dados, plano.plano, plano.sessoes);
             if (historico) secoes.push(historico);
@@ -456,11 +459,12 @@
         document.getElementById('calendario-popup-fechar').focus({ preventScroll: true });
     }
     function preencherPopupFolga(folga) {
-        document.getElementById('calendario-popup-titulo').textContent = 'Folga teórica';
+        document.getElementById('calendario-popup-titulo').textContent = 'Dia sem matérias';
         const semana = new Intl.DateTimeFormat('pt-BR', { weekday: 'long', timeZone: 'UTC' }).format(new Date(`${folga.dataPrevista}T12:00:00Z`));
         document.getElementById('calendario-popup-data').textContent = `${dataCivil(folga.dataPrevista)} · ${semana}`;
         const aviso = elemento('p', 'calendario-popup-vazio', 'Sem estudo teórico previsto. A atividade abaixo não consome a carga de estudo.');
-        document.getElementById('calendario-popup-conteudo').replaceChildren(aviso, secaoMissoes(folga.missoes));
+        document.getElementById('calendario-popup-conteudo').replaceChildren(
+            folga.carga ? window.CargaDiaria.painel(folga.carga) : aviso, secaoMissoes(folga.missoes));
     }
     function abrirDia(chave) {
         const dia = plano?.dias.find(d => d.dia === chave);
@@ -508,7 +512,7 @@
             (botao || document.querySelector('main')).focus({ preventScroll: true });
         });
         renderizar();
-        for (const evento of ['estudo:registrado', 'estudo:excluido', 'extras:alterados', 'revisoes:alteradas', 'notas:alteradas', 'praticas:alteradas']) window.addEventListener(evento, solicitarAtualizacao);
+        for (const evento of ['estudo:registrado', 'estudo:excluido', 'extras:alterados', 'revisoes:alteradas', 'notas:alteradas', 'praticas:alteradas', 'reagendamento:alterado']) window.addEventListener(evento, solicitarAtualizacao);
         window.addEventListener('storage', evento => {
             const projetoAtual = plano?.projetoId || window.ProjetosStore.idAtual();
             if (window.HistoricoRepository.ehChave(evento.key) || evento.key === 'materiasDominioV1' || evento.key === 'notasBlocosV1'

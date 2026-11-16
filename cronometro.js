@@ -16,6 +16,7 @@
     let fimDestaque;
     let pronto = false;
     let liberarAba = null;
+    let projetoComTrava = null;
     let estavaOculto = false;
     let baseMono = 0, baseCivil = 0, baseAcumulado = 0;
     function marcarRelogios() { baseMono = performance.now(); baseCivil = Date.now(); baseAcumulado = tempoDecorridoMs; estavaOculto = document.hidden; }
@@ -41,7 +42,7 @@
         if (!segundoPlano && delta - tempoDecorridoMs > 12 * 3600000) {
             estado = 'parado'; window.clearInterval(intervalo); intervalo = null;
             atualizarControles(elementosAtivos);
-            definirStatus(elementosAtivos, 'Contagem pausada por alteração de relógio ou ausência prolongada. Confira o tempo antes de continuar.');
+            definirStatus(elementosAtivos, 'O cronômetro pausou após uma mudança no relógio ou uma longa ausência. Confira o tempo antes de continuar.');
             return tempoDecorridoMs;
         }
         tempoDecorridoMs = delta;
@@ -54,7 +55,7 @@
         if (estado === 'rodando') { tempoDecorridoMs = Math.max(tempoDecorridoMs, performance.now()-inicioContagem); estado = 'parado'; }
         window.clearInterval(intervalo); intervalo = null;
         atualizarControles(elementosAtivos);
-        definirStatus(elementosAtivos, 'Não foi possível salvar o cronômetro. Os dados anteriores foram preservados. Libere armazenamento e recarregue para recuperar.', true);
+        definirStatus(elementosAtivos, 'O cronômetro não pôde salvar o tempo mais recente. Atualize a página para recuperar o último tempo salvo.', true);
     }
     async function assumirAba() {
         pronto = false;
@@ -62,10 +63,11 @@
         atualizarDisplay(elementosAtivos);
         atualizarControles(elementosAtivos);
         if (!navigator.locks) {
-            definirStatus(elementosAtivos, 'Este navegador precisa oferecer Web Locks para recuperar o cronômetro com segurança. Use localhost ou HTTPS.', true);
+            definirStatus(elementosAtivos, 'Abra o Grimório pelo endereço seguro (HTTPS) em um navegador compatível para usar o cronômetro.', true);
             return;
         }
-        await navigator.locks.request('cronometro:' + projetoId(), { ifAvailable: true }, async lock => {
+        const id = projetoId();
+        await navigator.locks.request('cronometro:' + id, { ifAvailable: true }, async lock => {
             if (!lock) { definirStatus(elementosAtivos, 'Cronômetro aberto em outra aba deste projeto. Feche essa aba e recarregue aqui.', true); return; }
             try {
                 window.ProjetosStore?.validarAtual?.();
@@ -116,11 +118,13 @@
                         }
                         elementosAtivos.materia.value = r.contexto.projetoMateriaId;
                     }
-                    definirStatus(elementosAtivos, estado === 'rodando' ? 'Sessão recuperada e contando, incluindo o período fora da página. Confira o tempo antes de registrar; use Pausa e Zerar para descartar.' : 'Sessão recuperada e pausada. O período fora da página não foi somado. Continue, registre ou zere.');
+                    definirStatus(elementosAtivos, estado === 'rodando' ? 'Cronômetro retomado com o tempo em que você esteve fora. Confira o total antes de salvar.' : 'Cronômetro restaurado em pausa. O tempo em que você esteve fora ficou de fora da contagem.');
                 }
+                projetoComTrava = id;
                 pronto = true; salvarTimer(); atualizarDisplay(elementosAtivos); atualizarControles(elementosAtivos); emitirEstado();
                 await new Promise(resolve => { liberarAba = resolve; });
             } catch (erro) { falhaPersistencia(); }
+            finally { projetoComTrava = null; }
         }).catch(() => falhaPersistencia());
     }
 
@@ -464,7 +468,7 @@
             return true;
         } catch (erro) {
             if (gravado) pronto = false;
-            definirStatus(elementosAtivos, gravado ? 'Tempo salvo. Recarregue para finalizar a recuperação do cronômetro.'
+            definirStatus(elementosAtivos, gravado ? 'Tempo registrado. Atualize a página antes de iniciar outra sessão.'
                 : `Não foi possível finalizar o registro. A sessão foi preservada para tentar novamente. ${erro.message}`, true);
             return false;
         } finally { registroPraticaEmCurso = false; atualizarControles(elementosAtivos); emitirEstado(); }
@@ -491,7 +495,7 @@
         }
         const anotacao = elementos.anotacaoManual?.value.trim().slice(0, 140) || '';
         if (projetoMateriaId.startsWith('pratica:')) {
-            definirStatusManual(elementos, 'Use a atividade prática para registrar sua conclusão. Este formulário é exclusivo para matérias.', true);
+            definirStatusManual(elementos, 'Para registrar um treino, abra a atividade prática correspondente.', true);
             return;
         }
         const contextual = contextoManual && contextoManual.projetoMateriaId === projetoMateriaId
@@ -524,7 +528,7 @@
             tentativaManual.dados ||= dados;
             if (automatico) await window.EstudoExtra.registrarManual(tentativaManual.dados);
             else window.EstudoStore.registrarSessao(tentativaManual.dados);
-        } catch (_) { definirStatusManual(elementos, 'Não foi possível salvar. Os campos foram preservados; confira o armazenamento e tente novamente.', true); return; }
+        } catch (_) { definirStatusManual(elementos, 'Não foi possível salvar o registro. Suas informações continuam no formulário. Tente novamente.', true); return; }
         finally { registroManualEmCurso = false; enviar.disabled = false; }
         tentativaManual = null;
         elementos.formManual.reset();
@@ -532,14 +536,21 @@
     }
 
     function obterElementos() {
+        const materia = document.getElementById('cronometro-materia');
+        if (materia && !materia.dataset.ajudaPraticas) {
+            materia.dataset.ajudaPraticas = '1';
+            materia.addEventListener('change', () => {
+                const ajuda = document.getElementById('cronometro-praticas-ajuda');
+                if (ajuda) ajuda.hidden = !materia.value.startsWith('pratica:');
+            });
+        }
         return {
-            materia: document.getElementById('cronometro-materia'),
+            materia,
             display: document.getElementById('cronometro-display'),
             iniciar: document.getElementById('cronometro-iniciar'),
             parar: document.getElementById('cronometro-parar'),
             registrar: document.getElementById('cronometro-registrar'),
             status: document.getElementById('cronometro-status'),
-            sessoesBody: document.getElementById('sessoes-estudo-body'),
             formManual: document.getElementById('registro-manual-form'),
             materiaManual: document.getElementById('registro-manual-materia'),
             horasManual: document.getElementById('registro-manual-horas'),
@@ -627,6 +638,9 @@
         elementos.parar.disabled = !pronto || registroPraticaEmCurso || estado === 'ocioso';
         elementos.parar.textContent = estado === 'parado' ? 'Zerar' : 'Pausa';
         elementos.registrar.disabled = !pronto || registroPraticaEmCurso || estado !== 'parado';
+        // A orientação sobre XP só faz sentido quando uma atividade prática está selecionada.
+        const ajudaPraticas = document.getElementById('cronometro-praticas-ajuda');
+        if (ajudaPraticas) ajudaPraticas.hidden = !String(elementos.materia.value || '').startsWith('pratica:');
     }
 
     function atualizarDisplay(elementos) {
@@ -769,5 +783,13 @@
         }
     }
 
-    window.CronometroEstudos = { iniciarMateria, iniciarPratica, abrirPraticaNoCronometro, parar, continuar, zerar, registrarAtual, obterEstado, abrirRegistroManual };
+    // A Jornada já possui a trava exclusiva da aba. O commit síncrono usa essa mesma trava.
+    function executarComTravaOciosa(id, operacao) {
+        if (!pronto || id !== projetoComTrava || estado !== 'ocioso' || registroManualEmCurso || registroPraticaEmCurso) {
+            throw new Error('Reagendamento: o cronômetro está em uso. Encerre a sessão antes de confirmar');
+        }
+        return operacao();
+    }
+
+    window.CronometroEstudos = { executarComTravaOciosa, iniciarMateria, iniciarPratica, abrirPraticaNoCronometro, parar, continuar, zerar, registrarAtual, obterEstado, abrirRegistroManual };
 })();

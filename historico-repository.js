@@ -79,6 +79,13 @@
         return novas;
     }
     const repositorio = {
+        prepararAdicao(sessao, id) {
+            validarSessao(sessao);
+            if (estado().registrados.has(sessao.id) || estado().excluidas.has(sessao.id) || storage.getItem(PREFIXO + id) !== null) {
+                throw new Error('ID de registro retrospectivo já utilizado');
+            }
+            return [PREFIXO + id, JSON.stringify({ versao: 1, id, tipo: 'adicionar', sessoes: [sessao] })];
+        },
         listar: () => estado().sessoes,
         possuiRegistro: id => { const atual=estado(); return atual.registrados.has(id) || atual.excluidas.has(id); },
         dominio: () => estado().dominio,

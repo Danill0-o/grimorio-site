@@ -3,42 +3,52 @@
 <head>
 <script type="application/grimorio" src="icones-pixel.js?v=controles-20261102"></script>
 <meta charset="UTF-8">
-<script src="tema-inicial.js?v=tema-inicial-20261102"></script>
+<script src="tema-inicial.js?v=arcano-padrao"></script>
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=tema-inicial-20261102"></script>
     <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
-    <script type="application/grimorio" src="backup-local.js?v=fusao-xp-20261102"></script>
-    <script type="application/grimorio" src="acessibilidade.js?v=sidebar-global-20261030"></script>
+    <script type="application/grimorio" src="reagendamento-schema.js?v=r2-20261103"></script>
+    <script type="application/grimorio" src="backup-local.js?v=revisoes-configuraveis-20261112"></script>
+    <script type="application/grimorio" src="acessibilidade.js?v=arcano-padrao"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Seu Grimório — Perfil</title>
     <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
     <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
-    <link rel="stylesheet" href="css/perfil.css?v=fade-integrado-20261101">
+    <link rel="stylesheet" href="css/perfil.css?v=milestones-20261115">
     <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
-    <script type="application/grimorio" src="projetos-store.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="praticas-store.js?v=pratica-extra-20261102"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=revisoes-configuraveis-20261112"></script><script type="application/grimorio" src="praticas-store.js?v=carga-diaria-4-20261114"></script>
     <script type="application/grimorio" src="materias-store.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script>
     <script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
-    <script type="application/grimorio" src="calendario-jornada.js?v=2"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script>
-    <script type="application/grimorio" src="estudo-store.js?v=extras-historico-20261102"></script>
-    <link rel="stylesheet" href="css/relatorios.css?v=temas3-20261022">
-    <script type="application/grimorio" src="relatorios-store.js?v=domingo-20261101"></script>
-    <script type="application/grimorio" src="relatorios-ui.js"></script>
-    <script type="application/grimorio" src="perfil.js?v=acoes-cards-20261101" defer></script>
-    <script type="application/grimorio" src="praticas-perfil.js?v=acoes-cards-20261101" defer></script>
-    <script type="application/grimorio" src="perfil-historico.js?v=exclusao-global-20261101" defer></script>
+    <script type="application/grimorio" src="calendario-jornada.js?v=revisoes-intervalos-20261115"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script>
+    <script type="application/grimorio" src="estudo-store.js?v=carga-diaria-4-20261114"></script>
+    <script type="application/grimorio" src="perfil-identidade.js?v=etapa1-20261115" defer></script>
+    <script type="application/grimorio" src="perfil-retencao.js?v=milestones-20261115" defer></script>
+    <script type="application/grimorio" src="perfil.js?v=milestones-20261115" defer></script>
+    <script type="application/grimorio" src="praticas-perfil.js?v=etapa3-20261115" defer></script>
 
 <link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
 <script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
 <link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102"></head>
 <body class="perfil-page">
-<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Suas matérias e vínculos</a><button type="button" id="abrir-historico" aria-haspopup="dialog" aria-controls="historico-dialog">Histórico de estudos</button><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
+<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Catálogo de matérias</a><a href="historico.html">Histórico de estudos</a><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
     <header class="container">
-
-        <section class="jornada-hero perfil-hero" aria-labelledby="perfil-titulo"><div class="perfil-hero-conteudo">
-            <p class="jornada-kicker">CONHECIMENTO ACUMULADO</p>
-            <h1 id="perfil-titulo">Seu Grimório</h1>
-            <p>Cada sessão escreve um novo capítulo, em qualquer projeto.</p>
+        <section class="jornada-hero perfil-hero perfil-ficha" aria-labelledby="perfil-titulo"><div class="perfil-hero-conteudo">
+            <div class="perfil-ficha-cabecalho">
+                <div class="perfil-avatar-quadro" aria-hidden="true">
+                    <img id="perfil-avatar-img" src="img/avatars/mago.svg" width="96" height="96" alt="">
+                    <span id="perfil-avatar-nivel" class="perfil-avatar-nivel">Nv. 1</span>
+                </div>
+                <div class="perfil-ficha-info">
+                    <div class="perfil-ficha-topo">
+                        <p class="jornada-kicker">FICHA DO ESTUDANTE</p>
+                        <button type="button" id="perfil-personalizar-btn" class="btn btn-outline-secondary perfil-personalizar-btn">Personalizar ficha</button>
+                    </div>
+                    <h1 id="perfil-titulo">Estudante do Grimório</h1>
+                    <p id="perfil-classe-titulo" class="perfil-classe-titulo">Iniciante · Mago Arcano</p>
+                    <p class="perfil-intro-apoio">Acompanhe sua evolução global, seus níveis por matéria e suas atividades práticas.</p>
+                </div>
+            </div>
             <dl class="perfil-stats">
                 <div class="jornada-stat"><dt>Tempo total registrado</dt><dd id="perfil-tempo">—</dd></div>
                 <div class="jornada-stat"><dt>Matérias estudadas</dt><dd id="perfil-materias">—</dd></div>
@@ -48,111 +58,160 @@
     </header>
     <main class="container">
         <section class="jornada-panel perfil-progressao" aria-labelledby="progressao-titulo">
-            <p class="jornada-kicker">CADA MINUTO CONTA</p>
-            <h2 id="progressao-titulo">Sua dedicação</h2>
-            <p id="perfil-global-nivel" class="perfil-nivel">—</p>
-            <p id="perfil-global-xp">—</p>
-            <progress id="perfil-global-barra" max="100" value="0" aria-label="Avanço para o próximo nível global"></progress>
-            <p id="perfil-global-avanco">—</p>
-            <p>Estudo e revisão valem o mesmo XP (1 minuto = 1 XP). Práticas somam sua recompensa própria ao XP global. Zerar experiência adquirida em determinada matérias preserva sua experiência global.</p>
-        </section>
-        <section aria-labelledby="dominio-titulo">
-            <p class="jornada-kicker">SUAS MATÉRIAS, ALÉM DE UMA JORNADA</p>
-            <h2 id="dominio-titulo">Domínio</h2>
-            <div class="perfil-backup-acoes">
-                <a class="btn btn-outline-secondary" href="materias.html">Gerenciar matérias e vínculos</a>
-                <button type="button" class="btn" id="reiniciar-dominio">Zerar todo o domínio</button>
+            <div class="perfil-progressao-cabecalho">
+                <div>
+                    <p class="jornada-kicker">EXPERIÊNCIA GLOBAL</p>
+                    <h2 id="progressao-titulo">Sua evolução</h2>
+                </div>
+                <p id="perfil-global-nivel" class="perfil-nivel-emblema">—</p>
             </div>
-            <p id="dominio-status" role="status"></p>
-            <p id="perfil-status" role="status">Carregando seu domínio...</p>
+            <div class="perfil-xp-barra-caixa">
+                <div class="perfil-xp-topo">
+                    <p id="perfil-global-xp">—</p>
+                    <p id="perfil-global-percentual" class="perfil-xp-percentual">0%</p>
+                </div>
+                <progress id="perfil-global-barra" class="perfil-barra-rpg perfil-barra-xp" max="100" value="0" aria-label="Avanço para o próximo nível global"></progress>
+                <p id="perfil-global-avanco" class="perfil-xp-avanco">—</p>
+            </div>
+            <p class="perfil-xp-regra">Cada minuto de estudo ou revisão vale 1 XP. Atividades práticas também dão XP ao serem concluídas.</p>
+        </section>
+        <section id="perfil-retencao" class="jornada-panel perfil-retencao-painel" aria-labelledby="retencao-titulo">
+            <div class="perfil-retencao-topo">
+                <div>
+                    <p class="jornada-kicker">CONSTÂNCIA E RITMO</p>
+                    <h2 id="retencao-titulo">Sua jornada contínua</h2>
+                </div>
+                <p id="perfil-constancia-status" class="perfil-status-pilula">—</p>
+            </div>
+            <div class="perfil-retencao-grade">
+                <div class="perfil-bloco-interno" id="perfil-constancia">
+                    <h3>Ritmo nos últimos 7 dias</h3>
+                    <dl class="perfil-mini-stats">
+                        <div class="perfil-mini-stat"><dt>Sequência atual</dt><dd id="perfil-streak-atual">0 dias</dd></div>
+                        <div class="perfil-mini-stat"><dt>Recorde</dt><dd id="perfil-streak-melhor">0 dias</dd></div>
+                        <div class="perfil-mini-stat"><dt>Dias ativos</dt><dd id="perfil-dias-ativos">0</dd></div>
+                    </dl>
+                    <ul id="perfil-ritmo-7d" class="perfil-ritmo-7d" aria-label="Atividade nos últimos 7 dias"></ul>
+                    <p id="perfil-ritmo-resumo" class="perfil-bloco-apoio">—</p>
+                </div>
+                <div class="perfil-bloco-interno" id="perfil-maestria">
+                    <h3>Maestria e dedicação</h3>
+                    <div id="perfil-maestria-card" class="perfil-maestria-card">
+                        <p id="perfil-maestria-nome" class="perfil-maestria-nome">Sem matéria destacada ainda</p>
+                        <p id="perfil-maestria-detalhe" class="perfil-maestria-detalhe">Registre sua primeira sessão para revelar sua principal especialidade.</p>
+                    </div>
+                    <div class="perfil-dedicacao-bloco">
+                        <p class="perfil-dedicacao-rotulo">Divisão da dedicação</p>
+                        <div id="perfil-dedicacao-barra" class="perfil-dedicacao-barra" role="img" aria-label="Divisão entre estudo, revisão e atividades práticas"></div>
+                        <ul id="perfil-dedicacao-legenda" class="perfil-dedicacao-legenda"></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section id="perfil-conquistas" class="jornada-panel perfil-conquistas-painel" aria-labelledby="conquistas-titulo">
+            <div class="perfil-conquistas-cabecalho">
+                <div>
+                    <p class="jornada-kicker">MARCOS DA JORNADA</p>
+                    <h2 id="conquistas-titulo">Mural de conquistas</h2>
+                </div>
+                <div class="perfil-conquistas-topo-acoes">
+                    <label class="perfil-conquistas-filtro-campo" for="perfil-conquistas-filtro">
+                        <span>Exibir</span>
+                        <select id="perfil-conquistas-filtro">
+                            <option value="todas">Todas as conquistas</option>
+                            <option value="desbloqueadas">Desbloqueadas</option>
+                            <option value="bloqueadas">A conquistar</option>
+                            <option value="Nível Global">Nível Global</option>
+                            <option value="Domínio">Domínio de Matéria</option>
+                            <option value="Constância">Constância</option>
+                            <option value="Dedicação">Dedicação</option>
+                            <option value="Revisão">Revisão</option>
+                            <option value="Práticas">Práticas</option>
+                        </select>
+                    </label>
+                    <p id="perfil-conquistas-resumo" class="perfil-nivel-emblema">0 de 32 desbloqueadas</p>
+                </div>
+            </div>
+            <p class="perfil-xp-regra">Marcos calculados automaticamente pelo seu histórico. Conquistas desbloqueadas liberam títulos para equipar na sua ficha.</p>
+            <p id="perfil-conquistas-vazio" class="perfil-conquistas-vazio" role="status" hidden></p>
+            <ul id="perfil-conquistas-lista" class="perfil-conquistas-grade"></ul>
+        </section>
+        <section class="perfil-vitrine-secao" aria-labelledby="dominio-titulo">
+            <div class="perfil-vitrine-cabecalho">
+                <div>
+                    <p class="jornada-kicker">SEU PROGRESSO POR MATÉRIA</p>
+                    <h2 id="dominio-titulo">Níveis por matéria</h2>
+                </div>
+                <p id="perfil-dominio-resumo" class="perfil-nivel-emblema">0 matérias</p>
+            </div>
+            <div class="perfil-acoes">
+                <div class="perfil-acoes-links">
+                    <a class="btn btn-outline-secondary" href="materias.html">Abrir catálogo de matérias</a>
+                    <a class="btn btn-outline-secondary" href="historico.html">Ver histórico completo</a>
+                </div>
+                <div class="perfil-vitrine-controles">
+                    <label class="perfil-controle-campo" for="perfil-dominio-ordem">
+                        <span>Ordenar por</span>
+                        <select id="perfil-dominio-ordem">
+                            <option value="tempo">Maior domínio</option>
+                            <option value="nivel">Maior nível</option>
+                            <option value="nome">Ordem alfabética (A–Z)</option>
+                        </select>
+                    </label>
+                    <label class="perfil-controle-campo" for="perfil-dominio-filtro">
+                        <span>Patente</span>
+                        <select id="perfil-dominio-filtro">
+                            <option value="todas">Todas as patentes</option>
+                            <option value="Iniciante">Iniciante</option>
+                            <option value="Aprendiz">Aprendiz</option>
+                            <option value="Dedicado">Dedicado</option>
+                            <option value="Perito">Perito</option>
+                            <option value="Expert">Expert</option>
+                            <option value="Mestre">Mestre</option>
+                            <option value="Lenda">Lenda</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <p id="perfil-status" role="status">Carregando matérias...</p>
             <div id="perfil-dominio" class="perfil-grid"></div>
         </section>
-        <section id="perfil-praticas" aria-labelledby="perfil-praticas-titulo" hidden>
-            <h2 id="perfil-praticas-titulo">Atividades práticas</h2>
-            <p>Cada atividade conserva seu histórico por projeto.</p>
+        <section id="perfil-praticas" class="perfil-vitrine-secao" aria-labelledby="perfil-praticas-titulo" hidden>
+            <div class="perfil-vitrine-cabecalho">
+                <div>
+                    <p class="jornada-kicker">DISCIPLINA E PRÁTICA</p>
+                    <h2 id="perfil-praticas-titulo">Atividades práticas</h2>
+                </div>
+                <p id="perfil-praticas-resumo" class="perfil-nivel-emblema">0 atividades</p>
+            </div>
+            <p class="perfil-vitrine-apoio">Cada atividade conserva seu histórico por projeto.</p>
             <p id="perfil-praticas-status" role="status"></p>
             <div id="perfil-praticas-lista" class="perfil-grid"></div>
         </section>
-        <section class="jornada-panel perfil-historico" aria-labelledby="historico-titulo">
-            <p class="jornada-kicker">SUA TRAJETÓRIA NO GRIMÓRIO</p>
-            <h2 id="historico-titulo">Histórico global</h2>
-            <p>Todos os seus projetos, inclusive os excluídos. Reiniciar domínio preserva este histórico.</p>
-            <p id="historico-global-status" role="status">Carregando seu histórico...</p>
-            <dl class="perfil-stats">
-                <div class="jornada-stat"><dt>Tempo de estudo</dt><dd id="historico-estudo">—</dd></div>
-                <div class="jornada-stat"><dt>Tempo de revisão</dt><dd id="historico-revisao">—</dd></div>
-                <div class="jornada-stat"><dt>Sessões registradas</dt><dd id="historico-sessoes">—</dd></div>
-                <div class="jornada-stat" id="historico-outros-item" hidden><dt>Tempo de outros registros</dt><dd id="historico-outros">—</dd></div>
-                <div class="jornada-stat"><dt>Primeira sessão</dt><dd><time id="historico-primeira">—</time></dd></div>
-                <div class="jornada-stat"><dt>Sessão mais recente</dt><dd><time id="historico-recente">—</time></dd></div>
-            </dl>
-            <p class="perfil-datas-ajuda">As datas indicam o início das sessões, no horário local.</p>
-            <h3 class="historico-consulta-titulo">Suas sessões</h3>
-            <form id="historico-filtros" class="historico-filtros" aria-label="Filtrar histórico global">
-                <label>De<input type="date" id="historico-de"></label>
-                <label>Até<input type="date" id="historico-ate"></label>
-                <label>Matéria<select id="historico-materia"><option value="">Todas as matérias</option></select></label>
-                <label>Projeto<select id="historico-projeto"><option value="">Todos os projetos</option></select></label>
-                <label>Tipo<select id="historico-tipo"><option value="">Todos os registros</option><option value="estudo">Estudo</option><option value="revisao">Revisão</option><option value="outros">Outros registros</option></select></label>
-                <label>Agrupar gráficos<select id="historico-agrupamento"><option value="semana">Por semana</option><option value="mes">Por mês</option></select></label>
-                <button type="button" class="btn" id="historico-limpar">Limpar filtros</button>
-            </form>
-            <section class="relatorios" aria-labelledby="relatorios-global-titulo">
-                <h3 id="relatorios-global-titulo">Dedicação por período</h3>
-                <div id="relatorios-global" tabindex="-1"></div>
-            </section>
-            <p id="historico-consulta-status" role="status">Carregando sessões...</p>
-            <div class="historico-tabela-regiao" id="historico-tabela-regiao" role="region" aria-label="Sessões do histórico global; role horizontalmente para ver todas as colunas" tabindex="0">
-                <table class="historico-tabela"><caption>Sessões registradas, da mais recente à mais antiga</caption>
-                    <thead><tr><th scope="col">Data e hora</th><th scope="col">Matéria</th><th scope="col">Projeto</th><th scope="col">Tipo</th><th scope="col">Duração</th></tr></thead>
-                    <tbody id="historico-global-body"></tbody>
-                </table>
-            </div>
-            <nav class="historico-paginacao" aria-label="Páginas do histórico">
-                <button type="button" class="btn" id="historico-anterior" disabled>Anterior</button>
-                <span id="historico-pagina">—</span>
-                <button type="button" class="btn" id="historico-proximo" disabled>Próxima</button>
-            </nav>
-        </section>
-        <section class="jornada-panel perfil-backup" id="backup" aria-labelledby="backup-titulo">
-            <h2 id="backup-titulo">Guarde seu Grimório</h2>
-            <p>Baixe uma cópia completa dos dados salvos neste navegador (projetos, matérias, sessões, notas e preferências), salve diretamente em uma pasta fixa do computador ou restaure um arquivo de backup. Inclui o último checkpoint salvo de cronômetros pendentes.</p>
-            <div class="perfil-backup-acoes">
-                <button type="button" class="btn" data-backup-exportar data-backup-status="backup-status">Baixar backup completo</button>
-                <button type="button" class="btn" data-backup-pasta data-backup-status="backup-status">Salvar na pasta fixa</button>
-                <button type="button" class="btn" data-backup-trocar-pasta data-backup-status="backup-status">Escolher pasta fixa</button>
-                <button type="button" class="btn" data-backup-restaurar data-backup-status="backup-status">Restaurar backup</button>
-            </div>
-            <p id="backup-status" role="status"></p>
-            <p>O backup é local e não envia dados para a nuvem.</p>
-        </section>
     </main>
-    <dialog class="reset-dialogo" id="reset-dominio-dialogo" aria-labelledby="reset-dominio-alvo" aria-describedby="reset-dominio-descricao">
-        <form id="reset-dominio-form">
-            <p class="jornada-kicker">Um novo começo</p>
-            <h2 id="reset-dominio-alvo">Zerar domínio?</h2>
-            <p id="reset-dominio-descricao">Os pontos de conhecimento serão zerados e os níveis e títulos voltarão ao início. O histórico de estudos e as metas dos projetos serão preservados. Esta ação não pode ser desfeita pela interface.</p>
-            <label for="reset-dominio-confirmacao">Digite <strong>ZERAR</strong> para confirmar.</label>
-            <input id="reset-dominio-confirmacao" autocomplete="off" spellcheck="false" required>
-            <div class="dialogo-acoes">
-                <button type="button" class="btn" id="reset-dominio-cancelar">Cancelar</button>
-                <button type="submit" class="btn" id="reset-dominio-executar" disabled>Zerar domínio</button>
+    <dialog id="perfil-identidade-dialog" class="perfil-dialogo" aria-labelledby="perfil-dialogo-titulo">
+        <form id="perfil-identidade-form" novalidate>
+            <h2 id="perfil-dialogo-titulo">Personalizar ficha</h2>
+            <p class="perfil-dialogo-ajuda">Defina seu nome no Grimório e escolha um retrato para a sua ficha.</p>
+            <label class="perfil-dialogo-campo" for="perfil-nome-input">
+                <span>Nome de exibição (até 40 caracteres)</span>
+                <input id="perfil-nome-input" name="nomeExibicao" type="text" maxlength="40" placeholder="Estudante do Grimório" autocomplete="nickname">
+            </label>
+            <fieldset class="perfil-avatares-grupo">
+                <legend>Escolha seu retrato</legend>
+                <div id="perfil-avatares-opcoes" class="perfil-avatares-opcoes"></div>
+            </fieldset>
+            <label class="perfil-dialogo-campo perfil-dialogo-campo-espaco" for="perfil-titulo-select">
+                <span>Título exibido na ficha</span>
+                <select id="perfil-titulo-select" name="tituloEquipadoId"></select>
+            </label>
+            <p id="perfil-dialogo-status" role="status" class="perfil-dialogo-erro"></p>
+            <div class="perfil-dialogo-acoes">
+                <button type="button" id="perfil-identidade-cancelar" class="btn btn-outline-secondary">Cancelar</button>
+                <button type="submit" id="perfil-identidade-salvar" class="btn">Salvar ficha</button>
             </div>
         </form>
     </dialog>
 </div></div>
-<dialog id="historico-dialog" aria-labelledby="historico-modal-titulo">
-<header class="historico-cabecalho"><div><h2 id="historico-modal-titulo">Histórico de estudos</h2><p>Consulte seus registros de estudo e revisão. Excluir uma entrada recalcula o tempo, o XP e o progresso correspondentes.</p></div><button type="button" id="fechar-historico" aria-label="Fechar histórico">Fechar</button></header>
-<details id="historico-modal-filtros-painel" open><summary>Filtrar registros</summary>
-<form id="historico-modal-filtros" class="historico-filtros" role="search">
-<label>Buscar matéria<input id="historico-busca" type="search" placeholder="Nome da matéria" autocomplete="off"></label>
-<label>Registros<select id="historico-modal-tipo"><option value="">Todos os tipos</option><option value="estudo">Estudos (inclui extras)</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option></select></label>
-<label>Projeto<select id="historico-modal-projeto"><option value="">Todos os projetos</option><option value="atual">Projeto selecionado</option></select></label>
-</form></details>
-<p id="historico-resumo" role="status" aria-live="polite"></p>
-<div class="historico-rolagem"><table id="tabela-sessoes-estudo"><caption>Registros mais recentes primeiro.</caption><thead><tr><th scope="col">Data</th><th scope="col">Hora</th><th scope="col">Matéria</th><th scope="col">Tempo estudado</th><th scope="col">Ações</th></tr></thead><tbody id="sessoes-estudo-body"></tbody></table></div>
-<div class="historico-paginacao"><button type="button" id="historico-modal-anterior">Anterior</button><span id="historico-modal-pagina"></span><button type="button" id="historico-modal-proximo">Próxima</button></div>
-</dialog>
-<script type="application/grimorio" src="jornada-interface.js?v=mobile-historico-20261101"></script>
 </body>
 </html>

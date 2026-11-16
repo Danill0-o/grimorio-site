@@ -290,7 +290,7 @@
 #calendario-popup {
     width: min(640px, calc(100% - 28px));
     max-height: calc(100dvh - 28px);
-    padding: 0 22px 20px;
+    padding: 0 22px 20px !important;
     border: 4px solid var(--pixel-gold) !important;
     border-radius: 0 !important;
     background: var(--pixel-surface-elevated) !important;
@@ -299,6 +299,7 @@
     overflow-y: auto;
     overscroll-behavior: contain;
 }
+#calendario-popup:has(.pixel-fechar) { padding-top: 0 !important; }
 #calendario-popup::backdrop { background: #20180f99; backdrop-filter: blur(2px); }
 .calendario-popup-cabecalho {
     position: sticky;

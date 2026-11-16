@@ -8,7 +8,7 @@
         'lista_distribuicao_materias', 'totalQuestoes', 'objetosSalvos', 'objetosNormalizados',
         'somaDasQuestoesNormalizadas', 'materiaDoDia', 'revisoesDoDia', 'planosIdentidadeV1',
         'revisoesEstadoV1', 'revisoesTransacaoV1', 'grimorioTemaPixelV1', 'grimorioScanlinesPixelV1',
-        'grimorioBackupAnteriorV1']);
+        'grimorioPerfilV1', 'grimorioBackupAnteriorV1']);
     const prefixos = ['projetoV1:', 'historicoOperacaoV1:', 'cronometroV1:', 'projetosTransacaoV2:', 'praticasProjetoV1:'];
     const DB_NOME = 'grimorioBackupPastaV1';
     const STORE_NOME = 'diretorio';
@@ -16,6 +16,7 @@
     const ANTERIOR = 'grimorioBackupAnteriorV1', JOURNAL = 'grimorioRestauracaoV1';
     const storageNativo = window.localStorage;
     let bloqueado = false, restaurando = false, liberarUso = null, pronta = Promise.resolve(), usoPedido = Promise.resolve();
+    let operacaoExclusiva = false;
     const objeto = v => v !== null && typeof v === 'object' && !Array.isArray(v);
     const texto = v => typeof v === 'string' && v.trim().length > 0;
     const falhar = mensagem => { throw new Error(`Backup inválido: ${mensagem}`); };
@@ -174,7 +175,8 @@
                 && Number.isInteger(s.duracaoSegundos) && s.duracaoSegundos > 0 && !Object.hasOwn(s, 'materiaId') && !Object.hasOwn(s, 'materiaGlobalId'), 'sessão.');
             vinculo(s.projetoMateriaId, s.projetoId);
             for (const campo of ['blocoId', 'blocoExtraId', 'revisaoId', 'tipo', 'origem']) if (s[campo] != null) exigir(texto(s[campo]), `campo ${campo} da sessão.`);
-            for (const campo of ['diaJornada', 'referenciaDia']) if (s[campo] != null) exigir(/^dia[1-9]\d*$/.test(s[campo]), `campo ${campo} da sessão.`);
+            for (const campo of ['diaJornada', 'referenciaDia']) if (s[campo] != null) exigir(/^dia[1-9]\d*$/.test(s[campo])
+                || (String(s[campo]).startsWith('folga-') && civil(s[campo].slice(6))), `campo ${campo} da sessão.`);
             if (s.blocoExtraId) exigir(s.blocoId === s.blocoExtraId && /^extra-[\w-]+$/.test(s.blocoExtraId), 'bloco extra da sessão.');
             if (s.anotacao !== undefined) exigir(typeof s.anotacao === 'string' && s.anotacao.length <= 140, 'anotação da sessão.');
             if (s.dataEstudo !== undefined) exigir(civil(s.dataEstudo) && s.precisaoInicio === 'dia' && instante(s.registradoEm), 'data estudada da sessão.');
@@ -209,16 +211,43 @@
                     'checkpoint de atividade prática.');
                 } else vinculo(v.contexto.projetoMateriaId, v.projetoId);
             }
+            if (k === 'grimorioPerfilV1') {
+                exigir(objeto(v) && v.versao === 1
+                    && Object.keys(v).every(c => ['versao', 'nomeExibicao', 'avatarId', 'tituloEquipadoId'].includes(c))
+                    && (v.nomeExibicao === undefined || typeof v.nomeExibicao === 'string')
+                    && (v.avatarId === undefined || typeof v.avatarId === 'string')
+                    && (v.tituloEquipadoId === undefined || v.tituloEquipadoId === null || typeof v.tituloEquipadoId === 'string'),
+                    'dados do perfil.');
+            }
             const p = /^projetoV1:([^:]+):(.+)$/.exec(k), nome = p ? p[2] : k, projetoId = p?.[1];
-            if (p) exigir(chaves.has(nome) || nome === 'registro' || nome === 'pomodoroV1' || /^estudoExtraV1:extra-[\w-]+$/.test(nome), `chave de projeto ${k}.`);
+            if (p) exigir(chaves.has(nome) || ['registro', 'pomodoroV1', 'reagendamentoV1'].includes(nome) || /^estudoExtraV1:extra-[\w-]+$/.test(nome), `chave de projeto ${k}.`);
+            if (nome === 'reagendamentoV1') {
+                const prefixo = `projetoV1:${projetoId}:`, registro = parsed[prefixo + 'registro'];
+                exigir(Boolean(p) && registro?.id === projetoId && !registro.removido, 'projeto do reagendamento ausente.');
+                exigir(typeof window.ReagendamentoSchema?.validar === 'function', 'validador de reagendamento indisponível.');
+                try {
+                    window.ReagendamentoSchema.validar(v, projetoId, { dados: parsed[prefixo + 'dadosExame'],
+                        materiaDoDia: parsed[prefixo + 'materiaDoDia'], praticas: parsed[`praticasProjetoV1:${projetoId}`] });
+                } catch (erro) { falhar(erro.message); }
+            }
             if (nome === 'pomodoroV1') exigir(Boolean(p) && validarPomodoro(v), 'configuração/checkpoint do Pomodoro.');
             if (nome === 'registro') exigir(objeto(v) && v.id === projetoId && instante(v.criadoEm), 'registro de projeto.');
             if (nome === 'dadosExame') {
                 exigir(objeto(v) && texto(v.projetoId) && (!projetoId || v.projetoId === projetoId), 'dados de projeto.');
                 if (v.duracaoProvaSegundos !== undefined) exigir(Number.isSafeInteger(v.duracaoProvaSegundos) && v.duracaoProvaSegundos > 0 && v.duracaoProvaSegundos % 60 === 0, 'duração da prova.');
+                validarCargaDiaria(v.cargaDiaria);
+                if (Object.hasOwn(v, 'cargaDiariaVersao') || Object.hasOwn(v, 'cargaDiariaPlano')) {
+                    const chavePlano = (projetoId ? `projetoV1:${projetoId}:` : '') + 'materiaDoDia';
+                    validarPlanoCargaDiaria(v, parsed[chavePlano]);
+                }
+                if (v.revisoesPolitica !== undefined) validarPoliticaRevisao(v.revisoesPolitica);
                 if (v.replanejamento !== undefined) validarReplanejamento(v.replanejamento, v.projetoId);
             }
-            if (nome === 'wizardProjeto' && v?.origemReplanejamento) validarReplanejamento(v.origemReplanejamento, projetoId);
+            if (nome === 'wizardProjeto') {
+                validarCargaDiaria(v?.cargaDiaria);
+                if (v?.origemReplanejamento) validarReplanejamento(v.origemReplanejamento, projetoId);
+                if (v?.revisoesPolitica !== undefined) validarPoliticaRevisao(v.revisoesPolitica, true);
+            }
             if (['objetosSalvos', 'objetosNormalizados', 'lista_distribuicao_materias'].includes(nome)) { exigir(Array.isArray(v), `lista ${k}.`); v.forEach(b => { exigir(objeto(b), `matéria em ${k}.`); vinculo(b.projetoMateriaId, projetoId || participacoes[b.projetoMateriaId]?.projetoId); }); }
             if (nome === 'materiaDoDia') {
                 exigir(objeto(v), 'plano diário.');
@@ -227,6 +256,7 @@
                 Object.entries(v).forEach(([dia, blocos]) => { exigir(/^dia[1-9]\d*$/.test(dia) && Array.isArray(blocos), 'dia do plano.'); blocos.forEach(b => {
                     exigir(objeto(b) && texto(b.blocoId) && !ids.has(b.blocoId) && b.projetoId === (projetoId || b.projetoId), 'bloco do plano.'); ids.add(b.blocoId); vinculo(b.projetoMateriaId, b.projetoId);
                     if (b.metaSegundos !== undefined) exigir(Number.isInteger(b.metaSegundos) && b.metaSegundos >= 0, 'meta do plano.');
+                    if (b.metaNominalSegundos !== undefined) exigir(Number.isSafeInteger(b.metaNominalSegundos) && b.metaNominalSegundos > 0, 'meta nominal do plano.');
                 }); });
             }
             if (nome === 'revisoesDoDia') {
@@ -235,7 +265,8 @@
                 for (const [dia, etapas] of Object.entries(v)) {
                     exigir(Object.hasOwn(plano, dia) && objeto(etapas), 'destino de revisão.');
                     for (const [etapa, grupo] of Object.entries(etapas)) {
-                        exigir(['revisao1', 'revisao2', 'revisao3'].includes(etapa) && (grupo === null || objeto(grupo)), 'etapa de revisão.');
+                        exigir((/^revisao[1-3]$/.test(etapa) || window.CalendarioJornada?.chavePeriodoDoGrupo(etapa))
+                            && (grupo === null || objeto(grupo)), 'período de revisão.');
                         for (const [origem, blocos] of Object.entries(grupo || {})) { exigir(Array.isArray(blocos), 'blocos de revisão.'); blocos.forEach(b => {
                             exigir(objeto(b) && (plano[origem] || []).some(x => x.blocoId === b.blocoId && x.projetoMateriaId === b.projetoMateriaId && x.projetoId === b.projetoId), 'origem de revisão.');
                         }); }
@@ -246,10 +277,17 @@
             if (nome === 'revisoesEstadoV1') {
                 exigir(objeto(v) && v.versao === 1 && typeof v.habilitadas === 'boolean' && objeto(v.entidades) && Array.isArray(v.ativas) && v.ativas.every(id => Object.hasOwn(v.entidades, id)), 'estados de revisão.');
                 for (const [id, r] of Object.entries(v.entidades)) { exigir(objeto(r) && r.id === id && texto(r.projetoId) && (!projetoId || r.projetoId === projetoId) && texto(r.blocoId)
-                    && ['R1', 'R2', 'R3'].includes(r.etapa) && ['pendente', 'concluida', 'dispensada'].includes(r.estado) && Number.isInteger(r.sugeridaSegundos) && r.sugeridaSegundos >= 0, 'revisão.'); vinculo(r.projetoMateriaId, r.projetoId); }
+                    && /^R[1-4]$/.test(r.etapa) && ['pendente', 'concluida', 'dispensada'].includes(r.estado) && Number.isInteger(r.sugeridaSegundos) && r.sugeridaSegundos >= 0, 'revisão.');
+                    if (r.chavePeriodo !== undefined || r.etapa === 'R4') exigir(window.CalendarioJornada?.periodoDaChave(r.chavePeriodo), 'identidade do período de revisão.');
+                    if (r.estadoAlteradoManualmente !== undefined) exigir(r.estadoAlteradoManualmente === true, 'alteração manual de revisão.');
+                    if (r.materializadaEm !== undefined) exigir(civil(r.materializadaEm), 'data de materialização da revisão.');
+                    if (r.dataNominal !== undefined) exigir(r.dataNominal === null || civil(r.dataNominal), 'data nominal da revisão.');
+                    if (r.foraDaReserva !== undefined) exigir(typeof r.foraDaReserva === 'boolean', 'classificação da reserva da revisão.');
+                    vinculo(r.projetoMateriaId, r.projetoId); }
             }
             if (nome.startsWith('estudoExtraV1:')) {
-                exigir(objeto(v) && v.versao === 1 && v.projetoId === projetoId && nome === `estudoExtraV1:${v.blocoId}` && /^dia[1-9]\d*$/.test(v.diaJornada)
+                exigir(objeto(v) && v.versao === 1 && v.projetoId === projetoId && nome === `estudoExtraV1:${v.blocoId}`
+                    && (/^dia[1-9]\d*$/.test(v.diaJornada) || v.diaJornada === 'folga-' + v.dataOrigem)
                     && civil(v.dataOrigem) && instante(v.criadoEm), 'atividade extra.');
                 if (v.projetoMateriaId !== null) vinculo(v.projetoMateriaId, projetoId);
                 if (v.registroManualPendente) { sessao(v.registroManualPendente); exigir(v.registroManualPendente.blocoExtraId === v.blocoId && v.registroManualPendente.projetoMateriaId === v.projetoMateriaId, 'registro pendente do extra.'); }
@@ -259,19 +297,99 @@
             if (['wizardProjeto', 'projetosBackupV1', 'identidadesV1', 'identidadesTransacaoV1', 'progressoProjetos'].includes(nome)) exigir(objeto(v), `estrutura ${nome}.`);
             if (['carga_horaria_disponivel', 'totalQuestoes', 'somaDasQuestoesNormalizadas'].includes(nome)) exigir(Number.isFinite(Number(v)) && Number(v) >= 0, `número ${nome}.`);
         }
+        function validarCargaDiaria(carga) {
+            if (carga === undefined) return;
+            exigir(objeto(carga) && Object.keys(carga).length === 2
+                && typeof carga.incluirRevisoes === 'boolean' && typeof carga.incluirPraticas === 'boolean', 'configuração da carga diária.');
+        }
+        function validarPlanoCargaDiaria(dados, plano) {
+            const carga = dados.cargaDiariaPlano;
+            exigir(dados.cargaDiariaVersao === 1 && objeto(dados.cargaDiaria) && objeto(carga)
+                && Object.keys(carga).every(campo => ['grupos', 'praticas'].includes(campo))
+                && Array.isArray(carga.grupos) && Array.isArray(carga.praticas) && objeto(plano), 'plano de carga diária.');
+            const calendario = window.CalendarioJornada;
+            exigir(typeof calendario?.mapear === 'function', 'calendário da carga diária indisponível.');
+            const inicio = calendario.somarDias(dados.dataInicioF, 0), fim = calendario.somarDias(dados.dataFinalF, 0);
+            exigir(civil(inicio) && civil(fim) && inicio <= fim && Array.isArray(dados.listaDiaDaSemana)
+                && dados.listaDiaDaSemana.length > 0
+                && dados.listaDiaDaSemana.every(dia => ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].includes(dia)), 'período da carga diária.');
+            const noPeriodo = data => civil(data) && data >= inicio && data <= fim;
+            const { porDia, porData } = calendario.mapear(dados, Object.keys(plano).length);
+            const origens = new Map();
+            for (const [dia, blocos] of Object.entries(plano)) {
+                exigir(Object.hasOwn(porDia, dia) && noPeriodo(porDia[dia]) && Array.isArray(blocos), 'datas dos blocos da carga diária.');
+                for (const bloco of blocos) {
+                    exigir(objeto(bloco) && bloco.projetoId === dados.projetoId && texto(bloco.blocoId)
+                        && Number.isSafeInteger(bloco.metaSegundos) && bloco.metaSegundos > 0, 'bloco da carga diária.');
+                    origens.set(bloco.blocoId, { data: porDia[dia], nominal: bloco.metaNominalSegundos ?? bloco.metaSegundos });
+                }
+            }
+            const ids = new Set();
+            for (const grupo of carga.grupos) {
+                exigir(objeto(grupo) && Object.keys(grupo).every(campo => ['dataOrigem', 'chavePeriodo', 'etapa', 'dataNominal', 'dataOperacional', 'estado', 'duracaoSegundos', 'itens'].includes(campo))
+                    && noPeriodo(grupo.dataOrigem) && noPeriodo(grupo.dataNominal) && grupo.dataOrigem < grupo.dataNominal
+                    && calendario.periodoDaChave(grupo.chavePeriodo) && /^R[1-4]$/.test(grupo.etapa)
+                    && (grupo.estado === 'reservada' ? noPeriodo(grupo.dataOperacional) && grupo.dataOperacional >= grupo.dataNominal
+                        && Object.hasOwn(porData, grupo.dataOperacional) : grupo.estado === 'naoProgramavel' && grupo.dataOperacional === null)
+                    && Array.isArray(grupo.itens) && grupo.itens.length > 0, 'grupo de revisão da carga diária.');
+                let total = 0;
+                for (const item of grupo.itens) {
+                    exigir(objeto(item) && Object.keys(item).every(campo => ['id', 'blocoId', 'duracaoSegundos'].includes(campo))
+                        && texto(item.blocoId) && item.id === JSON.stringify([dados.projetoId, item.blocoId, grupo.chavePeriodo])
+                        && !ids.has(item.id), 'identidade de revisão da carga diária.');
+                    ids.add(item.id);
+                    const origem = origens.get(item.blocoId);
+                    exigir(origem?.data === grupo.dataOrigem && Number.isSafeInteger(origem.nominal) && origem.nominal > 0
+                        && item.duracaoSegundos === Math.round(origem.nominal / 8), 'origem ou duração de revisão da carga diária.');
+                    total += item.duracaoSegundos;
+                }
+                exigir(Number.isSafeInteger(total) && grupo.duracaoSegundos === total, 'total do grupo de revisão da carga diária.');
+            }
+            const missoes = new Set();
+            for (const pratica of carga.praticas) {
+                exigir(objeto(pratica) && Object.keys(pratica).every(campo => ['missaoId', 'dataPrevista', 'duracaoPlanejadaSegundos', 'consomeCargaEstudo'].includes(campo))
+                    && texto(pratica.missaoId) && !missoes.has(pratica.missaoId) && noPeriodo(pratica.dataPrevista)
+                    && Number.isSafeInteger(pratica.duracaoPlanejadaSegundos) && pratica.duracaoPlanejadaSegundos > 0
+                    && typeof pratica.consomeCargaEstudo === 'boolean', 'prática do plano de carga diária.');
+                missoes.add(pratica.missaoId);
+            }
+        }
+        function validarPoliticaRevisao(politica, rascunho = false) {
+            const incompleta = rascunho && politica?.ativadas === true && politica.modalidade === 'personalizado'
+                && Array.isArray(politica.periodos) && !politica.periodos.length;
+            exigir(window.CalendarioJornada?.politicaRevisoesValida(incompleta ? { ...politica, ativadas: false } : politica), 'política de revisão.');
+        }
         function validarReplanejamento(r, projetoId) {
             exigir(objeto(r) && r.versao === 1 && r.projetoId === projetoId && objeto(r.origens)
                 && objeto(r.metasAnteriores) && Array.isArray(r.revisoesIds) && r.revisoesIds.every(texto), 'origens do replanejamento.');
             if (r.sessoesIds !== undefined) exigir(Array.isArray(r.sessoesIds) && r.sessoesIds.every(texto), 'sessões do replanejamento.');
             if (r.planoFonteId !== undefined) exigir(r.planoFonteId === null || texto(r.planoFonteId), 'versão de origem do replanejamento.');
+            if (r.revisoesPlano !== undefined) {
+                const plano = r.revisoesPlano;
+                exigir(objeto(plano) && [plano.dataInicioF, plano.dataFinalF].every(data => data === null || civil(data))
+                    && Array.isArray(plano.listaDiaDaSemana) && plano.listaDiaDaSemana.every(dia => ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'].includes(dia)), 'calendário anterior das revisões.');
+                if (plano.blocosConcluidos !== undefined) exigir(Array.isArray(plano.blocosConcluidos)
+                    && plano.blocosConcluidos.every(id => texto(id) && Object.hasOwn(r.origens, id)), 'blocos concluídos no calendário anterior.');
+                if (plano.revisoesPolitica !== undefined) validarPoliticaRevisao(plano.revisoesPolitica);
+            }
+            if (r.politicasExtras !== undefined) {
+                exigir(objeto(r.politicasExtras), 'políticas de revisão dos extras.');
+                for (const [id, politica] of Object.entries(r.politicasExtras)) {
+                    exigir(/^extra-[\w-]+$/.test(id), 'origem da política de revisão do extra.');
+                    validarPoliticaRevisao(politica);
+                }
+            }
             const estados = parsed[`projetoV1:${projetoId}:revisoesEstadoV1`] || parsed.revisoesEstadoV1;
             exigir(r.revisoesIds.every(id => estados?.entidades?.[id]?.projetoId === projetoId), 'referência histórica de revisão.');
             for (const [id, b] of Object.entries(r.origens)) {
                 exigir(objeto(b) && b.blocoId === id && texto(id) && b.projetoId === projetoId
-                    && /^dia[1-9]\d*$/.test(b.diaOrigem) && (b.dataOrigem === null || civil(b.dataOrigem))
+                    && (/^dia[1-9]\d*$/.test(b.diaOrigem) || b.diaOrigem === 'folga-' + b.dataOrigem)
+                    && (b.dataOrigem === null || civil(b.dataOrigem))
                     && Number.isInteger(b.numero) && b.numero > 0 && Number.isSafeInteger(b.metaSegundos) && b.metaSegundos > 0,
                     'bloco histórico do replanejamento.');
                 vinculo(b.projetoMateriaId, projetoId);
+                if (b.metaNominalSegundos !== undefined) exigir(Number.isSafeInteger(b.metaNominalSegundos) && b.metaNominalSegundos > 0, 'meta nominal histórica do replanejamento.');
+                if (b.revisoesPolitica !== undefined) validarPoliticaRevisao(b.revisoesPolitica);
             }
             for (const [id, m] of Object.entries(r.metasAnteriores)) {
                 exigir(objeto(m) && typeof m.materia === 'string' && Number.isSafeInteger(m.metaSegundos) && m.metaSegundos > 0, 'meta histórica do replanejamento.');
@@ -337,7 +455,7 @@
         try {
             substituir(storage, entradas);
             storage.removeItem(JOURNAL);
-            if (storage.getItem(JOURNAL) !== null) throw new Error('O commit da restauração não foi confirmado.');
+            if (storage.getItem(JOURNAL) !== null) throw new Error('Não foi possível concluir a restauração.');
             try {
                 if (typeof sessionStorage !== 'undefined') {
                     if (entradas.projetoSelecionadoV1) sessionStorage.setItem('projetoSelecionadoV1', entradas.projetoSelecionadoV1);
@@ -366,15 +484,21 @@
         await adquirida;
     }
     async function exclusivo(comando) {
-        if (!window.navigator?.locks) throw new Error('Restauração exige Web Locks em localhost/HTTPS. A exportação continua disponível.');
-        await pronta;
-        if (liberarUso) { const liberar = liberarUso; liberarUso = null; liberar(); await usoPedido; }
+        if (!window.navigator?.locks) throw new Error('Para restaurar, abra o Grimório pelo endereço seguro (HTTPS) em um navegador compatível.');
+        if (operacaoExclusiva) throw new Error('Uma operação exclusiva já está em andamento nesta aba.');
+        operacaoExclusiva = true;
         try {
-            return await window.navigator.locks.request('grimorio:uso', { ifAvailable: true }, lock => {
-                if (!lock) throw new Error('Feche as outras abas do Grimório antes de restaurar o backup.');
-                return comando();
-            });
-        } finally { if (!bloqueado) { pronta = manterUso(); await pronta; } }
+            await pronta;
+            try {
+                if (liberarUso) { const liberar = liberarUso; liberarUso = null; liberar(); await usoPedido; }
+                return await window.navigator.locks.request('grimorio:uso', { ifAvailable: true }, lock => {
+                    if (!lock) throw new Error('Feche as outras abas do Grimório antes de restaurar o backup.');
+                    return comando();
+                });
+            } finally {
+                if (!bloqueado) { pronta = manterUso(); await pronta; }
+            }
+        } finally { operacaoExclusiva = false; }
     }
     async function restaurar(dados, storage = storageNativo) {
         if (restaurando) throw new Error('Uma restauração já está em andamento. Aguarde sua conclusão.');
@@ -552,6 +676,65 @@
 
     solicitarPersistencia();
 
+    function prepararDialogoRestauracao() {
+        const dialogo = document.createElement('dialog');
+        dialogo.id = 'backup-restauracao-dialog';
+        dialogo.setAttribute('aria-labelledby', 'backup-restauracao-titulo');
+        dialogo.setAttribute('aria-describedby', 'backup-restauracao-aviso');
+        dialogo.innerHTML = `
+            <h2 id="backup-restauracao-titulo">Restaurar cópia de segurança?</h2>
+            <p data-arquivo></p>
+            <p id="backup-restauracao-aviso">Seus dados atuais serão substituídos pelos do arquivo. O Grimório guarda uma cópia dos dados atuais neste navegador.</p>
+            <form>
+                <label for="backup-restauracao-confirmacao">Digite RESTAURAR para confirmar</label>
+                <input id="backup-restauracao-confirmacao" autocomplete="off" spellcheck="false">
+                <p data-erro role="alert"></p>
+                <div class="backup-restauracao-acoes">
+                    <button type="button" data-cancelar autofocus>Cancelar</button>
+                    <button type="submit" data-confirmar disabled>Restaurar backup</button>
+                </div>
+            </form>`;
+        document.body.append(dialogo);
+        const campo = dialogo.querySelector('input');
+        const cancelar = dialogo.querySelector('[data-cancelar]');
+        const confirmar = dialogo.querySelector('[data-confirmar]');
+        const erro = dialogo.querySelector('[data-erro]');
+        let pendente;
+        cancelar.addEventListener('click', () => dialogo.close());
+        campo.addEventListener('input', () => {
+            confirmar.disabled = campo.value.trim().toUpperCase() !== 'RESTAURAR';
+        });
+        dialogo.addEventListener('cancel', evento => {
+            if (cancelar.disabled) evento.preventDefault();
+        });
+        dialogo.addEventListener('close', () => {
+            pendente?.botao.focus();
+            pendente = null;
+        });
+        dialogo.querySelector('form').addEventListener('submit', async evento => {
+            evento.preventDefault();
+            if (confirmar.disabled) return;
+            confirmar.disabled = cancelar.disabled = campo.disabled = true;
+            erro.textContent = '';
+            try {
+                await restaurar(pendente.texto);
+                window.location.reload();
+            } catch (falha) {
+                erro.textContent = `Não foi possível restaurar o backup. ${falha.message || 'Tente novamente.'}`;
+                confirmar.disabled = cancelar.disabled = campo.disabled = false;
+            }
+        });
+        return (botao, nome, texto) => {
+            pendente = { botao, texto };
+            campo.value = '';
+            erro.textContent = '';
+            confirmar.disabled = true;
+            dialogo.querySelector('[data-arquivo]').textContent = nome;
+            dialogo.showModal();
+            cancelar.focus();
+        };
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         for (const botao of document.querySelectorAll('[data-backup-exportar]')) {
             botao.addEventListener('click', () => {
@@ -559,7 +742,7 @@
                 try {
                     const dados = exportar();
                     dispararDownload(dados);
-                    if (status) status.textContent = 'Backup preparado para download. Guarde o arquivo em um local seguro.';
+                    if (status) status.textContent = 'Download do backup iniciado.';
                 } catch (erro) {
                     if (status) status.textContent = `Não foi possível preparar o backup. ${erro.message || 'Tente novamente.'}`;
                 }
@@ -577,7 +760,7 @@
                     if (status) {
                         status.textContent = resultado.modo === 'pasta'
                             ? `Backup do dia salvo em "${resultado.pasta}" (${resultado.arquivo}).`
-                            : 'Backup preparado para download. Guarde o arquivo em um local seguro.';
+                            : 'Download do backup iniciado.';
                     }
                 } catch (erro) {
                     if (erro?.name === 'AbortError') return;
@@ -600,7 +783,11 @@
             });
         }
 
-        for (const botao of document.querySelectorAll('[data-backup-restaurar]')) {
+        const botoesRestaurar = document.querySelectorAll('[data-backup-restaurar]');
+        if (!botoesRestaurar.length) return;
+        const abrirRestauracao = prepararDialogoRestauracao();
+        for (const botao of botoesRestaurar) {
+            botao.setAttribute('aria-haspopup', 'dialog');
             const input = document.createElement('input');
             input.type = 'file';
             input.accept = '.json,application/json';
@@ -616,19 +803,9 @@
                 const status = document.getElementById(botao.dataset.backupStatus);
                 try {
                     const texto = await arquivo.text();
-                    const entradas = validarBackup(texto);
-                    const qtd = Object.keys(entradas).length;
-                    const confirmar = window.confirm(
-                        `Restaurar backup de "${arquivo.name}" (${qtd} registros de armazenamento)?\n\n` +
-                        'Os dados atuais do Grimório neste navegador serão substituídos pelos dados do arquivo (uma cópia de segurança do estado anterior será mantida localmente).'
-                    );
-                    if (!confirmar) {
-                        if (status) status.textContent = 'Restauração cancelada. Nenhum dado foi alterado.';
-                        return;
-                    }
-                    await restaurar(texto);
-                    if (status) status.textContent = 'Backup restaurado com sucesso. Recarregando...';
-                    window.location.reload();
+                    validarBackup(texto);
+                    if (status) status.textContent = '';
+                    abrirRestauracao(botao, arquivo.name, texto);
                 } catch (erro) {
                     if (status) status.textContent = `Não foi possível restaurar o backup. ${erro.message || 'Verifique o arquivo.'}`;
                 }

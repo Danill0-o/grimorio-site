@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" shape-rendering="crispEdges">
+  <!-- Livro Tier 4: Perito (tomo azul real + fecho metálico + brasão prateado) -->
+  <rect x="4" y="3" width="16" height="18" fill="#090d1a"/>
+  <!-- Capa azul -->
+  <rect x="5" y="4" width="13" height="14" fill="#1e3a8a"/>
+  <rect x="8" y="5" width="9" height="12" fill="#2563eb"/>
+  <!-- Lombada reforçada -->
+  <rect x="5" y="4" width="3" height="15" fill="#172554"/>
+  <rect x="5" y="6" width="3" height="1" fill="#cbd5e1"/>
+  <rect x="5" y="11" width="3" height="1" fill="#cbd5e1"/>
+  <rect x="5" y="16" width="3" height="1" fill="#cbd5e1"/>
+  <!-- Cantoneiras prateadas e douradas -->
+  <rect x="14" y="4" width="4" height="2" fill="#e2e8f0"/>
+  <rect x="16" y="6" width="2" height="2" fill="#e2e8f0"/>
+  <rect x="14" y="16" width="4" height="2" fill="#e2e8f0"/>
+  <rect x="16" y="14" width="2" height="2" fill="#e2e8f0"/>
+  <!-- Folhas -->
+  <rect x="8" y="18" width="10" height="2" fill="#f1f5f9"/>
+  <rect x="18" y="5" width="1" height="14" fill="#cbd5e1"/>
+  <!-- Fecho lateral trancado -->
+  <rect x="16" y="9" width="4" height="4" fill="#f59e0b"/>
+  <rect x="17" y="10" width="2" height="2" fill="#fde047"/>
+  <!-- Brasão central -->
+  <rect x="10" y="8" width="4" height="6" fill="#1d4ed8"/>
+  <rect x="11" y="8" width="2" height="6" fill="#e2e8f0"/>
+  <rect x="10" y="10" width="4" height="2" fill="#38bdf8"/>
+</svg>

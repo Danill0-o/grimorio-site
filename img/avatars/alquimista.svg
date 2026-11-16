@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96" shape-rendering="crispEdges">
+  <rect width="24" height="24" fill="#11241a"/>
+  <!-- Hood -->
+  <rect x="7" y="4" width="10" height="2" fill="#1e6b4e"/>
+  <rect x="6" y="6" width="12" height="4" fill="#166534"/>
+  <!-- Goggles -->
+  <rect x="7" y="10" width="10" height="3" fill="#92400e"/>
+  <rect x="8" y="10" width="3" height="3" fill="#fde047"/>
+  <rect x="13" y="10" width="3" height="3" fill="#fde047"/>
+  <!-- Scarf / Coat -->
+  <rect x="7" y="13" width="10" height="4" fill="#334155"/>
+  <rect x="5" y="17" width="14" height="7" fill="#1e6b4e"/>
+  <!-- Elixir Flask -->
+  <rect x="17" y="14" width="2" height="2" fill="#cbd5e1"/>
+  <rect x="16" y="16" width="4" height="5" fill="#2de091"/>
+  <rect x="17" y="17" width="1" height="2" fill="#ffffff"/>
+</svg>

@@ -304,6 +304,7 @@ body > .container, body > header.container, body > main.container {
     border-radius: 0 !important;
     background:
         linear-gradient(180deg, var(--pixel-surface-elevated) 0%, var(--pixel-surface) 100%) !important;
+    background-color: var(--pixel-surface) !important;
     color: var(--pixel-ink);
     box-shadow:
         0 0 0 4px var(--pixel-border-outer),
@@ -316,6 +317,7 @@ body > .container, body > header.container, body > main.container {
     overflow: hidden;
     background:
         linear-gradient(95deg, var(--pixel-surface-elevated) 0%, var(--pixel-surface) 62%, rgba(212, 162, 76, 0.25) 100%) !important;
+    background-color: var(--pixel-surface) !important;
 }
 
 .jornada-hero::after {
@@ -636,6 +638,7 @@ progress::-moz-progress-bar {
     color: #f3e2b8 !important;
     border: 2px solid var(--pixel-gold) !important;
     box-shadow: 2px 2px 0 #000 !important;
+    text-shadow: none !important;
 }
 
 .pixel-theme-chip[aria-pressed="true"] {
@@ -665,4 +668,43 @@ progress::-moz-progress-bar {
 :is([data-tema-pixel="taverna"], [data-tema-pixel="floresta"]) .jornada-conteudo > section > .cartas-ajuda,
 :is([data-tema-pixel="taverna"], [data-tema-pixel="floresta"]) .jornada-conteudo > section > div > .text-secondary {
     color: #fff !important;
+}
+#backup-restauracao-dialog {
+    width: min(32rem, calc(100% - 2rem));
+    padding: 1.25rem;
+    color: var(--texto-comum);
+    background: var(--pixel-surface);
+    border: 2px solid var(--pixel-bronze);
+}
+
+#backup-restauracao-dialog::backdrop { background: rgb(0 0 0 / .65); }
+#backup-restauracao-dialog h2 { color: var(--texto-destaque); }
+#backup-restauracao-dialog [data-arquivo] { overflow-wrap: anywhere; }
+#backup-restauracao-dialog input {
+    display: block;
+    max-width: 100%;
+    color: var(--texto-comum);
+    background: var(--pixel-surface);
+    border: 1px solid var(--pixel-bronze);
+}
+
+.backup-restauracao-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    justify-content: flex-end;
+}
+
+#backup-restauracao-dialog button {
+    min-height: 44px;
+    color: var(--texto-comum);
+    background: var(--pixel-surface);
+    border: 2px solid var(--pixel-bronze);
+    padding: .35rem .75rem;
+}
+
+#backup-restauracao-dialog button:enabled:hover,
+#backup-restauracao-dialog :focus-visible {
+    outline: 2px solid var(--texto-destaque);
+    outline-offset: 2px;
 }

@@ -20,7 +20,7 @@
         secao.append(legenda);
         const maior = escala ?? linhas.reduce((maximo, linha) => Math.max(maximo, linha.total), 0);
         const maximo = Math.max(1, maior);
-        if (!metas) secao.append(criar('p', maior ? `Escala comum: barra inteira = ${tempo(maior)}.` : 'Nenhum tempo registrado nestes períodos.', 'relatorios-ajuda'));
+        if (!metas) secao.append(criar('p', maior ? `Uma barra cheia representa = ${tempo(maior)}.` : 'Nenhum tempo registrado nestes períodos.', 'relatorios-ajuda'));
         const lista = criar('ul', null, 'relatorios-barras');
         for (const linha of linhas) {
             const item = criar('li');

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" shape-rendering="crispEdges">
+  <!-- Livro Tier 2: Aprendiz (capa costurada + lombada + marcador) -->
+  <rect x="5" y="3" width="14" height="17" fill="#1a120b"/>
+  <!-- Capa -->
+  <rect x="6" y="4" width="12" height="14" fill="#9c4f24"/>
+  <rect x="9" y="5" width="8" height="12" fill="#b86535"/>
+  <!-- Lombada com duas faixas -->
+  <rect x="6" y="4" width="3" height="15" fill="#632e12"/>
+  <rect x="6" y="7" width="3" height="2" fill="#d4a24c"/>
+  <rect x="6" y="13" width="3" height="2" fill="#d4a24c"/>
+  <!-- Folhas -->
+  <rect x="9" y="18" width="9" height="1" fill="#f5e9cb"/>
+  <rect x="17" y="5" width="1" height="13" fill="#e6d3a3"/>
+  <!-- Marca-página vermelho -->
+  <rect x="13" y="19" width="2" height="3" fill="#dc2626"/>
+  <rect x="13" y="21" width="1" height="1" fill="#f87171"/>
+  <!-- Detalhe central costurado -->
+  <rect x="11" y="9" width="4" height="4" fill="#7c3a18"/>
+  <rect x="12" y="10" width="2" height="2" fill="#d4a24c"/>
+</svg>

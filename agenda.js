@@ -17,8 +17,9 @@
     window.addEventListener('notas:alteradas', iniciarJornada);
     window.addEventListener('extras:alterados', iniciarJornada);
     window.addEventListener('revisoes:alteradas', iniciarJornada);
+    window.addEventListener('reagendamento:alterado', iniciarJornada);
     window.addEventListener('storage', (event) => {
-        if (event.key?.startsWith('praticasProjetoV1:')) iniciarJornada({ reutilizarPlano: true });
+        if (event.key?.startsWith('praticasProjetoV1:') || event.key?.endsWith(':reagendamentoV1')) iniciarJornada({ reutilizarPlano: true });
         else if (window.HistoricoRepository?.ehChave(event.key) || ['reiniciosDominio', 'sessoesEstudo', 'notasBlocosV1', 'materiasDominioV1'].includes(event.key) || event.key?.endsWith(':revisoesEstadoV1') || event.key?.includes(':estudoExtraV1:')) iniciarJornada();
     });
     window.addEventListener('praticas:alteradas', () => iniciarJornada({ reutilizarPlano: true }));
@@ -52,10 +53,6 @@
         const paramsUrl = new URLSearchParams(window.location?.search || '');
         const parametroDia = paramsUrl.get('dia');
         if (parametroDia !== null) {
-            const numeroDia = Number(String(parametroDia).replace(/\D/g, ''));
-            if (Number.isInteger(numeroDia) && numeroDia >= 1 && numeroDia <= Object.keys(materiaDoDia).length) {
-                indiceSelecionado = numeroDia - 1;
-            }
             if (window.history?.replaceState) {
                 paramsUrl.delete('dia');
                 const buscaLimpa = paramsUrl.toString();
@@ -90,9 +87,15 @@
             console.error(erro); return;
         }
         const estadoDias = progressoPlano.dias;
-        let missoesPorDia = {};
+        if (parametroDia !== null) {
+            const chave = parametroDia.startsWith('folga-') ? parametroDia : 'dia' + Number(parametroDia.replace(/\D/g, ''));
+            const indice = estadoDias.findIndex(d => d.dia === chave);
+            if (indice >= 0) indiceSelecionado = indice;
+        }
+        let missoesPorDia = {}, missoes;
         try {
             const praticas = window.PraticasStore?.projetarMissoesProjeto?.(projetoId, { dados: dadosExame, materiaDoDia });
+            missoes = praticas?.missoes;
             missoesPorDia = { ...(praticas?.missoesPorDiaJornada || {}) };
             const datas = window.CalendarioJornada.mapear(dadosExame, Object.keys(materiaDoDia).length).porDia;
             for (const folga of praticas?.folgas || []) {
@@ -110,12 +113,13 @@
         }));
         const dominioMaterias = window.EstudoStore.obterDominioMaterias([...globaisPorParticipacao.values()]);
         let revisoes = [];
-        let mostrarRevisoes = false;
+        let mostrarRevisoes = false, cargaPorData;
         try {
-            revisoes = window.RevisoesStore.sincronizar({ dados: dadosExame, materiaDoDia, revisoesDoDia, dias: estadoDias, sessoes: sessoesProjeto });
+            revisoes = window.RevisoesStore.sincronizar({ dados: dadosExame, materiaDoDia, revisoesDoDia, dias: estadoDias, sessoes: sessoesProjeto, missoes });
+            cargaPorData = window.CargaDiaria?.consultar({ dados: dadosExame, materiaDoDia, sessoes: sessoesProjeto, missoes });
             mostrarRevisoes = window.RevisoesStore.habilitadas();
             document.getElementById('revisoes-status').textContent = mostrarRevisoes
-                ? 'Revisões opcionais e adicionais. Registrar o tempo sugerido conclui a revisão; você pode estudar além dele.'
+                ? 'As revisões são opcionais e contam à parte da meta do dia. Registre o tempo sugerido para concluir uma revisão.'
                 : 'Sugestões ocultas. Histórico, notas e estados das revisões foram preservados.';
         } catch (erro) {
             document.getElementById('revisoes-status').textContent = 'Não foi possível carregar as revisões. Seus dados foram preservados; tente recarregar.';
@@ -136,6 +140,7 @@
         renderizarProgresso(dadosExame, percentualReal, estadoDias);
         renderizarCards({
             extras, segundosExtrasPorBloco, anotacoesSessoes, missoesPorDia,
+            cargaPorData,
             materiaDoDia,
             revisoesDoDia,
             revisoes: mostrarRevisoes ? revisoes : [],
@@ -161,14 +166,14 @@
     function renderizarCabecalho(dadosExame, estadoDias, minutosProjeto, minutosHoje) {
         const atual = estadoDias[indiceAtual];
         const concluidos = estadoDias.filter((estado) => estado.concluido).length;
-        document.getElementById('jornada-titulo').textContent = dadosExame.nomeExame || 'Sua campanha de estudos';
+        document.getElementById('jornada-titulo').textContent = dadosExame.nomeExame || 'Plano de estudos';
         const elNomeProjeto = document.querySelector('[data-projeto-nome]');
         if (elNomeProjeto) elNomeProjeto.textContent = dadosExame.nomeExame || 'Projeto sem nome';
         document.getElementById('jornada-status').textContent = concluidos >= estadoDias.length
-            ? 'Campanha concluída. Você completou todos os dias planejados!'
-            : `${concluidos} de ${estadoDias.length} dias concluídos. Continue acumulando conhecimento.`;
-        document.getElementById('stat-dia').textContent = atual ? formatarDia(atual.indice + 1) : '--';
-        document.getElementById('stat-xp').textContent = `${Math.floor(minutosProjeto)} pts`;
+            ? 'Parabéns! Você concluiu todos os dias do plano.'
+            : `${concluidos} de ${estadoDias.length} dias concluídos.`;
+        document.getElementById('stat-dia').textContent = atual ? rotuloDia(atual.dia) : '--';
+        document.getElementById('stat-tempo-projeto').textContent = formatarMinutos(minutosProjeto);
         document.getElementById('stat-hoje').textContent = formatarMinutos(minutosHoje);
     }
 
@@ -187,8 +192,8 @@
         document.getElementById('jornada-marcos').replaceChildren(...estadoDias.map(dia => {
             const marco = document.createElement('button');
             marco.type = 'button';
-            marco.textContent = formatarDia(dia.indice + 1);
-            marco.title = `${formatarDia(dia.indice + 1)}: ${Number(dia.percentual.toFixed(2))}% realizado`;
+            marco.textContent = rotuloDia(dia.dia);
+            marco.title = `${rotuloDia(dia.dia)}: ${Number(dia.percentual.toFixed(2))}% realizado`;
             marco.addEventListener('click', () => centralizarCarta(dia.indice));
             return marco;
         }));
@@ -235,6 +240,7 @@
             const card = document.createElement('article');
             card.className = 'dia-card';
             card.dataset.indice = estado.indice;
+            card.dataset.dia = estado.dia;
             card.dataset.situacaoTemporal = estado.situacaoTemporal;
             if (estado.dataPrevista) card.dataset.dataPrevista = estado.dataPrevista;
             card.tabIndex = 0;
@@ -243,6 +249,10 @@
                 if (!restaurandoFoco && event.target.matches(':focus-visible') && indiceSelecionado !== estado.indice) centralizarCarta(estado.indice, false);
             });
             card.addEventListener('click', event => {
+                if (event.target.closest('.revisao-grupo > summary')) {
+                    if (indiceSelecionado !== estado.indice) centralizarCarta(estado.indice);
+                    return;
+                }
                 if (!event.target.closest('button, input, select, a, summary, textarea')) centralizarCarta(estado.indice);
             });
             card.addEventListener('keydown', event => {
@@ -250,7 +260,7 @@
                     event.preventDefault(); centralizarCarta(estado.indice);
                 }
             });
-            card.setAttribute('aria-label', formatarDia(estado.indice + 1));
+            card.setAttribute('aria-label', rotuloDia(estado.dia));
             if (!estado.desbloqueado) card.classList.add('dia-card-bloqueado');
             else if (estado.concluido) card.classList.add('dia-card-concluido');
             if (estado.atual) card.classList.add('dia-card-disponivel');
@@ -260,14 +270,14 @@
             badge.className = 'dia-card-badge';
             const rotuloEstado = !estado.desbloqueado
                 ? estado.dataPrevista ? `Bloqueado até ${estado.dataPrevista.split('-').reverse().join('/')}` : 'Calendário indisponível'
-                : estado.concluido ? 'Concluído' : estado.atual ? 'Disponível hoje' : 'Meta pendente; registro retrospectivo';
+                : estado.concluido ? 'Concluído' : estado.atual ? 'Disponível hoje' : 'Dia anterior com meta pendente';
             badge.title = rotuloEstado;
             badge.setAttribute('role', 'img');
             badge.setAttribute('aria-label', rotuloEstado);
             badge.append(criarIcone(!estado.desbloqueado ? 'bloqueado' : estado.concluido ? 'concluir' : 'proximo'));
             if (!estado.desbloqueado && estado.concluido) badge.append(criarIcone('concluir'));
             const titulo = document.createElement('h3');
-            titulo.textContent = formatarDia(estado.indice + 1);
+            titulo.textContent = rotuloDia(estado.dia);
             const cabecalho = document.createElement('div');
             cabecalho.className = 'dia-card-cabecalho';
             cabecalho.append(titulo, badge);
@@ -284,7 +294,7 @@
             adicionar.type = 'button';
             adicionar.className = 'dia-extra-adicionar';
             adicionar.textContent = '+';
-            adicionar.title = `Adicionar estudo extra no ${formatarDia(estado.indice + 1)}`;
+            adicionar.title = `Adicionar estudo extra · ${rotuloDia(estado.dia)}`;
             adicionar.setAttribute('aria-label', adicionar.title);
             adicionar.disabled = !estado.dataPrevista;
             adicionar.addEventListener('click', async () => {
@@ -296,6 +306,8 @@
             });
             cabecalho.append(adicionar);
             card.append(cabecalho);
+            const carga = contexto.cargaPorData?.get(estado.dataPrevista);
+            if (carga) card.append(window.CargaDiaria.painel(carga));
 
             if (!estado.desbloqueado) {
                 const aviso = document.createElement('p');
@@ -354,7 +366,7 @@
             seletor.replaceChildren(...contexto.estadoDias.map((estado) => {
                 const option = document.createElement('option');
                 option.value = estado.indice;
-                option.textContent = `${formatarDia(estado.indice + 1)}${estado.indice === indiceAtual ? ' · calendário' : ''}${estado.indice === indiceProximo ? ' · próximo a estudar' : estado.concluido ? ' · concluído' : ''}`;
+                option.textContent = `${rotuloDia(estado.dia)}${estado.indice === indiceAtual ? ' · calendário' : ''}${estado.indice === indiceProximo ? ' · próximo a estudar' : estado.concluido ? ' · concluído' : ''}`;
                 return option;
             }));
         }
@@ -392,17 +404,26 @@
 
     function destacarCarta(indice) {
         indiceSelecionado = indice;
+        let cartaSelecionada, recolheuFoco = false;
         document.querySelectorAll('#jornada-cards .dia-card').forEach(card => {
             const selecionado = Number(card.dataset.indice) === indice;
             card.classList.toggle('dia-card-selecionado', selecionado);
             card.tabIndex = selecionado ? 0 : -1;
+            if (selecionado) cartaSelecionada = card;
+            else card.querySelectorAll('.revisao-grupo[open]').forEach(grupo => {
+                const foco = document.activeElement;
+                if (grupo.contains(foco) && !grupo.firstElementChild.contains(foco)) recolheuFoco = true;
+                grupo.open = false;
+            });
             if (Number(card.dataset.indice) === indiceAtual) card.setAttribute('aria-current', 'date');
             else card.removeAttribute('aria-current');
-            card.setAttribute('aria-label', `${formatarDia(Number(card.dataset.indice) + 1)}${selecionado ? ', em destaque' : ''}${Number(card.dataset.indice) === indiceAtual ? ', dia atual' : ''}${card.classList.contains('dia-card-bloqueado') ? ', bloqueado' : card.classList.contains('dia-card-concluido') ? ', concluído' : ', disponível'}`);
+            card.setAttribute('aria-label', `${rotuloDia(card.dataset.dia)}${selecionado ? ', em destaque' : ''}${Number(card.dataset.indice) === indiceAtual ? ', dia atual' : ''}${card.classList.contains('dia-card-bloqueado') ? ', bloqueado' : card.classList.contains('dia-card-concluido') ? ', concluído' : ', disponível'}`);
         });
+        if (recolheuFoco) cartaSelecionada?.focus({ preventScroll: true });
         const seletor = document.getElementById('carta-seletor');
         if (seletor) seletor.value = indice;
-        document.getElementById('carta-em-foco').textContent = `Em destaque: ${formatarDia(indice + 1)} · Calendário: ${formatarDia(indiceAtual + 1)} · ${indiceProximo === null ? textoSemPendencia() : `Próximo a estudar: ${formatarDia(indiceProximo + 1)}`}${avisoCalendario ? ` · ${avisoCalendario}` : ''}`;
+        const rotuloIndice = i => rotuloDia(document.querySelector(`.dia-card[data-indice="${i}"]`)?.dataset.dia);
+        document.getElementById('carta-em-foco').textContent = `Em destaque: ${rotuloIndice(indice)} · Calendário: ${rotuloIndice(indiceAtual)} · ${indiceProximo === null ? textoSemPendencia() : `Próximo a estudar: ${rotuloIndice(indiceProximo)}`}${avisoCalendario ? ` · ${avisoCalendario}` : ''}`;
     }
 
     function textoSemPendencia() {
@@ -495,7 +516,7 @@
             estadoMateria.textContent = meta.completo ? 'Meta concluída' : 'Meta pendente';
             if (meta.completo) nome.append(criarIcone('concluir'));
             const progresso = criarIndicadorProgresso('dia', textoTempoRegistrado(meta), meta.pontosAplicadosSegundos,
-                meta.metaSegundos, `${contexto.creditoSequencial ? 'Crédito sequencial' : 'Estudo normal registrado'} de ${meta.materia} neste dia: ${textoTempoRegistrado(meta)}`);
+                meta.metaSegundos, `${contexto.creditoSequencial ? 'Tempo aproveitado' : 'Tempo registrado'} de ${meta.materia} neste dia: ${textoTempoRegistrado(meta)}`);
             identificacao.append(nome, estadoMateria, progresso);
             const blocos = contexto.blocos.filter(bloco => bloco.projetoMateriaId === meta.projetoMateriaId);
             const notas = document.createElement('span');
@@ -528,7 +549,7 @@
                     topico.dataset.notaBlocoOrigem = bloco.blocoId;
                     if (blocos.length > 1) {
                         const numero = document.createElement('strong');
-                        numero.textContent = `Bloco ${indice + 1} · `;
+                        numero.textContent = `Sessão ${indice + 1} · `;
                         topico.append(numero);
                     }
                     const texto = document.createElement('span');
@@ -551,7 +572,7 @@
                     linha.dataset.blocoId = bloco.blocoId;
                     const nomeBloco = document.createElement('strong');
                     nomeBloco.className = blocos.length > 1 ? 'bloco-nome' : 'bloco-nome visually-hidden';
-                    nomeBloco.textContent = `Bloco ${indice + 1}`;
+                    nomeBloco.textContent = `Sessão ${indice + 1}`;
                     const progressoBloco = progressoBlocos[indice];
                     const aplicado = progressoBloco.pontosAplicadosSegundos;
                     linha.dataset.faltamSegundos = progressoBloco.faltamSegundos;
@@ -562,7 +583,7 @@
                     estadoBloco.className = 'bloco-estado visually-hidden';
                     estadoBloco.textContent = concluido ? '✓ Concluído' : aplicado > 0 ? 'Em andamento' : 'A estudar';
                     const indicador = criarIndicadorProgresso('bloco', textoTempoRegistrado(progressoBloco), aplicado,
-                        bloco.metaSegundos, `${contexto.creditoSequencial ? 'Crédito sequencial' : 'Estudo normal registrado'} de ${meta.materia}, bloco ${indice + 1}: ${textoTempoRegistrado(progressoBloco)}`);
+                        bloco.metaSegundos, `${contexto.creditoSequencial ? 'Tempo aproveitado' : 'Tempo registrado'} de ${meta.materia}, bloco ${indice + 1}: ${textoTempoRegistrado(progressoBloco)}`);
                     indicador.querySelector('small').classList.add('bloco-tempo-restante');
                     indicador.querySelector('progress').classList.add('bloco-progresso');
                     linha.append(nomeBloco, estadoBloco, indicador);
@@ -575,7 +596,7 @@
             const percentualProjeto = projeto.percentual.toLocaleString('pt-BR', { maximumFractionDigits: 1 });
             identificacao.append(
                 criarIndicadorProgresso('projeto', `${percentualProjeto}%`, projeto.segundosCreditados,
-                    projeto.metaTotalSegundos, `Progresso de ${meta.materia} neste projeto: ${percentualProjeto}%; ${textoTempoRegistrado({ pontosAplicadosSegundos: projeto.segundos, metaSegundos: projeto.metaTotalSegundos })} de estudo normal registrado`),
+                    projeto.metaTotalSegundos, `Progresso de ${meta.materia} neste projeto: ${percentualProjeto}%; ${textoTempoRegistrado({ pontosAplicadosSegundos: projeto.segundos, metaSegundos: projeto.metaTotalSegundos })} de estudo registrado`),
                 criarIndicadorProgresso('nivel', `Nvl. ${dominio.nivel}`, dominio.percentual, 100,
                     `Nível global de ${dominio.nomeCanonico}: ${dominio.nivel}. ${dominio.nivel === 100 ? 'Nível máximo' : `${dominio.percentual.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}% até o próximo nível; faltam ${dominio.pontosParaProximoNivel.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} min`}`)
             );
@@ -592,7 +613,7 @@
                 rodape.className = 'blocos-acoes';
                 const conclusao = acoes.querySelector('.materia-acao-concluir');
                 if (conclusao && blocos.length > 1) {
-                    conclusao.title = `Concluir os ${blocos.length} blocos de ${meta.materia} neste dia`;
+                    conclusao.title = `Concluir a meta de ${meta.materia} neste dia`;
                     conclusao.setAttribute('aria-label', conclusao.title);
                 }
                 acoes.prepend(...notas.childNodes);
@@ -610,7 +631,7 @@
         if (!estado.metasMaterias.length) {
             const aviso = document.createElement('p');
             aviso.className = 'dia-missoes-aviso';
-            aviso.textContent = 'Nenhum bloco teórico previsto neste dia (capacidade reservada às atividades práticas).';
+            aviso.textContent = 'Dia reservado para atividades práticas.';
             card.append(aviso);
         }
         const titulo = document.createElement('h4');
@@ -795,6 +816,14 @@
 
     function adicionarRevisoesComCronometro(card, revisoes, contexto) {
         const planoOrigem = lerObjeto('materiaDoDia') || {};
+        const idsVistos = new Set();
+        const revisoesUnicas = [];
+        for (const rev of revisoes) {
+            if (!rev || !rev.id || idsVistos.has(rev.id)) continue;
+            idsVistos.add(rev.id);
+            revisoesUnicas.push(rev);
+        }
+        revisoes = revisoesUnicas;
         const titulo = document.createElement('h4');
         titulo.className = revisoes.length ? 'dia-revisoes-titulo' : 'visually-hidden';
         titulo.textContent = 'Revisões';
@@ -819,8 +848,13 @@
                 grupo.open = contexto.revisoesAbertas.has(grupo.dataset.revisaoChave);
                 const resumo = document.createElement('summary');
                 const quantidadeConcluida = itens.filter((revisao) => revisao.estado === 'concluida').length;
-                resumo.setAttribute('aria-label', `Revisões do ${formatarDia(numeroDoDia(diaOrigem))}, ${quantidadeConcluida} de ${itens.length} concluídas`);
-                resumo.innerHTML = `<strong>${formatarDia(numeroDoDia(diaOrigem))}</strong><span aria-hidden="true">${quantidadeConcluida}/${itens.length}</span>`;
+                resumo.setAttribute('aria-label', `Revisões de ${rotuloDia(diaOrigem)}, ${quantidadeConcluida} de ${itens.length} concluídas`);
+                const origemRotulo = document.createElement('strong');
+                origemRotulo.textContent = rotuloDia(diaOrigem);
+                const contagem = document.createElement('span');
+                contagem.setAttribute('aria-hidden', 'true');
+                contagem.textContent = `${quantidadeConcluida}/${itens.length}`;
+                resumo.append(origemRotulo, contagem);
                 const sublista = document.createElement('ul');
                 sublista.className = 'dia-lista dia-revisoes revisao-grupo-lista';
                 itens.forEach((revisao) => {
@@ -849,12 +883,11 @@
                 rotulo.appendChild(texto);
                 const situacao = document.createElement('small');
                 situacao.textContent = `${revisao.estado === 'pendente' ? 'Pendente' : concluida ? 'Concluída' : 'Dispensada'} · Sugestão: ${formatarDuracaoRevisao(revisao.sugeridaSegundos)} · ${revisao.etapa} · D+${revisao.intervalo}`;
-                if (revisao.origemHistorica) situacao.textContent += ` · origem histórica · prevista para ${revisao.dataPrevista.split('-').reverse().join('/')}`;
+                if (revisao.origemHistorica) situacao.textContent += ` · prevista originalmente para ${revisao.dataPrevista.split('-').reverse().join('/')}`;
                 situacao.className = 'visually-hidden';
                 const sugestao = document.createElement('small');
                 sugestao.className = 'revisao-sugestao';
                 sugestao.textContent = `${revisao.etapa} · ${formatarDuracaoRevisao(revisao.sugeridaSegundos)}${revisao.estado === 'dispensada' ? ' · Dispensada' : ''}`;
-                if (revisao.origemHistorica) sugestao.textContent += ` · origem histórica · ${revisao.dataPrevista.split('-').reverse().join('/')}`;
                 sugestao.setAttribute('aria-hidden', 'true');
                 rotulo.append(situacao, sugestao);
                 for (const bloco of [revisao]) {
@@ -908,7 +941,7 @@
     async function executarAcaoRevisao(revisao, acao) {
         const timer = window.CronometroEstudos?.obterEstado();
         if (timer?.revisaoId === revisao.id && timer.estado !== 'ocioso') {
-            document.getElementById('revisoes-status').textContent = 'Registre ou zere o cronômetro desta revisão antes de alterar seu estado.';
+            document.getElementById('revisoes-status').textContent = 'Salve ou zere o cronômetro desta revisão antes de continuar.';
             return;
         }
         try {
@@ -920,7 +953,8 @@
 
     function renderizarRevisoesAtrasadas(revisoes, projetoId, anotacoesSessoes) {
         const hoje = window.RevisoesStore.dataLocal();
-        const atrasadas = revisoes.filter(r => r.estado === 'pendente' && r.dataPrevista && r.dataPrevista < hoje);
+        const atrasadas = revisoes.filter(r => r.estado === 'pendente' && r.dataPrevista && r.dataPrevista < hoje)
+            .sort((a, b) => a.dataPrevista.localeCompare(b.dataPrevista));
         const container = document.getElementById('revisoes-atrasadas-lista');
         const abertas = new Set([...container.querySelectorAll('.revisao-grupo[open]')].map(el => el.dataset.revisaoChave));
         container.replaceChildren();
@@ -932,7 +966,7 @@
             const secao = document.createElement('section');
             const titulo = document.createElement('h3');
             const revisoesDia = atrasadas.filter(r=>chaveDestino(r)===dia);
-            titulo.textContent = `${dia.startsWith('historico:') ? 'Origem histórica' : formatarDia(numeroDoDia(dia))} · prevista para ${revisoesDia[0].dataPrevista.split('-').reverse().join('/')}`;
+            titulo.textContent = `${dia.startsWith('historico:') ? 'Origem histórica' : rotuloDia(dia)} · prevista para ${revisoesDia[0].dataPrevista.split('-').reverse().join('/')}`;
             secao.append(titulo);
             adicionarRevisoesComCronometro(secao,revisoesDia,{projetoId,diaJornada:dia,revisoesAbertas:abertas,anotacoesSessoes});
             container.append(secao);
@@ -1140,6 +1174,9 @@
 
     function formatarDia(numero) {
         return `Dia ${String(Math.max(1, numero)).padStart(2, '0')}`;
+    }
+    function rotuloDia(chave) {
+        return chave?.startsWith('folga-') ? chave.slice(6).split('-').reverse().join('/') : formatarDia(numeroDoDia(chave));
     }
 
     function numeroDoDia(chave) {

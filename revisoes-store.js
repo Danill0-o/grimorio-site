@@ -60,19 +60,28 @@
             r.estado='pendente'; delete r.conclusao; delete r.sessoesConclusao;
         }
     }
-    function sincronizar({ dados, materiaDoDia, revisoesDoDia, dias, sessoes = [] }) {
+    function fontesParaCarga(projetoId, registro = ler()) {
+        const checkpoint = JSON.parse(window.localStorage.getItem(`cronometroV1:${projetoId}`) || 'null');
+        return { entidades: registro.entidades, ativas: registro.ativas,
+            revisaoEmCurso: checkpoint?.contexto?.tipo === 'revisao' ? checkpoint.contexto.revisaoId : null };
+    }
+    function sincronizar({ dados, materiaDoDia, revisoesDoDia, dias, sessoes = [], missoes }) {
         const registro = ler();
         // O journal pode ter recuperado uma sessão desde a leitura do chamador.
         sessoes = window.EstudoStore.listarSessoes();
         const origens = new Map();
-        const calendario = window.CalendarioJornada.mapear(dados, Object.keys(materiaDoDia).length).porDia;
-        const chave = (bloco,etapa) => JSON.stringify([dados.projetoId,bloco,etapa]);
+        const civil = window.CalendarioJornada;
+        const mapa = civil.mapear(dados, Object.keys(materiaDoDia).length);
+        const calendario = mapa.porDia;
+        const destinoProgramado = data => mapa.porData[data]?.startsWith('dia') ? mapa.porData[data] : null;
+        const chave = (bloco, periodo) => JSON.stringify([dados.projetoId, bloco, periodo]);
+        const periodoDaEntidade = r => r.chavePeriodo || r.etapa;
         const existentes = new Map();
         Object.values(registro.entidades).forEach(r => {
             if (r.projetoId !== dados.projetoId) return;
-            const etapa = r.etapa;
-            if (!etapa) return;
-            const k=chave(r.blocoId,etapa);
+            const periodo = periodoDaEntidade(r);
+            if (!periodo) return;
+            const k = chave(r.blocoId, periodo);
             // Dados ambíguos ficam preservados; não atribuir sessões por adivinhação.
             if (!existentes.has(k)) existentes.set(k,r);
             else existentes.set(k,null);
@@ -96,42 +105,79 @@
             creditoAnterior.set(origem.projetoMateriaId, (creditoAnterior.get(origem.projetoMateriaId) || 0) - herdado);
             origem.metaOriginalSegundos -= herdado;
         }
-        const porDestino = new Map();
-        Object.entries(revisoesDoDia).forEach(([diaJornada, grupos]) => {
+        const porDestino = new Map(), etapasPorOrigem = new Map();
+        const integrada = dados.cargaDiariaVersao === 1;
+        function etapaDaProjecao(dia, periodo) {
+            if (!dados.revisoesPolitica) return periodo;
+            if (!etapasPorOrigem.has(dia)) {
+                etapasPorOrigem.set(dia, new Map(civil.projetarPeriodosRevisao(calendario[dia], dados)
+                    .map(({ chavePeriodo, etapa }) => [chavePeriodo, etapa])));
+            }
+            return etapasPorOrigem.get(dia).get(periodo);
+        }
+        if (!integrada) Object.entries(revisoesDoDia).forEach(([diaJornada, grupos]) => {
             const dia = new Map();
-            Object.entries(grupos || {}).forEach(([grupoEtapa,grupo]) => Object.entries(grupo || {}).forEach(([diaOrigem, blocos]) => {
+            Object.entries(grupos || {}).forEach(([grupoPeriodo, grupo]) => Object.entries(grupo || {}).forEach(([diaOrigem, blocos]) => {
+                const chavePeriodo = civil.chavePeriodoDoGrupo(grupoPeriodo);
+                const etapa = etapaDaProjecao(diaOrigem, chavePeriodo);
+                if (!etapa) return;
                 blocos.forEach(bloco => {
                     const origem = origens.get(bloco.blocoId);
                     if (!origem || origem.metaOriginalSegundos <= 0 || !calendario[diaJornada] || !calendario[diaOrigem]) return;
-                    const etapa = {revisao1:'R1',revisao2:'R2',revisao3:'R3'}[grupoEtapa];
-                    if (!etapa) return;
-                    const id = existentes.get(chave(bloco.blocoId,etapa))?.id || chave(bloco.blocoId,etapa);
+                    const k = chave(bloco.blocoId, chavePeriodo);
+                    const id = existentes.get(k)?.id || k;
                     dia.set(id, { id, projetoId: dados.projetoId, projetoMateriaId: bloco.projetoMateriaId, blocoId: bloco.blocoId,
                         materia: bloco.materia, numero: origem.numero, diaOrigem, diaJornada, etapa, projecaoVersao:2,
-                        intervalo: window.CalendarioJornada.diferencaDias(calendario[diaOrigem],calendario[diaJornada]), metaOriginalSegundos: origem.metaOriginalSegundos,
+                        ...(dados.revisoesPolitica ? { chavePeriodo } : {}),
+                        intervalo: civil.diferencaDias(calendario[diaOrigem],calendario[diaJornada]), metaOriginalSegundos: origem.metaOriginalSegundos,
                         dataPrevista: calendario[diaJornada] || null });
                 });
             }));
             porDestino.set(diaJornada, [...dia.values()]);
         });
+        if (integrada) {
+            const calculo = window.RevisoesMaterializacao.calcular({ dados, materiaDoDia, mapa, sessoes, missoes, revisoesDoDia,
+                ...fontesParaCarga(dados.projetoId, registro) });
+            for (const item of calculo.ocorrencias) {
+                const origem = item.origem;
+                const id = existentes.get(chave(origem.blocoId, item.chavePeriodo))?.id || item.id;
+                const r = registro.entidades[id] ||= {
+                    id, projetoId: dados.projetoId, projetoMateriaId: origem.projetoMateriaId, blocoId: origem.blocoId,
+                    materia: origem.materia, numero: origens.get(origem.blocoId)?.numero ?? 1, diaOrigem: origem.dia,
+                    dataOrigem: origem.dataOrigem, etapa: item.etapa, chavePeriodo: item.chavePeriodo, projecaoVersao: 3,
+                    metaOriginalSegundos: origem.metaNominalSegundos ?? origem.metaSegundos,
+                    idealSegundos: item.duracaoSegundos, sugeridaSegundos: item.duracaoSegundos,
+                    estado: 'pendente', criadaEm: new Date().toISOString()
+                };
+                Object.assign(r, { diaJornada: item.diaJornada, dataPrevista: item.destino,
+                    dataNominal: item.dataNominal ?? null, intervalo: civil.diferencaDias(origem.dataOrigem, item.destino),
+                    materializadaEm: item.materializadaEm, foraDaReserva: item.foraDaReserva });
+                reconciliar(r, sessoes);
+                if (!ativas.includes(id)) ativas.push(id);
+            }
+        }
         const segundosExtras = new Map();
         sessoes.filter(s => s.projetoId === dados.projetoId && s.blocoExtraId && window.EstudoStore.sessaoEstudoElegivel(s))
             .forEach(s => segundosExtras.set(s.blocoExtraId, (segundosExtras.get(s.blocoExtraId) || 0) + s.duracaoSegundos));
         for (const extra of window.EstudoExtra?.listar(dados.projetoId) || []) {
             const segundos = segundosExtras.get(extra.blocoId) || 0;
-            if (!extra.projetoMateriaId || segundos <= 0) continue;
+            if (!extra.projetoMateriaId || segundos <= 0 || dados.replanejamento?.politicasExtras?.[extra.blocoId]) continue;
             const materia = window.IdentidadeStore.nomeMateria(extra.projetoMateriaId);
-            for (const { etapa, data } of window.CalendarioJornada.projetarRevisoes(extra.dataOrigem, dados)) {
-                const diaJornada = Object.keys(calendario).find(dia => calendario[dia] === data);
+            for (const { etapa, chavePeriodo, data } of civil.projetarPeriodosRevisao(extra.dataOrigem, dados)) {
+                const diaJornada = destinoProgramado(data);
                 if (!diaJornada) continue;
-                const id = existentes.get(chave(extra.blocoId, etapa))?.id || chave(extra.blocoId, etapa);
+                const k = chave(extra.blocoId, chavePeriodo);
+                const id = existentes.get(k)?.id || k;
                 if (preservadas.has(id)) continue;
                 if (!porDestino.has(diaJornada)) porDestino.set(diaJornada, []);
-                porDestino.get(diaJornada).push({ id, projetoId: dados.projetoId, projetoMateriaId: extra.projetoMateriaId,
-                    blocoId: extra.blocoId, blocoExtraId: extra.blocoId, materia, numero: 1,
-                    diaOrigem: extra.diaJornada, diaJornada, etapa, projecaoVersao: 2,
-                    intervalo: window.CalendarioJornada.diferencaDias(extra.dataOrigem, data),
-                    metaOriginalSegundos: segundos, dataPrevista: data });
+                if (!porDestino.get(diaJornada).some(item => item.id === id)) {
+                    porDestino.get(diaJornada).push({ id, projetoId: dados.projetoId, projetoMateriaId: extra.projetoMateriaId,
+                        blocoId: extra.blocoId, blocoExtraId: extra.blocoId, materia, numero: 1,
+                        diaOrigem: extra.diaJornada, diaJornada, etapa: dados.revisoesPolitica ? etapa : chavePeriodo, projecaoVersao: 2,
+                        ...(dados.revisoesPolitica ? { chavePeriodo } : {}),
+                        intervalo: civil.diferencaDias(extra.dataOrigem, data),
+                        metaOriginalSegundos: segundos, dataPrevista: data });
+                }
             }
         }
         porDestino.forEach(previstas => {
@@ -146,40 +192,81 @@
             previstas.forEach((prevista,i) => {
                 const r = registro.entidades[prevista.id] ||= { ...prevista, idealSegundos: Math.round(prevista.metaOriginalSegundos/8),
                     sugeridaSegundos: sugestoes[i], estado: 'pendente', criadaEm: new Date().toISOString() };
-                if (r.projecaoVersao !== 2 || r.dataPrevista !== prevista.dataPrevista || r.diaJornada !== prevista.diaJornada || r.sugeridaSegundos !== sugestoes[i]) {
+                if (r.projecaoVersao !== 2 || r.dataPrevista !== prevista.dataPrevista || r.diaJornada !== prevista.diaJornada
+                    || r.diaOrigem !== prevista.diaOrigem || r.intervalo !== prevista.intervalo || r.sugeridaSegundos !== sugestoes[i]) {
                     const {projecoesAnteriores, ...anterior} = r;
                     r.projecoesAnteriores = [...(projecoesAnteriores || []), anterior];
                     if (r.estado==='concluida' && r.sessoesConclusao?.length) r.conclusaoPreservada = [...r.sessoesConclusao];
                 }
                 Object.assign(r,prevista,{idealSegundos:Math.round(prevista.metaOriginalSegundos/8),sugeridaSegundos:sugestoes[i]});
                 reconciliar(r, sessoes);
-                ativas.push(r.id);
+                if (!ativas.includes(r.id)) ativas.push(r.id);
             });
         });
         for (const id of preservadas) {
             const r = registro.entidades[id];
             if (!r || r.projetoId !== dados.projetoId || ativas.includes(id)) continue;
             if (r.blocoExtraId && window.EstudoExtra?.excluido(r.blocoExtraId, r.projetoId)) continue;
-            const origem = dados.replanejamento.origens[r.blocoId];
+            const origem = dados.replanejamento?.origens?.[r.blocoId];
             // A origem civil permanece estável para blocos normais e extras.
             const extra = r.blocoExtraId ? window.EstudoExtra?.listar(dados.projetoId).find(e => e.blocoId === r.blocoExtraId) : null;
             if (!origem && !extra) continue;
             r.origemHistorica = true;
             r.dataOrigem = (origem || extra).dataOrigem;
-            r.diaJornada = Object.keys(calendario).find(d => calendario[d] === r.dataPrevista) || null;
+            const destinoCivil = destinoProgramado(r.dataPrevista);
+            const novoJaPrevisto = destinoCivil && (porDestino.get(destinoCivil) || [])
+                .some(p => p.projetoMateriaId === r.projetoMateriaId && periodoDaEntidade(p) === periodoDaEntidade(r));
+            const preservaOcorrencia = origem?.revisoesPolitica || dados.replanejamento?.politicasExtras?.[r.blocoId]
+                || r.estadoAlteradoManualmente || r.estado === 'concluida' || r.estado === 'dispensada'
+                || sessoes.some(s => s.revisaoId === r.id && s.duracaoSegundos > 0);
+            r.diaJornada = novoJaPrevisto && !preservaOcorrencia ? null : destinoCivil;
             reconciliar(r, sessoes);
-            ativas.push(id);
+            if (!ativas.includes(id)) ativas.push(id);
         }
-        registro.ativas = ativas.filter(id => !dados.replanejamento || !window.MateriasStore.obterProjetoMateria(registro.entidades[id].projetoMateriaId, dados.projetoId).removida);
+        registro.ativas = [...new Set(ativas)].filter(id => !dados.replanejamento || !window.MateriasStore.obterProjetoMateria(registro.entidades[id].projetoMateriaId, dados.projetoId).removida);
         salvar(registro);
         return registro.ativas.map(id => registro.entidades[id]);
     }
+    function sincronizarPlano({ dados, materiaDoDia, revisoesDoDia }) {
+        const progresso = window.EstudoStore.calcularProgressoPlano({ dados, materiaDoDia,
+            distribuicaoMaterias: JSON.parse(storage().getItem('lista_distribuicao_materias') || '[]'),
+            sessoesProjeto: window.EstudoStore.listarSessoes().filter(s => s.projetoId === dados.projetoId) });
+        return sincronizar({ dados, materiaDoDia, revisoesDoDia, dias: progresso.dias });
+    }
     function listar() { const reg=ler(); return reg.ativas.map(id=>reg.entidades[id]).filter(r=>!r.blocoExtraId||!window.EstudoExtra?.excluido(r.blocoExtraId,r.projetoId)); }
+    function reservasProtegidasParaPrevia(projetoId, blocosConcluidos = []) {
+        const raw = storage().getItem(CHAVE);
+        if (!raw) return [];
+        const registro = JSON.parse(raw);
+        if (registro.versao !== 1 || !registro.entidades || !Array.isArray(registro.ativas)) throw new Error('Registro de revisões inválido');
+        const blocosComEstudo = new Set(blocosConcluidos);
+        const segundosPorRevisao = new Map();
+        for (const sessao of window.HistoricoRepository.listar()) {
+            const segundos = Number(sessao.duracaoSegundos);
+            if (sessao.projetoId !== projetoId || sessao.blocoExtraId || !Number.isFinite(segundos) || segundos <= 0) continue;
+            if (sessao.tipo === 'revisao' && sessao.revisaoId) {
+                segundosPorRevisao.set(sessao.revisaoId, (segundosPorRevisao.get(sessao.revisaoId) ?? 0) + segundos);
+                const origem = registro.entidades[sessao.revisaoId];
+                if (origem?.projetoId === projetoId && origem.blocoId && !origem.blocoExtraId) blocosComEstudo.add(origem.blocoId);
+            } else if (sessao.blocoId && window.EstudoStore.sessaoEstudoElegivel(sessao)) {
+                blocosComEstudo.add(sessao.blocoId);
+            }
+        }
+        return [...new Set(registro.ativas)].map(id => registro.entidades[id]).filter(revisao => {
+            if (!revisao || revisao.projetoId !== projetoId || !revisao.dataPrevista || revisao.blocoExtraId) return false;
+            return revisao.estado === 'concluida' || revisao.estado === 'dispensada' || revisao.estadoAlteradoManualmente
+                || blocosComEstudo.has(revisao.blocoId) || segundosPorRevisao.has(revisao.id);
+        }).map(({ id, blocoId, chavePeriodo, etapa, dataPrevista, estado, sugeridaSegundos }) => ({
+            id, blocoId, chavePeriodo: chavePeriodo || etapa, dataPrevista, estado,
+            saldoSegundos: estado === 'pendente' ? Math.max(0, sugeridaSegundos - (segundosPorRevisao.get(id) ?? 0)) : 0
+        }));
+    }
     function notificar() { window.dispatchEvent(new Event('revisoes:alteradas')); }
     function alterar(id, estado) {
         const reg=ler(); const r=reg.entidades[id];
         if (r?.blocoExtraId&&window.EstudoExtra?.excluido(r.blocoExtraId,r.projetoId))throw new Error('O extra desta revisão foi excluído.');
         if (!r || !reg.ativas.includes(id) || r.estado==='concluida') return;
+        if (r.estado !== estado) r.estadoAlteradoManualmente = true;
         r.estado=estado; reconciliar(r, window.EstudoStore.listarSessoes()); salvar(reg); notificar();
     }
     function concluir(id) {
@@ -209,7 +296,7 @@
         if (nova) window.dispatchEvent(new CustomEvent('estudo:registrado',{detail:{sessoes:[nova],pontosConhecimento:faltam/60}}));
         else notificar();
     }
-    window.RevisoesStore = { sincronizar, listar, calcularSugestoes, concluir,
+    window.RevisoesStore = { sincronizar, sincronizarPlano, listar, fontesParaCarga, reservasProtegidasParaPrevia, calcularSugestoes, concluir,
         dispensar: id=>alterar(id,'dispensada'), reabrir: id=>alterar(id,'pendente'),
         habilitadas: ()=>ler().habilitadas,
         definirHabilitadas(valor) { const reg=ler(); reg.habilitadas=Boolean(valor); salvar(reg); notificar(); },

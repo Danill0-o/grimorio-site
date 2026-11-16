@@ -96,7 +96,7 @@
         semTempoPendente(id);
         const dados = ler(prefixo(id) + 'dadosExame', {});
         const valores = { [prefixo(id) + 'registro']: JSON.stringify({...r, nome: dados.nomeExame || ler(prefixo(id) + 'wizardProjeto', {})?.valores?.nome_exame || r.nome || 'Projeto', removido:true}) };
-        CHAVES.forEach(k => { valores[prefixo(id) + k] = null; });
+        [...CHAVES, 'reagendamentoV1'].forEach(k => { valores[prefixo(id) + k] = null; });
         gravar(valores,`projetosTransacaoV2:${id}`);
     }
     async function duplicar(id, destino) {
@@ -120,6 +120,11 @@
         const minutos=Number(dados.minutosPorDia)||0;
         const horas=rascunho?.valores?.['horas-por-dia'] || dados.horasPorDia || `${String(Math.floor(minutos/60)).padStart(2,'0')}:${String(minutos%60).padStart(2,'0')}`;
         const dias=rascunho?.dias || dados.listaDiaDaSemana || [];
+        const revisoesPolitica = [rascunho?.revisoesPolitica, dados.revisoesPolitica]
+            .find(politica => window.CalendarioJornada?.politicaRevisoesValida?.(politica));
+        const cargaDiaria = [rascunho?.cargaDiaria, dados.cargaDiaria]
+            .find(carga => carga && typeof carga === 'object' && !Array.isArray(carga) && Object.keys(carga).length === 2
+                && typeof carga.incluirRevisoes === 'boolean' && typeof carga.incluirPraticas === 'boolean');
         if (!window.PraticasStore && (storage.getItem(`praticasProjetoV1:${id}`) !== null || storage.getItem(`praticasProjetoV1:${destino}`) !== null)) {
             throw new Error('O armazenamento de atividades práticas precisa estar disponível antes de copiar este projeto. Recarregue a página.');
         }
@@ -131,7 +136,7 @@
             [prefixo(destino)+'dadosExame']:JSON.stringify({projetoId:destino,nomeExame:nome}),
             [prefixo(destino)+'objetosSalvos']:JSON.stringify(cadastro),
             [prefixo(destino)+'totalQuestoes']:JSON.stringify(cadastro.reduce((s,m)=>s+(Number(m.Nquestoes)||0),0)),
-            [prefixo(destino)+'wizardProjeto']:JSON.stringify({etapa:0,valores:{nome_exame:nome,dataInicio:'',dataFinal:'','horas-por-dia':horas},dias}),
+            [prefixo(destino)+'wizardProjeto']:JSON.stringify({etapa:0,valores:{nome_exame:nome,dataInicio:'',dataFinal:'','horas-por-dia':horas},dias,revisoesPolitica,cargaDiaria}),
             ...praticas,
             [prefixo(destino)+'registro']:JSON.stringify({id:destino,criadoEm:new Date().toISOString(),origemCopia:id})
         },`projetosTransacaoV2:${destino}`);
@@ -141,7 +146,10 @@
     const chaveReal = chave => CHAVES.has(chave) ? prefixo(selecionado) + chave : chave;
     window.ProjetoStorage = {
         getItem(chave) {
-            const k = chaveReal(chave), raw = planoEmPreparacao?.has(k) ? planoEmPreparacao.get(k) : storage.getItem(k);
+            const k = chaveReal(chave);
+            const efetivo = !planoEmPreparacao && pagina !== 'index.html' && selecionado && ['dadosExame', 'materiaDoDia', 'revisoesDoDia'].includes(chave)
+                ? window.ReagendamentoStore?.lerPlanoEfetivo(selecionado, chave) : undefined;
+            const raw = planoEmPreparacao?.has(k) ? planoEmPreparacao.get(k) : efetivo ?? storage.getItem(k);
             return window.MateriasStore?.projetarNomes ? window.MateriasStore.projetarNomes(chave, raw) : raw;
         },
         setItem(chave, valor) {
@@ -157,6 +165,42 @@
         get length() { return storage.length; }
     };
     window.ProjetosStore = {
+        // O chamador já detém os locks de gestão e do cronômetro.
+        publicarAntecipacao(id, valores) {
+            validar();
+            if (id !== selecionado) throw new Error('O projeto selecionado mudou.');
+            const journal = `projetosTransacaoV2:${id}`;
+            const aplicados = [];
+            storage.setItem(journal, JSON.stringify(valores));
+            try {
+                for (const [chave, valor] of Object.entries(valores)) {
+                    const anterior = storage.getItem(chave);
+                    storage.setItem(chave, valor);
+                    aplicados.push([chave, anterior]);
+                }
+                storage.removeItem(journal);
+            } catch (erro) {
+                for (const [chave, anterior] of aplicados.reverse()) {
+                    if (anterior === null) storage.removeItem(chave);
+                    else storage.setItem(chave, anterior);
+                }
+                throw erro;
+            }
+        },
+        recuperarAntecipacao(id) {
+            validar();
+            if (id !== selecionado) throw new Error('O projeto selecionado mudou.');
+            const valores = ler(`projetosTransacaoV2:${id}`);
+            if (valores) window.ProjetosStore.publicarAntecipacao(id, valores);
+        },
+        temReagendamentoAtivo(dados, atividadeId = null) {
+            if (!dados?.projetoId) return false;
+            const raw = storage.getItem(prefixo(dados.projetoId) + 'reagendamentoV1');
+            if (raw === null) return false;
+            const ledger = window.ReagendamentoSchema.validar(JSON.parse(raw), dados.projetoId);
+            return ledger.operacoes.some(op => op.planoVersaoId === (dados.planoVersaoId ?? null)
+                && (atividadeId === null || op.praticas.some(m => m.atividadeId === atividadeId)));
+        },
         confirmarPlano(preparar) {
             return gerenciar(selecionado, () => {
                 if (planoEmPreparacao) throw new Error('Já existe um planejamento em preparação.');

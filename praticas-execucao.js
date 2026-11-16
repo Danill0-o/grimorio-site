@@ -29,7 +29,8 @@
         verificarRealizacao(contexto);
         const { missao, atividade } = contexto;
         // Materializa somente a atividade prática já projetada pela E5. Não regenera distribuição ou agenda.
-        const existente = store().obterEstado(missao.projetoId).missoes[missaoId];
+        const existente = await store().prepararReagendada?.(missao.projetoId, missaoId)
+            || store().obterEstado(missao.projetoId).missoes[missaoId];
         if (existente && (existente.atividadeId !== atividade.atividadeId || existente.dataPrevista !== missao.dataPrevista
             || existente.duracaoPlanejadaSegundos !== missao.duracaoPlanejadaSegundos
             || (existente.presetXpId ?? null) !== (missao.presetXpId ?? null)

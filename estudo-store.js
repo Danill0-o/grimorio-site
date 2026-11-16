@@ -62,7 +62,7 @@
 
     function registrarCronometro(dados) {
         recuperarCronometro();
-        const sessao = normalizarSessao(dados);
+        const sessao = normalizarSessao({ ...dados, registradoEm: dados.registradoEm ?? new Date() });
         if (!sessao) throw new Error('Sessão inválida');
         const existente = listarSessoes().find(s => s.id === sessao.id);
         if (existente) return existente;
@@ -230,7 +230,9 @@
     }
 
     function calcularProgressoPlano({ dados, materiaDoDia, sessoesProjeto, distribuicaoMaterias, hoje = new Date() }) {
-        const dias = Object.keys(materiaDoDia || {}).sort((a, b) => numeroDoDia(a) - numeroDoDia(b));
+        const dias = Object.keys(materiaDoDia || {}).sort((a, b) => dados?.datasReagendamento
+            ? dados.datasReagendamento[a].localeCompare(dados.datasReagendamento[b])
+            : numeroDoDia(a) - numeroDoDia(b));
         const diasDoPlano = new Set(dias);
         // O volume é integral; cada registro quita somente a meta de seu próprio dia.
         const segundosPorDia = new Map();
@@ -259,7 +261,7 @@
             }
             const dataLocal = `${String(inicioSessao.getFullYear()).padStart(4, '0')}-${String(inicioSessao.getMonth() + 1).padStart(2, '0')}-${String(inicioSessao.getDate()).padStart(2, '0')}`;
             const dia = calendarioPorData?.[dataLocal];
-            return diasDoPlano.has(dia) ? dia : null;
+            return diasDoPlano.has(dia) && !dia.startsWith('folga-') ? dia : null;
         }
         const pontosPorMateria = (Array.isArray(sessoesProjeto) ? sessoesProjeto : []).reduce((acc, sessao) => {
             if (sequencial && sessao.projetoId !== dados.projetoId) return acc;

@@ -764,8 +764,62 @@
         };
     }
 
+    function modelarCargaDiaria(dados) {
+        const { dataInicio, dataFinal, diasRotina, disponibilidadeDiariaSegundos,
+            blocosPorDia, cargaDiaria, periodosRevisao, missoes } = dados;
+        const capacidade = segundos(disponibilidadeDiariaSegundos);
+        const duracaoNormalBlocoSegundos = Math.floor(capacidade / blocosPorDia);
+        if (!Number.isInteger(blocosPorDia) || blocosPorDia < 1 || blocosPorDia > 4 || duracaoNormalBlocoSegundos < 1) {
+            falhar('quantidade de blocos inválida para a carga diária');
+        }
+        campos(cargaDiaria, ['incluirRevisoes', 'incluirPraticas']);
+        if (typeof cargaDiaria.incluirRevisoes !== 'boolean' || typeof cargaDiaria.incluirPraticas !== 'boolean') {
+            falhar('opções da carga diária inválidas');
+        }
+        if (!Number.isInteger(periodosRevisao) || periodosRevisao < 0 || periodosRevisao > 4) {
+            falhar('quantidade de períodos de revisão inválida');
+        }
+        const calendario = mapearCalendarioRotina(dataInicio, dataFinal, diasRotina);
+        const porData = new Map();
+        const ocorrencias = unicos(missoes, 'missaoId', missao => {
+            const { missaoId, dataPrevista, duracaoPlanejadaSegundos, consomeCargaEstudo } = missao;
+            id(missaoId, 'missaoId');
+            dataCivil(dataPrevista);
+            segundos(duracaoPlanejadaSegundos);
+            if (typeof consomeCargaEstudo !== 'boolean') falhar('classificação da prática inválida');
+            return { missaoId, dataPrevista, duracaoPlanejadaSegundos, consomeCargaEstudo };
+        });
+        for (const missao of ocorrencias.values()) {
+            if (missao.dataPrevista < calendario.inicio || missao.dataPrevista > calendario.fim) continue;
+            const carga = porData.get(missao.dataPrevista) || { interna: 0, extra: 0 };
+            const grupo = missao.consomeCargaEstudo ? 'interna' : 'extra';
+            carga[grupo] = somarSegundos(carga[grupo], missao.duracaoPlanejadaSegundos);
+            porData.set(missao.dataPrevista, carga);
+        }
+        const limitePraticasRegulares = Number(BigInt(capacidade) * 3n / 4n);
+        const baseRevisoes = BigInt(capacidade) * BigInt(cargaDiaria.incluirRevisoes ? periodosRevisao : 0);
+        let numeroVisual = 0;
+        let ordinalTeorico = 0;
+        const dias = calendario.todasDatas.map(({ dataPrevista, diaSemana, ehEstudo }) => {
+            const carga = porData.get(dataPrevista);
+            const praticaInterna = carga?.interna ?? 0;
+            const incluir = ehEstudo && cargaDiaria.incluirPraticas;
+            const praticasRegularesSegundos = incluir ? praticaInterna : 0;
+            const praticasExtrasSegundos = somarSegundos(carga?.extra ?? 0, incluir ? 0 : praticaInterna);
+            const excepcional = praticasRegularesSegundos > limitePraticasRegulares;
+            return { dataPrevista, diaSemana, ehEstudo, excepcional,
+                numeroVisual: ehEstudo || carga ? ++numeroVisual : null,
+                ordinalTeorico: ehEstudo && !excepcional ? ++ordinalTeorico : null,
+                praticasRegularesSegundos, praticasExtrasSegundos,
+                excessoPraticasSegundos: Math.max(0, praticasRegularesSegundos - capacidade) };
+        });
+        return { duracaoNormalBlocoSegundos, tetoRevisoesSegundos: Number(baseRevisoes / 8n),
+            limiteRevisoesSegundos: Number(baseRevisoes * 11n / 80n), dias };
+    }
+
     window.AtividadesPraticas = Object.freeze({ tipos, diasSemana, periodicidades, modosInicio, regrasDoTipo,
         validarAgendamento, criarAtividade, validarAtividade, criarMissao, validarMissao, criarConclusao,
         criarSessao, criarAvaliacao, validarAvaliacao: normalizarAvaliacao, validarSessao: normalizarSessao,
-        validarConclusao: normalizarConclusao, projetarAtividade, resolverInicioPlanejado, gerarMissoesAtividade, planejarCapacidadePraticas });
+        validarConclusao: normalizarConclusao, projetarAtividade, resolverInicioPlanejado, gerarMissoesAtividade,
+        planejarCapacidadePraticas, modelarCargaDiaria });
 })();

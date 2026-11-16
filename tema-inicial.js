@@ -2,9 +2,9 @@
    inicializa stores; o bootstrap offline continua protegendo o acervo. */
 (function () {
     'use strict';
-    let tema = 'taverna';
+    let tema = 'arcano';
     try { tema = localStorage.getItem('grimorioTemaPixelV1') || tema; } catch (_) {}
     if (tema === 'reliquia') tema = 'floresta';
-    if (!['taverna', 'arcano', 'floresta'].includes(tema)) tema = 'taverna';
+    if (!['taverna', 'arcano', 'floresta'].includes(tema)) tema = 'arcano';
     document.documentElement.dataset.temaPixel = tema;
 })();

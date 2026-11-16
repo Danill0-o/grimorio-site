@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" shape-rendering="crispEdges">
+  <!-- Livro Tier 7: Lenda (grimório celestial obsidiana, ouro radiante, núcleo prisma e centelhas) -->
+  <!-- Centelhas estelares ao redor -->
+  <rect x="1" y="4" width="1" height="1" fill="#fde047"/>
+  <rect x="2" y="3" width="1" height="1" fill="#38bdf8"/>
+  <rect x="22" y="5" width="1" height="1" fill="#fde047"/>
+  <rect x="21" y="18" width="1" height="1" fill="#34d399"/>
+  <rect x="2" y="17" width="1" height="1" fill="#fde047"/>
+  <!-- Contorno do grimório -->
+  <rect x="3" y="2" width="18" height="19" fill="#05070e"/>
+  <!-- Capa obsidiana celestial -->
+  <rect x="4" y="3" width="15" height="15" fill="#111827"/>
+  <rect x="8" y="4" width="10" height="13" fill="#1e293b"/>
+  <!-- Lombada imperial dourada -->
+  <rect x="4" y="3" width="4" height="16" fill="#090d16"/>
+  <rect x="4" y="4" width="4" height="2" fill="#fde047"/>
+  <rect x="4" y="8" width="4" height="2" fill="#f59e0b"/>
+  <rect x="4" y="12" width="4" height="2" fill="#f59e0b"/>
+  <rect x="4" y="16" width="4" height="2" fill="#fde047"/>
+  <!-- Borda de ouro maciço em volta da capa -->
+  <rect x="8" y="3" width="10" height="1" fill="#fde047"/>
+  <rect x="8" y="17" width="10" height="1" fill="#fde047"/>
+  <rect x="17" y="4" width="2" height="13" fill="#f59e0b"/>
+  <rect x="16" y="4" width="2" height="2" fill="#fde047"/>
+  <rect x="16" y="15" width="2" height="2" fill="#fde047"/>
+  <!-- Folhas douradas reluzentes -->
+  <rect x="8" y="18" width="11" height="2" fill="#fde047"/>
+  <rect x="18" y="4" width="1" height="15" fill="#fef08a"/>
+  <!-- Fecho coroa com joia esmeralda -->
+  <rect x="17" y="7" width="4" height="7" fill="#fde047"/>
+  <rect x="18" y="8" width="2" height="5" fill="#f59e0b"/>
+  <rect x="18" y="9" width="2" height="3" fill="#34d399"/>
+  <!-- Brasão estelar central -->
+  <rect x="10" y="6" width="5" height="9" fill="#f59e0b"/>
+  <rect x="9" y="8" width="7" height="5" fill="#fde047"/>
+  <rect x="10" y="7" width="5" height="7" fill="#0f172a"/>
+  <rect x="12" y="7" width="1" height="7" fill="#38bdf8"/>
+  <rect x="10" y="10" width="5" height="1" fill="#38bdf8"/>
+  <rect x="11" y="9" width="3" height="3" fill="#34d399"/>
+  <rect x="12" y="10" width="1" height="1" fill="#ffffff"/>
+  <!-- Fitas reais -->
+  <rect x="10" y="20" width="2" height="3" fill="#fde047"/>
+  <rect x="14" y="20" width="2" height="3" fill="#34d399"/>
+</svg>

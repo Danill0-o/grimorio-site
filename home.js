@@ -56,7 +56,7 @@
                 });
                 abrir.dataset.projetoAbrir=projeto.id;
             }
-            botao('offline','Salvar e liberar espaço',async()=>{if(!await window.BackupLocal.obterPastaSalva())await window.BackupLocal.configurarPastaFixa();const r=await window.ProjetosOffline.salvar(projeto.id,{descarregar:true});renderizar(r.descarregado?'Backup conferido. Espaço do projeto liberado no localStorage.':'Pasta indisponível. O projeto foi mantido no navegador.');});
+            botao('offline','Salvar na pasta e liberar espaço',async()=>{if(!await window.BackupLocal.obterPastaSalva())await window.BackupLocal.configurarPastaFixa();const r=await window.ProjetosOffline.salvar(projeto.id,{descarregar:true});renderizar(r.descarregado?'Projeto salvo na pasta. O espaço no navegador foi liberado.':'Pasta indisponível. O projeto foi mantido no navegador.');});
             botao('arquivo',projeto.arquivado?'Restaurar':'Arquivar',async()=>{
                 await window.ProjetosStore[projeto.arquivado?'restaurar':'arquivar'](projeto.id);
                 renderizar(projeto.arquivado?'Projeto restaurado nos ativos.':'Projeto movido para Arquivados.');

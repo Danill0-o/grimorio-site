@@ -15,8 +15,8 @@ summary::after, .jornada-menu summary::after, .revisao-grupo summary::after {
 .jornada-menu summary::after { margin-inline-start: auto; }
 details[open] > summary::after, .jornada-menu details[open] > summary::after, .revisao-grupo[open] summary::after { content: ''; background-image: url('../img/icons/seta-cima.png'); transform: none; }
 select:not([multiple]):not([size]) { appearance: none !important; background-image: url('../img/icons/seta-baixo.png') !important; background-repeat: no-repeat !important; background-size: 16px 16px !important; background-position: right 10px center !important; padding-right: 36px !important; }
-.jornada-page button.info-contextual { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; min-height: 22px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--pixel-ink) !important; border-radius: 50% !important; background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; font: italic 16px Georgia,serif; text-transform: none; box-shadow: none !important; text-shadow: none !important; }
-.jornada-page button.info-contextual:is(:hover,:focus-visible) { background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; }
+:is(.jornada-page,.criacao-page) button.info-contextual { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; min-height: 22px; width: 22px; height: 22px; padding: 0; border: 1px solid var(--pixel-ink) !important; border-radius: 50% !important; background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; font: italic 16px Georgia,serif; text-transform: none; box-shadow: none !important; text-shadow: none !important; }
+:is(.jornada-page,.criacao-page) button.info-contextual:is(:hover,:focus-visible) { background: var(--pixel-surface) !important; color: var(--pixel-ink) !important; }
 .ajuda-contextual[popover] { margin: 0; inset: auto; max-width: min(360px,calc(100vw - 32px)); padding: 16px; background: var(--pixel-surface); color: var(--pixel-ink) !important; border: 2px solid var(--pixel-bronze); box-shadow: 2px 2px 0 var(--pixel-shadow); }
 .praticas-cabecalho-acoes { display: flex; flex-direction: column; align-items: flex-end; gap: 20px; }
 
@@ -55,3 +55,7 @@ html body button.materia-excluir-icone.materia-excluir-icone.materia-excluir-ico
 
 /* O fechamento absoluto não ocupa espaço no cabeçalho: reserve sua linha. */
 #praticas-painel-dialog:has(.pixel-fechar) { padding-top: 74px; }
+#calendario-popup:has(.pixel-fechar),
+#livro-materias-dialog:has(.pixel-fechar),
+.livro-aberto-dialog:has(.pixel-fechar),
+.pratica-dialogo:has(.pixel-fechar) { padding-top: 0 !important; }

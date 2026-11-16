@@ -127,11 +127,17 @@
 .pratica-dialogo {
     width: min(42rem, calc(100% - 1rem));
     max-height: calc(100dvh - 2rem);
-    padding: 0;
+    padding: 0 !important;
     border: 2px solid var(--bs-border-color);
     border-radius: .5rem;
     background: var(--pixel-surface, var(--bs-body-bg));
     color: var(--bs-body-color);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+.pratica-dialogo:has(.pixel-fechar) {
+    padding-top: 0 !important;
 }
 
 .pratica-dialogo::backdrop {
@@ -143,11 +149,29 @@
 }
 
 .pratica-topo {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
     align-items: start;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: .75rem;
+    margin: -1.25rem -1.25rem .75rem;
+    padding: 1.25rem 64px .75rem 1.25rem;
+    background: var(--pixel-surface, var(--bs-body-bg));
+    border-bottom: 2px solid var(--pixel-bronze);
+}
+
+.pratica-topo [data-fechar],
+.pratica-topo [data-fechar-ocorrencias] {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    z-index: 5;
 }
 
 .pratica-dialogo h2 {
@@ -245,9 +269,6 @@
 }
 
 .pratica-dialogo [data-status] {
-    position: sticky;
-    top: 0;
-    z-index: 1;
     margin-bottom: .75rem;
     padding: .5rem .75rem;
     border: 1px solid var(--bs-border-color);
@@ -277,18 +298,12 @@
         padding: .85rem;
     }
     .pratica-topo {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
+        margin: -.85rem -.85rem .75rem;
+        padding: .85rem 56px .75rem .85rem;
     }
     .pratica-topo h2 {
-        grid-row: 2;
         font-size: 1.25rem;
         line-height: 1.5;
-    }
-    .pratica-topo [data-fechar],
-    .pratica-topo [data-fechar-ocorrencias] {
-        grid-row: 1;
-        justify-self: end;
     }
     .dia-missao-item {
         flex-wrap: wrap;

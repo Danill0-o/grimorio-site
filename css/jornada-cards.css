@@ -28,6 +28,7 @@
 .jornada-page .dia-bloqueio-aviso { margin: 0 0 10px; font-size: .85rem; line-height: 1.4; }
 .jornada-page .dia-lista { margin: 0; gap: 8px; }
 .jornada-page .dia-lista .dia-materia-item {
+    box-sizing: border-box;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
@@ -56,6 +57,7 @@
 .jornada-page .dia-materia-identificacao > strong .jornada-icone { width: 16px; height: 16px; margin-left: 5px; color: #315b44; }
 .jornada-page .dia-materia-identificacao small { font-size: .85rem; line-height: 1.4; }
 .jornada-page .dia-bloco-item {
+    box-sizing: border-box;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     gap: 4px;
@@ -220,7 +222,17 @@
 .jornada-page .dia-progresso-resumo { margin-top: 10px; font-size: .85rem; }
 .jornada-page .dia-progresso-resumo .progresso-trilho { height: 8px; border-width: 1px; box-shadow: none; }
 /* O estado continua disponível a leitores de tela, sem estilos de badge/box herdados. */
-.jornada-page .dia-bloco-item .bloco-estado.visually-hidden { margin: -1px !important; padding: 0 !important; border: 0 !important; }
+.jornada-page .dia-bloco-item .bloco-estado.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
 @media (prefers-reduced-motion: reduce) {
     .jornada-page #jornada-cards .dia-card:not(.dia-card-selecionado) { transform: translateY(20px) !important; }
     .jornada-page #jornada-cards .dia-card-selecionado { transform: none !important; }

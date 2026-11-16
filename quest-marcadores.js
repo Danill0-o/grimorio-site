@@ -79,7 +79,7 @@
         }
         agendar(); window.setInterval(agendar, 30000);
     });
-    for (const evento of ['praticas:alteradas', 'projetos:alterados', 'storage', 'focus', 'pageshow']) window.addEventListener(evento, agendar);
+    for (const evento of ['praticas:alteradas', 'projetos:alterados', 'reagendamento:alterado', 'storage', 'focus', 'pageshow']) window.addEventListener(evento, agendar);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) agendar(); });
     document.addEventListener('click', event => { if (!event.target.closest('.quest-marcador')) fecharAjuda(); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape' && origem) { event.preventDefault(); event.stopImmediatePropagation(); fecharAjuda(); } }, true);

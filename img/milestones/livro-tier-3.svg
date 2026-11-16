@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48" shape-rendering="crispEdges">
+  <!-- Livro Tier 3: Dedicado (grimório esmeralda + cantoneiras de bronze) -->
+  <rect x="5" y="3" width="14" height="17" fill="#0d1b14"/>
+  <!-- Capa -->
+  <rect x="6" y="4" width="12" height="14" fill="#165a40"/>
+  <rect x="9" y="5" width="8" height="12" fill="#1e7a56"/>
+  <!-- Lombada com 3 nervuras -->
+  <rect x="6" y="4" width="3" height="15" fill="#0f3d2b"/>
+  <rect x="6" y="6" width="3" height="1" fill="#d4a24c"/>
+  <rect x="6" y="11" width="3" height="1" fill="#d4a24c"/>
+  <rect x="6" y="15" width="3" height="1" fill="#d4a24c"/>
+  <!-- Cantoneiras metálicas -->
+  <rect x="15" y="4" width="3" height="2" fill="#d4a24c"/>
+  <rect x="16" y="6" width="2" height="1" fill="#d4a24c"/>
+  <rect x="15" y="16" width="3" height="2" fill="#d4a24c"/>
+  <rect x="16" y="15" width="2" height="1" fill="#d4a24c"/>
+  <!-- Folhas -->
+  <rect x="9" y="18" width="9" height="1" fill="#f5ebd1"/>
+  <rect x="18" y="5" width="1" height="13" fill="#d8cca8"/>
+  <!-- Selo losango na capa -->
+  <rect x="12" y="8" width="2" height="6" fill="#d4a24c"/>
+  <rect x="11" y="10" width="4" height="2" fill="#ffe07d"/>
+  <!-- Marca-página -->
+  <rect x="13" y="19" width="2" height="3" fill="#2de091"/>
+</svg>

@@ -9,6 +9,26 @@
 .materias-page button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .materias-page .catalogo-nova-global-form { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 16px; }
 .materias-page .catalogo-nova-global-form label { display: grid; gap: 8px; min-width: 0; }
+.materias-page .catalogo-acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 12px; }
+.materias-page .dominio-reset { margin-top: 0; }
+.materias-page .reset-dialogo {
+    box-sizing: border-box;
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    border: 4px solid var(--pixel-bronze);
+    border-radius: 0;
+    padding: 24px;
+    background: var(--pixel-surface-elevated);
+    color: var(--pixel-ink);
+    box-shadow: 0 0 0 4px var(--pixel-border-outer), inset 0 0 0 3px var(--pixel-gold), 12px 12px 0 rgb(0 0 0 / .75);
+}
+.materias-page .reset-dialogo::backdrop { background: rgb(10 6 4 / .8); }
+.materias-page .reset-dialogo input { display: block; width: 100%; min-height: 44px; margin-top: 8px; padding: 10px; font: inherit; color: var(--pixel-ink); background: var(--pixel-surface); border: 2px solid var(--pixel-bronze); }
+.materias-page #reset-dominio-erro { min-height: 1.2em; font-weight: 600; color: var(--pixel-ink); }
+.materias-page .dialogo-acoes { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 14px; }
+.materias-page #reset-dominio-executar:hover:not(:disabled),
+.materias-page #reset-dominio-executar:focus-visible { background: #881337 !important; color: #ffffff !important; }
 .materias-page #catalogo-memorias-lista { padding-left: 20px; margin: 0; }
 @media(max-width:600px){
  .materias-page .jornada-pagina > .container { padding: 16px 12px; }

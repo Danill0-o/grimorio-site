@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<script type="application/grimorio" src="icones-pixel.js?v=controles-20261102"></script>
+<meta charset="UTF-8">
+<script src="tema-inicial.js?v=arcano-padrao"></script>
+<script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
+<script src="iniciar-offline.js?v=tema-inicial-20261102"></script>
+    <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
+    <script type="application/grimorio" src="reagendamento-schema.js?v=r2-20261103"></script>
+    <script type="application/grimorio" src="backup-local.js?v=revisoes-configuraveis-20261112"></script>
+    <script type="application/grimorio" src="acessibilidade.js?v=arcano-padrao"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Seu Grimório — Histórico de estudos</title>
+    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/relatorios.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
+    <link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
+    <link rel="stylesheet" href="css/historico.css">
+    <link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102">
+    <script type="application/grimorio" src="projetos-store.js?v=revisoes-configuraveis-20261112"></script><script type="application/grimorio" src="praticas-store.js?v=carga-diaria-4-20261114"></script>
+    <script type="application/grimorio" src="materias-store.js?v=fusao-xp-20261102"></script>
+    <script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script>
+    <script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
+    <script type="application/grimorio" src="calendario-jornada.js?v=revisoes-intervalos-20261115"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script>
+    <script type="application/grimorio" src="estudo-store.js?v=carga-diaria-4-20261114"></script>
+    <script type="application/grimorio" src="relatorios-store.js?v=domingo-20261101"></script>
+    <script type="application/grimorio" src="relatorios-ui.js"></script>
+    <script type="application/grimorio" src="historico.js" defer></script>
+    <script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
+</head>
+<body class="historico-page">
+<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Catálogo de matérias</a><a href="historico.html">Histórico de estudos</a><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
+    <header class="container">
+        <section class="jornada-hero historico-hero" aria-labelledby="historico-titulo"><div class="historico-hero-conteudo">
+            <p class="jornada-kicker">SEUS REGISTROS</p>
+            <h1 id="historico-titulo">Histórico de estudos</h1>
+            <p>Consulte e gerencie todas as sessões registradas em seus projetos, inclusive extras, revisões e projetos excluídos.</p>
+        </div></section>
+    </header>
+    <main class="container">
+        <section class="jornada-panel historico-resumo-painel" aria-labelledby="historico-resumo-titulo">
+            <p class="jornada-kicker">VISÃO GERAL</p>
+            <h2 id="historico-resumo-titulo">Resumo dos registros</h2>
+            <p id="historico-global-status" role="status">Carregando seu histórico...</p>
+            <dl class="historico-stats">
+                <div class="jornada-stat"><dt>Tempo de estudo</dt><dd id="historico-estudo">—</dd></div>
+                <div class="jornada-stat"><dt>Tempo de revisão</dt><dd id="historico-revisao">—</dd></div>
+                <div class="jornada-stat"><dt>Sessões registradas</dt><dd id="historico-sessoes">—</dd></div>
+                <div class="jornada-stat" id="historico-outros-item" hidden><dt>Tempo de outros registros</dt><dd id="historico-outros">—</dd></div>
+                <div class="jornada-stat"><dt>Primeira sessão</dt><dd><time id="historico-primeira">—</time></dd></div>
+                <div class="jornada-stat"><dt>Sessão mais recente</dt><dd><time id="historico-recente">—</time></dd></div>
+            </dl>
+            <p class="historico-datas-ajuda">As datas indicam o início das sessões, no horário local. Excluir uma sessão recalcula automaticamente o tempo, o XP e o progresso correspondentes.</p>
+        </section>
+
+        <section class="jornada-panel historico-sessoes-painel" aria-labelledby="historico-consulta-titulo">
+            <p class="jornada-kicker">CONSULTA E GRÁFICOS</p>
+            <h2 id="historico-consulta-titulo">Suas sessões</h2>
+            <form id="historico-filtros" class="historico-filtros" role="search" aria-label="Filtrar histórico global">
+                <label>Buscar matéria<input type="search" id="historico-busca" placeholder="Nome da matéria" autocomplete="off"></label>
+                <label>De<input type="date" id="historico-de"></label>
+                <label>Até<input type="date" id="historico-ate"></label>
+                <label>Matéria<select id="historico-materia"><option value="">Todas as matérias</option></select></label>
+                <label>Projeto<select id="historico-projeto"><option value="">Todos os projetos</option></select></label>
+                <label>Tipo<select id="historico-tipo"><option value="">Todos os registros</option><option value="estudo">Estudo</option><option value="revisao">Revisão</option><option value="extra">Extras e suas revisões</option><option value="outros">Outros registros</option></select></label>
+                <label>Agrupar gráficos<select id="historico-agrupamento"><option value="semana">Por semana</option><option value="mes">Por mês</option></select></label>
+                <button type="button" class="btn btn-outline-secondary" id="historico-limpar">Limpar filtros</button>
+            </form>
+            <section class="relatorios" aria-labelledby="relatorios-global-titulo">
+                <h3 id="relatorios-global-titulo">Dedicação por período</h3>
+                <div id="relatorios-global" tabindex="-1"></div>
+            </section>
+            <p id="historico-consulta-status" role="status" aria-live="polite">Carregando sessões...</p>
+            <div class="historico-tabela-regiao" id="historico-tabela-regiao" role="region" aria-label="Sessões do histórico global; role horizontalmente para ver todas as colunas" tabindex="0">
+                <table class="historico-tabela" id="tabela-sessoes-estudo"><caption>Sessões registradas, da mais recente à mais antiga</caption>
+                    <thead><tr><th scope="col">Data e hora</th><th scope="col">Matéria</th><th scope="col">Projeto</th><th scope="col">Tipo</th><th scope="col">Duração</th><th scope="col">Ações</th></tr></thead>
+                    <tbody id="historico-global-body"></tbody>
+                </table>
+            </div>
+            <nav class="historico-paginacao" aria-label="Páginas do histórico">
+                <button type="button" class="btn btn-outline-secondary" id="historico-anterior" disabled>Anterior</button>
+                <span id="historico-pagina">—</span>
+                <button type="button" class="btn btn-outline-secondary" id="historico-proximo" disabled>Próxima</button>
+            </nav>
+        </section>
+    </main>
+
+    <dialog id="excluir-sessao-dialog" aria-labelledby="excluir-sessao-titulo" aria-describedby="excluir-sessao-descricao">
+        <h2 id="excluir-sessao-titulo">Excluir registro de estudo?</h2>
+        <p id="excluir-sessao-descricao"></p>
+        <p>O tempo, o XP e o progresso correspondentes serão recalculados. Esta ação não pode ser desfeita.</p>
+        <p id="excluir-sessao-erro" role="alert"></p>
+        <div class="historico-dialogo-acoes">
+            <button type="button" class="btn btn-outline-secondary" id="excluir-sessao-cancelar" autofocus>Cancelar</button>
+            <button type="button" class="btn acao-perigosa" id="excluir-sessao-confirmar">Excluir registro</button>
+        </div>
+    </dialog>
+</div></div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="96" height="96" shape-rendering="crispEdges">
+  <rect width="24" height="24" fill="#152b1f"/>
+  <!-- Hat & Feather -->
+  <rect x="15" y="3" width="3" height="2" fill="#f59e0b"/>
+  <rect x="8" y="5" width="8" height="3" fill="#3b6e4c"/>
+  <rect x="6" y="8" width="12" height="2" fill="#2b8a3e"/>
+  <!-- Face -->
+  <rect x="8" y="10" width="8" height="6" fill="#e8b892"/>
+  <rect x="9" y="12" width="2" height="2" fill="#1f1209"/>
+  <rect x="13" y="12" width="2" height="2" fill="#1f1209"/>
+  <!-- Cloak & Compass -->
+  <rect x="6" y="16" width="12" height="8" fill="#6e4720"/>
+  <rect x="8" y="16" width="8" height="3" fill="#2b8a3e"/>
+  <rect x="11" y="17" width="2" height="2" fill="#ffe07d"/>
+  <rect x="3" y="16" width="3" height="7" fill="#92400e"/>
+</svg>

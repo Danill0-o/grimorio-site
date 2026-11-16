@@ -43,6 +43,10 @@ function converterMinutosParaHoras(minutos){ //converte os minutos para o format
 }
 function distribui_materias(){
     const dados = lerObjetoArmazenado('dadosExame');
+    if (dados?.cargaDiariaVersao === 1) {
+        lista_distribuicao_materias = lerArrayArmazenado('lista_distribuicao_materias');
+        return lista_distribuicao_materias;
+    }
     if (dados?.distribuicaoVersao === 2 || dados?.distribuicaoVersao === 3) {
         const normalizadas = lerArrayArmazenado('objetosNormalizados');
         const cap = dados.distribuicaoVersao === 3 ? window.PraticasStore?.planejarProjeto?.(dados, normalizadas) : null;

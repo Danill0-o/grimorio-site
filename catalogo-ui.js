@@ -97,7 +97,7 @@
             try {
                 const g = window.MateriasStore.resolverMateriaGlobal(globalId);
                 const dom = obterDominios([g.materiaGlobalId]).get(g.materiaGlobalId) || { nivel: 1, titulo: 'Iniciante', segundos: 0, pontos: 0 };
-                textoVinculo.textContent = `📖 Matéria do Grimório selecionada: ${g.nomeCanonico} — Nível ${dom.nivel} (${dom.titulo}) · ${formatarTempo(dom.segundos)}`;
+                textoVinculo.textContent = `Matéria selecionada: ${g.nomeCanonico} — Nível ${dom.nivel} (${dom.titulo}) · ${formatarTempo(dom.segundos)} · Novas metas para este plano`;
                 bannerVinculo.hidden = false;
             } catch (_) {
                 bannerVinculo.hidden = true;
@@ -236,7 +236,7 @@
                 if (painel) painel.hidden = false;
                 input.setAttribute('aria-expanded', 'true');
                 status.textContent = todosResultados.length
-                    ? `${todosResultados.length} ${todosResultados.length === 1 ? 'matéria encontrada' : 'matérias encontradas'}. Clique em um card ou use as setas e Enter.`
+                    ? `${todosResultados.length} ${todosResultados.length === 1 ? 'matéria encontrada' : 'matérias encontradas'}.`
                     : 'Nenhuma matéria encontrada. Você pode criar uma nova.';
             } catch (erro) {
                 fecharSugestoes();
@@ -351,9 +351,29 @@
         const formNova = document.getElementById('catalogo-nova-global-form');
         const inputNova = document.getElementById('catalogo-nova-global-nome');
         const statusNova = document.getElementById('catalogo-nova-global-status');
+        const btnReiniciarTodos = document.getElementById('reiniciar-dominio');
+        const dominioStatus = document.getElementById('dominio-status');
+        const dialogoReset = document.getElementById('reset-dominio-dialogo');
+        const entradaReset = document.getElementById('reset-dominio-confirmacao');
+        const confirmarReset = document.getElementById('reset-dominio-executar');
+        const cancelarReset = document.getElementById('reset-dominio-cancelar');
+        const formReset = document.getElementById('reset-dominio-form');
+        const erroReset = document.getElementById('reset-dominio-erro');
         if (!grid) return;
 
+        function abrirReset(id = null, nome = '') {
+            if (!dialogoReset) return;
+            dialogoReset.dataset.materia = id || '';
+            document.getElementById('reset-dominio-alvo').textContent = id ? `Reiniciar o nível de ${nome}?` : 'Reiniciar os níveis de todas as matérias?';
+            if (erroReset) erroReset.textContent = '';
+            entradaReset.value = '';
+            confirmarReset.disabled = true;
+            dialogoReset.showModal();
+            cancelarReset.focus();
+        }
+
         function renderizarAcervo() {
+            const materiaComFoco = document.activeElement?.closest('#catalogo-acervo-grid article')?.dataset.materiaGlobalId;
             try {
                 const globais = window.MateriasStore.listarMateriasGlobais();
                 const dominios = obterDominios(globais.map(g => g.materiaGlobalId));
@@ -362,6 +382,7 @@
                     const p = document.createElement('p');
                     p.textContent = 'Ainda não há matérias cadastradas no seu Grimório. Cadastre uma acima ou durante a criação de um projeto.';
                     grid.appendChild(p);
+                    if (materiaComFoco) btnReiniciarTodos?.focus({ preventScroll: true });
                     return;
                 }
                 const ordenadas = [...globais].sort((a, b) => {
@@ -369,6 +390,7 @@
                     const db = dominios.get(b.materiaGlobalId)?.segundos || 0;
                     return db - da || a.nomeCanonico.localeCompare(b.nomeCanonico, 'pt-BR');
                 });
+                const cards = [];
                 for (const g of ordenadas) {
                     const dom = dominios.get(g.materiaGlobalId) || { nivel: 1, titulo: 'Iniciante', segundos: 0, pontos: 0, percentual: 0 };
                     const card = document.createElement('article');
@@ -394,14 +416,54 @@
                     barra.value = Math.round(dom.percentual || 0);
                     barra.setAttribute('aria-label', `Avanço de ${g.nomeCanonico}`);
 
-                    card.append(h3, nivel, titulo, tempo, barra);
-                    card.append(window.criarBotaoExcluirMateria(g.materiaGlobalId, g.nomeCanonico));
+                    const reset = document.createElement('button');
+                    reset.type = 'button';
+                    reset.className = 'btn dominio-reset';
+                    reset.textContent = 'Reiniciar nível';
+                    reset.disabled = (dom.pontos || 0) <= 0;
+                    reset.setAttribute('aria-label', `Reiniciar nível de ${g.nomeCanonico}`);
+                    reset.addEventListener('click', () => abrirReset(g.materiaGlobalId, g.nomeCanonico));
+
+                    const acoes = document.createElement('div');
+                    acoes.className = 'materia-card-acoes';
+                    acoes.append(reset, window.criarBotaoExcluirMateria(g.materiaGlobalId, g.nomeCanonico));
+
+                    card.append(h3, nivel, titulo, tempo, barra, acoes);
+                    cards.push(card);
                     grid.appendChild(card);
+                }
+                if (materiaComFoco) {
+                    const card = cards.find(el => el.dataset.materiaGlobalId === materiaComFoco);
+                    const botao = card?.querySelector('.dominio-reset');
+                    (botao && !botao.disabled ? botao : btnReiniciarTodos)?.focus({ preventScroll: true });
                 }
             } catch (erro) {
                 if (statusNova) statusNova.textContent = erro.message;
+                if (materiaComFoco) btnReiniciarTodos?.focus({ preventScroll: true });
             }
         }
+
+        btnReiniciarTodos?.addEventListener('click', () => abrirReset());
+        entradaReset?.addEventListener('input', () => { confirmarReset.disabled = entradaReset.value.trim() !== 'ZERAR'; });
+        cancelarReset?.addEventListener('click', () => dialogoReset?.close());
+        dialogoReset?.addEventListener('close', () => {
+            const card = [...grid.querySelectorAll('article')].find(el => el.dataset.materiaGlobalId === dialogoReset.dataset.materia);
+            const botao = card?.querySelector('.dominio-reset');
+            (botao && !botao.disabled ? botao : btnReiniciarTodos)?.focus();
+        });
+        formReset?.addEventListener('submit', event => {
+            event.preventDefault();
+            if (entradaReset.value.trim() !== 'ZERAR') return;
+            try {
+                window.EstudoStore.reiniciarDominio(dialogoReset.dataset.materia || null);
+                dialogoReset.close();
+                if (dominioStatus) dominioStatus.textContent = 'Domínio reiniciado. Novas sessões voltarão a acumular conhecimento.';
+                renderizarAcervo();
+            } catch (erro) {
+                if (erroReset) erroReset.textContent = 'Não foi possível reiniciar o domínio. Tente novamente.';
+                console.error(erro);
+            }
+        });
 
         formNova?.addEventListener('submit', async e => {
             e.preventDefault();
@@ -425,10 +487,11 @@
             }
         });
 
-        window.addEventListener('memorias:atualizadas', renderizarAcervo);
-        window.addEventListener('materias:excluida', renderizarAcervo);
+        for (const evento of ['memorias:atualizadas', 'materias:excluida', 'estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'pageshow']) {
+            window.addEventListener(evento, renderizarAcervo);
+        }
         window.addEventListener('storage', e => {
-            if (['materiasBuscaV1', 'materiasDominioV1', 'sessoesEstudo', 'reiniciosDominio'].includes(e.key) || window.HistoricoRepository?.ehChave(e.key)) {
+            if (!e.key || ['materiasBuscaV1', 'materiasDominioV1', 'sessoesEstudo', 'reiniciosDominio'].includes(e.key) || window.HistoricoRepository?.ehChave(e.key)) {
                 renderizarAcervo();
             }
         });

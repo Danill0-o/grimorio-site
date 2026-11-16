@@ -51,14 +51,30 @@
         }
         const somaPesos = materias.reduce((s,m) => s + m.peso, 0);
         if (!(somaPesos > 0)) throw new Error('Pesos inválidos.');
-        if (Array.isArray(dados.blocosPorDiaLista)) {
-            const listaBlocos = dados.blocosPorDiaLista.map(Number);
-            const duracaoBloco = dados.duracaoNormalBlocoSegundos === undefined
+        const listaEntrada = Array.isArray(dados.blocosPorDiaLista)
+            ? dados.blocosPorDiaLista
+            : (dados.projecao?.temReservaCapacidade && Array.isArray(dados.projecao.blocosPorDiaLista)
+                ? dados.projecao.blocosPorDiaLista
+                : null);
+        if (listaEntrada) {
+            const listaBlocos = listaEntrada.map(Number);
+            const listaTeoriaEntrada = Array.isArray(dados.teoriaSegundosPorDiaLista)
+                ? dados.teoriaSegundosPorDiaLista
+                : (dados.projecao?.temReservaCapacidade && Array.isArray(dados.projecao.teoriaSegundosPorDiaLista)
+                    ? dados.projecao.teoriaSegundosPorDiaLista
+                    : null);
+            const listaTeoria = listaTeoriaEntrada ? listaTeoriaEntrada.map(Number) : null;
+            const duracaoEntrada = dados.duracaoNormalBlocoSegundos ?? dados.carga?.duracaoNormalBlocoSegundos;
+            const duracaoBloco = duracaoEntrada === undefined
                 ? Math.floor(segundosDia / quantidade)
-                : Number(dados.duracaoNormalBlocoSegundos);
+                : Number(duracaoEntrada);
             if (listaBlocos.length !== dias
                 || listaBlocos.some(n => !Number.isInteger(n) || n < 0 || n > quantidade)
-                || !Number.isSafeInteger(duracaoBloco) || duracaoBloco < 1 || duracaoBloco > segundosDia) {
+                || !Number.isSafeInteger(duracaoBloco) || duracaoBloco < 1 || duracaoBloco > segundosDia
+                || (listaTeoria && (listaTeoria.length !== dias
+                    || listaTeoria.some((segundosTeoria, i) => !Number.isSafeInteger(segundosTeoria)
+                        || segundosTeoria < 0 || segundosTeoria > segundosDia
+                        || (listaBlocos[i] === 0 ? segundosTeoria !== 0 : segundosTeoria < listaBlocos[i]))))) {
                 throw new Error('Disponibilidade, blocos ou pesos inválidos.');
             }
             const total = listaBlocos.reduce((s, n) => s + n, 0);
@@ -82,7 +98,7 @@
             for (let i = 0; i < sobra; i++) limites[ordem[i]]++;
             const ordemCobertura = materias.map((_, i) => i).sort((a, b) => materias[b].peso - materias[a].peso || a - b);
             ordemCobertura.forEach(i => {
-                if (limites[i] || !(materias[i].peso > 0)) return;
+                if (limites[i] || (capacidadeInsuficiente && !(materias[i].peso > 0))) return;
                 let doador = -1;
                 limites.forEach((n, j) => {
                     if (n > 1 && (doador < 0 || n - cotas[j] > limites[doador] - cotas[doador])) doador = j;
@@ -104,12 +120,16 @@
                         const valor = passo * limites[i] / total - usadas[i];
                         if (usadas[i] < limites[i] && valor > deficit) { escolhido = i; deficit = valor; }
                     });
+                    const duracaoSlot = listaTeoria
+                        ? Math.floor(listaTeoria[dia] / quantidadeDia) + (slot < listaTeoria[dia] % quantidadeDia ? 1 : 0)
+                        : duracaoBloco;
                     usadas[escolhido]++;
-                    segundos[escolhido] += duracaoBloco;
+                    segundos[escolhido] += duracaoSlot;
                     blocos.push({
                         materia: materias[escolhido].Materia,
                         projetoMateriaId: materias[escolhido].projetoMateriaId,
-                        metaSegundos: duracaoBloco,
+                        metaSegundos: duracaoSlot,
+                        ...(listaTeoria ? { metaNominalSegundos: duracaoBloco } : {}),
                         tempoEstudado: '',
                         topico: ''
                     });

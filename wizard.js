@@ -7,18 +7,39 @@
     let etapa = 0;
     let blocosEscolhidos = null;
     let backupPendente = false;
+    let sincronizarPraticasAposConfirmacao = false;
     let origemReplanejamento = null;
+    let revisoes;
 
     function atualizarBlocos() {
+        function duracaoSessao(minutos) {
+            const total = Math.round(minutos);
+            const horas = Math.floor(total / 60), resto = total % 60;
+            if (!horas) return `${resto} min`;
+            if (!resto) return `${horas} ${horas === 1 ? 'hora' : 'horas'}`;
+            return `${horas}h${resto ? (resto < 10 ? '0' + resto : resto) : ''}`;
+        }
         const minutos = converterHorasParaMinutos(el('horas-por-dia').value);
-        const maximo = Math.min(4, Math.max(1, Math.floor(minutos / 30)));
+        const seletor = el('blocos-por-dia');
+        // Sem tempo diário não há como mostrar a duração de cada sessão.
+        if (!(minutos > 0)) {
+            const aviso = document.createElement('option');
+            aviso.value = ''; aviso.textContent = 'Informe antes o tempo por dia';
+            seletor.replaceChildren(aviso);
+            seletor.disabled = true;
+            return;
+        }
+        seletor.disabled = false;
+        const maximo = Math.min(4, Math.max(1, Math.floor(minutos / 45)));
         const valor = Math.min(maximo, Math.max(1, blocosEscolhidos || Math.min(2, maximo)));
-        el('blocos-por-dia').replaceChildren(...Array.from({length:maximo}, (_,i) => {
+        seletor.replaceChildren(...Array.from({length:maximo}, (_,i) => {
             const opcao = document.createElement('option');
-            opcao.value = String(i+1); opcao.textContent = String(i+1); return opcao;
+            opcao.value = String(i+1);
+            opcao.textContent = `${i+1} (${duracaoSessao(minutos / (i+1))} por sessão)`;
+            return opcao;
         }));
-        el('blocos-por-dia').value = String(valor);
-        if (minutos > 0) blocosEscolhidos = valor;
+        seletor.value = String(valor);
+        blocosEscolhidos = valor;
     }
 
     function selecionados() { return dias.filter((dia) => el(`btn-${dia}`).checked); }
@@ -27,10 +48,18 @@
         el('btn-checkAll').checked = quantidade === 7;
         el('btn-checkAll').indeterminate = quantidade > 0 && quantidade < 7;
     }
+    function escolhasDeCarga() {
+        return {
+            incluirRevisoes: el('contar-revisoes-na-carga').checked,
+            incluirPraticas: el('contar-praticas-na-carga').checked
+        };
+    }
     function guardarRascunho() {
         const valores = Object.fromEntries(campos.map((id) => [id, el(id).value]));
         valores['blocos-por-dia'] = blocosEscolhidos === null ? '' : String(blocosEscolhidos);
-        (window.ProjetoStorage || localStorage).setItem(CHAVE, JSON.stringify({ etapa, valores, dias: selecionados(), origemReplanejamento }));
+        (window.ProjetoStorage || localStorage).setItem(CHAVE, JSON.stringify({
+            etapa, valores, dias: selecionados(), origemReplanejamento, cargaDiaria: escolhasDeCarga(), ...revisoes.rascunho()
+        }));
     }
     function erro(texto, campo) {
         el('wizard-erro').textContent = texto;
@@ -41,19 +70,21 @@
         const falhar = (texto, campo) => exibir ? erro(texto, campo) : false;
         if (numero === 0) {
             const tempo = el('duracao-prova');
-            if (tempo.value && (!tempo.checkValidity() || !Number.isSafeInteger(Number(tempo.value) * 60))) return falhar('Informe a duração da prova em minutos inteiros maiores que zero.', tempo);
+            if (tempo.value && (!tempo.checkValidity() || !Number.isSafeInteger(Number(tempo.value) * 60))) return falhar('Informe a duração da prova em minutos, usando um número inteiro maior que zero.', tempo);
             if (!el('nome_exame').value.trim()) return falhar('Informe o nome do projeto.', el('nome_exame'));
             for (const id of ['dataInicio', 'dataFinal']) {
                 if (!el(id).value || !el(id).checkValidity()) return falhar('Informe as duas datas válidas.', el(id));
             }
-            if (el('dataFinal').value < el('dataInicio').value) return falhar('A data da prova deve ser igual ou posterior ao início.', el('dataFinal'));
+            if (el('dataFinal').value < el('dataInicio').value) return falhar('A data da prova não pode ser anterior à data de início.', el('dataFinal'));
         }
         if (numero === 1) {
             if (!selecionados().length) return falhar('Selecione pelo menos um dia da semana.', el('btn-Dom'));
             if (!el('horas-por-dia').checkValidity() || !(converterHorasParaMinutos(el('horas-por-dia').value) > 0)) return falhar('Informe um tempo diário maior que zero.', el('horas-por-dia'));
             const blocos = Number(el('blocos-por-dia').value);
-            if (!Number.isInteger(blocos) || blocos < 1 || blocos > Math.min(4, Math.max(1, Math.floor(converterHorasParaMinutos(el('horas-por-dia').value) / 30)))) return falhar('Escolha a quantidade de blocos de estudo.', el('blocos-por-dia'));
-            if (!quantosDiasTem(new Date(el('dataInicio').value + 'T12:00:00'), new Date(el('dataFinal').value + 'T12:00:00'), selecionados())) return falhar('O período precisa conter pelo menos um dos dias de estudo selecionados.', el('btn-Dom'));
+            if (!Number.isInteger(blocos) || blocos < 1 || blocos > Math.min(4, Math.max(1, Math.floor(converterHorasParaMinutos(el('horas-por-dia').value) / 45)))) return falhar('Escolha quantas sessões você quer fazer por dia.', el('blocos-por-dia'));
+            if (!quantosDiasTem(new Date(el('dataInicio').value + 'T12:00:00'), new Date(el('dataFinal').value + 'T12:00:00'), selecionados())) return falhar('Escolha pelo menos um dia de estudo entre o início do plano e a prova.', el('btn-Dom'));
+            const problema = revisoes.problema();
+            if (problema) return falhar(problema, revisoes.campoInvalido());
         }
         if (numero === 2) {
             if (!el('table-body').children.length) return falhar('Adicione pelo menos uma matéria.', el('materia'));
@@ -61,7 +92,7 @@
         }
         return true;
     }
-    function salvarProjeto(comRotina) {
+    function salvarProjeto(comRotina, confirmarPolitica = false) {
         const inicio = new Date(el('dataInicio').value + 'T12:00:00');
         const fim = new Date(el('dataFinal').value + 'T12:00:00');
         const dados = Object.assign({}, lerObjetoArmazenado('dadosExame') || {}, {
@@ -84,31 +115,118 @@
             (window.ProjetoStorage || localStorage).setItem('listaDiaDaSemana', JSON.stringify(listaDiaDaSemana));
             (window.ProjetoStorage || localStorage).setItem('carga_horaria_disponivel', JSON.stringify(carga_horaria_disponivel));
         }
+        if (confirmarPolitica) {
+            const politica = revisoes.politicaConfirmada();
+            if (politica) dados.revisoesPolitica = politica;
+            else delete dados.revisoesPolitica;
+            dados.cargaDiaria = escolhasDeCarga();
+        }
         window.IdentidadeStore?.garantirProjeto(dados);
         if (el('duracao-prova').value) dados.duracaoProvaSegundos = Number(el('duracao-prova').value) * 60;
         else delete dados.duracaoProvaSegundos;
         (window.ProjetoStorage || localStorage).setItem('dadosExame', JSON.stringify(dados));
+    }
+    function calcularCargaDiaria(dados, materiasNormalizadas, origem) {
+        const calendario = window.CalendarioJornada;
+        const politica = calendario.politicaProjeto(dados);
+        const inicio = calendario.somarDias(dados.dataInicioF, 0);
+        const fim = calendario.somarDias(dados.dataFinalF, 0);
+        const missoes = window.PraticasStore.projetarMissoesProjeto(dados.projetoId, { dados, materiasNormalizadas, base: true }).missoes
+            .filter(missao => missao.dataPrevista >= inicio && missao.dataPrevista <= fim && missao.duracaoPlanejadaSegundos != null)
+            .map(({ missaoId, dataPrevista, duracaoPlanejadaSegundos, consomeCargaEstudo }) => ({
+                missaoId, dataPrevista, duracaoPlanejadaSegundos, consomeCargaEstudo
+            }));
+        const disponibilidadeDiariaSegundos = Math.round(dados.minutosPorDia * 60);
+        const carga = window.AtividadesPraticas.modelarCargaDiaria({
+            dataInicio: inicio,
+            dataFinal: fim,
+            diasRotina: dados.listaDiaDaSemana,
+            disponibilidadeDiariaSegundos,
+            blocosPorDia: dados.blocosPorDia,
+            cargaDiaria: dados.cargaDiaria,
+            periodosRevisao: politica.ativadas ? politica.periodos.length : 0,
+            missoes
+        });
+        const protegidas = origem ? window.RevisoesStore.reservasProtegidasParaPrevia(dados.projetoId,
+            origem.revisoesPlano?.blocosConcluidos) : [];
+        const projecao = window.RevisoesProjecao.projetar({
+            carga,
+            disponibilidadeDiariaSegundos,
+            blocosPorDia: dados.blocosPorDia,
+            incluirRevisoes: dados.cargaDiaria.incluirRevisoes,
+            politica,
+            protegidas
+        });
+        return { carga, projecao, missoes, politica };
+    }
+    function resumirCargaDiaria({ carga, projecao, politica }, dados, plano) {
+        const { cargaDiaria } = dados;
+        const excepcionais = carga.dias.filter(dia => dia.excepcional).length;
+        const revisoesNaCarga = !politica.ativadas ? 'Revisões desativadas.'
+            : cargaDiaria.incluirRevisoes ? 'Revisões incluídas.' : 'Revisões fora da carga.';
+        const praticasNaCarga = cargaDiaria.incluirPraticas ? 'Práticas regulares incluídas.' : 'Práticas fora da carga.';
+        const diasPraticas = excepcionais === 1 ? '1 dia reservado para práticas.' : `${excepcionais} dias reservados para práticas.`;
+        const diasTeoricos = Object.values(plano.materiaDoDia);
+        const totais = { teoria: 0, praticas: 0, revisoes: 0, extras: 0 };
+        const capacidade = Math.round(dados.minutosPorDia * 60);
+        let indice = 0, excesso = 0, diasComExcesso = 0;
+        carga.dias.forEach((dia, i) => {
+            const teoria = dia.ehEstudo ? diasTeoricos[indice++].reduce((soma, bloco) => soma + bloco.metaSegundos, 0) : 0;
+            const { revisoesProtegidasSegundos, revisoesReservadasSegundos } = projecao.dias[i];
+            const revisoes = cargaDiaria.incluirRevisoes ? revisoesProtegidasSegundos + revisoesReservadasSegundos : 0;
+            totais.teoria += teoria;
+            totais.praticas += dia.praticasRegularesSegundos;
+            totais.revisoes += revisoes;
+            totais.extras += dia.praticasExtrasSegundos;
+            const saldo = teoria + revisoes + dia.praticasRegularesSegundos - (dia.ehEstudo ? capacidade : 0);
+            if (saldo > 0) { excesso += saldo; diasComExcesso++; }
+        });
+        const duracao = window.CargaDiaria.duracao;
+        const resumo = [revisoesNaCarga, praticasNaCarga, diasPraticas,
+            `No período, ${duracao(totais.teoria)} de teoria, ${duracao(totais.revisoes)} de revisões reservadas e ${duracao(totais.praticas)} de práticas na carga.`];
+        if (totais.extras) resumo.push(`${duracao(totais.extras)} de práticas fora da carga.`);
+        if (diasComExcesso) resumo.push(`Excesso planejado de ${duracao(excesso)} em ${diasComExcesso} ${diasComExcesso === 1 ? 'data' : 'datas'}.`);
+        if (!politica.ativadas || !cargaDiaria.incluirRevisoes) return resumo.join(' ');
+
+        let reservadas = 0;
+        let semVaga = 0;
+        for (const grupo of projecao.grupos) {
+            if (grupo.estado === 'reservada') reservadas += grupo.itens.length;
+            else semVaga += grupo.itens.length;
+        }
+        resumo.push(reservadas === 1 ? '1 revisão com reserva na simulação.' : `${reservadas} revisões com reserva na simulação.`);
+        if (semVaga) resumo.push(semVaga === 1 ? '1 revisão sem vaga até o fim do projeto.' : `${semVaga} revisões sem vaga até o fim do projeto.`);
+        if (projecao.dias.some(dia => dia.excessoProtegidoSegundos > 0)) resumo.push('Há dias em que revisões já registradas excedem o tempo disponível.');
+        return resumo.join(' ');
     }
     function resumo() {
         const pares = [
             ['Projeto', el('nome_exame').value.trim()],
             ['Período', `${formatarData(new Date(el('dataInicio').value + 'T12:00:00'))} — ${formatarData(new Date(el('dataFinal').value + 'T12:00:00'))}`],
             ['Dias escolhidos', selecionados().map(d => d === 'Sab' ? 'Sáb' : d).join(', ')],
-            ['Estudo diário, sem revisões', el('horas-por-dia').value],
-            ['Blocos de estudo por dia', el('blocos-por-dia').value],
-            ['Duração normal dos blocos', `${(converterHorasParaMinutos(el('horas-por-dia').value) / Number(el('blocos-por-dia').value)).toLocaleString('pt-BR', {maximumFractionDigits:2})} min`],
-            ['Revisões', 'Opcionais e adicionais ao tempo de estudo informado.'],
+            ['Tempo de estudo por dia', el('horas-por-dia').value],
+            ['Sessões por dia', el('blocos-por-dia').value],
+            ['Duração padrão por sessão', `${(converterHorasParaMinutos(el('horas-por-dia').value) / Number(el('blocos-por-dia').value)).toLocaleString('pt-BR', {maximumFractionDigits:2})} min`],
+            ['Revisões', revisoes.resumo()],
             ['Matérias cadastradas', el('table-body').children.length],
             ['Total de questões', el('totalQuestoes').value]
         ];
         if (el('duracao-prova').value) pares.push(['Duração da prova', `${el('duracao-prova').value} min`]);
-        if (origemReplanejamento) pares.push(['Replanejamento', 'Os cards serão reconstruídos desde a data escolhida, inclusive retroativa. Estudos normais preenchem sequencialmente os blocos da mesma matéria; extras ficam separados. Notas, revisões e datas reais são preservadas.']);
         el('wizard-resumo').replaceChildren(...pares.map(([rotulo, valor]) => {
             const linha = document.createElement('div');
             const dt = document.createElement('dt'); const dd = document.createElement('dd');
             dt.textContent = rotulo; dd.textContent = valor;
             linha.append(dt, dd); return linha;
         }));
+        if (origemReplanejamento && window.ProjetosStore.temReagendamentoAtivo(lerObjetoArmazenado('dadosExame'))) {
+            const aviso = document.createElement('div');
+            const descricao = document.createElement('dt');
+            const efeito = document.createElement('dd');
+            descricao.textContent = 'Organização manual';
+            efeito.textContent = 'O novo planejamento substituirá os movimentos manuais e preservará o histórico.';
+            aviso.append(descricao, efeito);
+            el('wizard-resumo').append(aviso);
+        }
         const normalizadas = lerArrayArmazenado('objetosNormalizados');
         if (normalizadas.length) {
             const minutos = converterHorasParaMinutos(el('horas-por-dia').value);
@@ -122,32 +240,45 @@
                 diasEstudoPraProva: diasEstudo,
                 dataInicioF: formatarData(new Date(el('dataInicio').value + 'T12:00:00')),
                 dataFinalF: formatarData(new Date(el('dataFinal').value + 'T12:00:00')),
-                listaDiaDaSemana: selecionados()
+                listaDiaDaSemana: selecionados(),
+                revisoesPolitica: revisoes.politicaConfirmada(),
+                cargaDiaria: escolhasDeCarga()
             };
-            let cap = null;
-            try { cap = window.PraticasStore?.planejarProjeto?.(dadosResumo, normalizadas) || null; } catch (_) {}
-            const plano = window.DistribuicaoEstudos.gerar(cap ? cap.dadosDistribuicao : {
-                distribuicaoVersao: 3,
-                minutosPorDia: minutos,
-                blocosPorDia: blocos,
-                diasEstudoPraProva: diasEstudo
-            }, normalizadas);
-            if (plano.coberturaExtra) {
+            let cargaPlanejada, plano;
+            try {
+                cargaPlanejada = calcularCargaDiaria(dadosResumo, normalizadas, origemReplanejamento);
+                plano = window.DistribuicaoEstudos.gerar(window.RevisoesProjecao.dadosDistribuicao({
+                    dados: dadosResumo, ...cargaPlanejada
+                }), normalizadas);
+            } catch (erro) {
+                console.error('Prévia da carga diária indisponível.', erro);
+            }
+            if (plano?.coberturaExtra) {
                 const aviso = document.createElement('p');
                 const grupos = new Map();
-                Object.values(plano.materiaDoDia).forEach(blocos => grupos.set(blocos.length, (grupos.get(blocos.length) || 0) + 1));
-                const resultado = [...grupos].map(([n, dias]) => `${dias} ${dias === 1 ? 'dia com' : 'dias com'} ${n} blocos de aproximadamente ${(minutos/n).toLocaleString('pt-BR', {maximumFractionDigits:2})} min`).join('; ');
-                aviso.textContent = `Para incluir todas as ${normalizadas.length} matérias no período disponível, serão usados mais blocos que os ${el('blocos-por-dia').value} escolhidos por dia: ${resultado}. O tempo diário permanece igual.`;
+                Object.values(plano.materiaDoDia).forEach(sessoes => grupos.set(sessoes.length, (grupos.get(sessoes.length) || 0) + 1));
+                const resumoDias = [...grupos].map(([quantidade, dias]) =>
+                    `${dias} ${dias === 1 ? 'dia' : 'dias'} com ${quantidade} sessões de cerca de ${(minutos / quantidade).toLocaleString('pt-BR', {maximumFractionDigits:2})} min`
+                ).join(' e ');
+                aviso.textContent = `Para encaixar todas as matérias até a prova, o plano usa sessões mais curtas em alguns dias. O tempo total de estudo por dia continua igual. Você terá ${resumoDias}.`;
                 el('wizard-resumo').append(aviso);
-            } else if (plano.semBlocosTeoricos) {
+            } else if (plano?.semBlocosTeoricos) {
                 const aviso = document.createElement('p');
-                aviso.textContent = `Atenção: as atividades práticas agendadas ocupam toda a capacidade diária de estudo (0 blocos teóricos restantes para ${normalizadas.length} matérias). Nenhum bloco teórico será alocado neste período.`;
+                aviso.textContent = `Os treinos ocupam todo o tempo disponível. Nenhuma matéria teórica entrou no cronograma.`;
                 el('wizard-resumo').append(aviso);
-            } else if (plano.capacidadeInsuficiente) {
+            } else if (plano?.capacidadeInsuficiente) {
                 const aviso = document.createElement('p');
-                aviso.textContent = `Atenção: restam ${cap?.previa?.resumo?.totalBlocosNormaisRestantes ?? 0} blocos teóricos para ${normalizadas.length} matérias após reservar as atividades práticas. Os blocos de tamanho fixo serão distribuídos entre as matérias de maior peso.`;
+                aviso.textContent = `Depois de reservar tempo para os treinos, o plano prioriza as matérias de maior peso na prova. Algumas matérias ficarão fora do cronograma.`;
                 el('wizard-resumo').append(aviso);
             }
+            const linha = document.createElement('div');
+            linha.id = 'carga-diaria-previa';
+            const rotulo = document.createElement('dt');
+            const valor = document.createElement('dd');
+            rotulo.textContent = 'Prévia da carga diária';
+            valor.textContent = plano ? resumirCargaDiaria(cargaPlanejada, dadosResumo, plano) : 'Prévia indisponível.';
+            linha.append(rotulo, valor);
+            el('wizard-resumo').append(linha);
         }
     }
     function mostrar(numero, foco = true) {
@@ -161,8 +292,9 @@
             else botao.removeAttribute('aria-current');
         });
         el('wizard-voltar').hidden = etapa === 0;
-        el('wizard-avancar').textContent = etapa === 3 ? 'Criar jornada' : 'Continuar ';
+        el('wizard-avancar').textContent = etapa === 3 ? 'Gerar cronograma' : 'Continuar ';
         if (etapa !== 3) el('wizard-avancar').append(window.IconesPixel.criar('direita'));
+        if (etapa !== 1 && el('revisoes-ajuda').matches(':popover-open')) el('revisoes-ajuda').hidePopover();
         el('wizard-erro').textContent = '';
         if (etapa === 3) resumo();
         guardarRascunho();
@@ -175,6 +307,10 @@
         botoes.forEach(b => { b.disabled = true; });
         el('wizard-backup-status').textContent = 'Salvando backup da jornada…';
         try {
+            if (sincronizarPraticasAposConfirmacao) {
+                await window.PraticasStore?.sincronizarMissoesProjeto?.();
+                sincronizarPraticasAposConfirmacao = false;
+            }
             if (!window.BackupLocal?.salvarRapido) throw new Error('Backup indisponível nesta página.');
             const offline = !somenteDownload ? await window.ProjetosOffline?.salvar() : null;
             if (offline?.modo !== 'pasta') await window.BackupLocal.salvarRapido({ somenteDownload });
@@ -193,30 +329,44 @@
         try {
             if (etapa >= 2 && window.PraticasCadastro && !window.PraticasCadastro.podeAvancar()) return;
             if (!validar(etapa)) return;
+            const editando = Boolean(origemReplanejamento);
+            if (etapa === 1) revisoes.fixar();
             guardarRascunho();
-            if (etapa === 0) salvarProjeto(false);
-            if (etapa === 1) salvarProjeto(true);
+            if (etapa === 0 && !editando) salvarProjeto(false);
+            if (etapa === 1 && !editando) salvarProjeto(true);
             if (etapa === 2) await salvarObjetos();
             if (etapa < 3) return mostrar(etapa + 1);
             for (let n = 0; n < 3; n++) {
                 if (!validar(n, false)) { mostrar(n); validar(n); return; }
             }
-            salvarProjeto(true);
+            if (!editando) salvarProjeto(true);
             await salvarObjetos();
-            if (window.PraticasStore?.sincronizarMissoesProjeto) {
+            if (!editando && window.PraticasStore?.sincronizarMissoesProjeto) {
                 await window.PraticasStore.sincronizarMissoesProjeto(lerObjetoArmazenado('dadosExame'), lerArrayArmazenado('objetosNormalizados'));
             }
             await window.ProjetosStore.confirmarPlano(() => {
-                if (origemReplanejamento) {
-                    const dados = lerObjetoArmazenado('dadosExame');
-                    dados.replanejamento = window.Replanejamento.preparar(origemReplanejamento, dados);
-                    dados.planoVersaoId = `plano-${crypto.randomUUID()}`;
-                    (window.ProjetoStorage || localStorage).setItem('dadosExame', JSON.stringify(dados));
+                if (editando) {
+                    const origemAtual = window.Replanejamento.capturar();
+                    if (origemAtual?.planoFonteId !== origemReplanejamento.planoFonteId) {
+                        throw new Error('Outro planejamento foi salvo. Recarregue a edição antes de continuar.');
+                    }
+                    origemReplanejamento = origemAtual;
                 }
-                distribui_materias();
-                if (!sortMaterias({ reconstruir:true })) throw new Error('Não foi possível gerar a jornada. Confira a rotina e as matérias.');
+                salvarProjeto(true, true);
+                const dados = lerObjetoArmazenado('dadosExame');
+                dados.cargaDiariaVersao = 1;
+                if (editando) {
+                    dados.replanejamento = window.Replanejamento.preparar(origemReplanejamento, dados);
+                }
+                dados.planoVersaoId = `plano-${crypto.randomUUID()}`;
+                (window.ProjetoStorage || localStorage).setItem('dadosExame', JSON.stringify(dados));
+                const cargaPlanejada = calcularCargaDiaria(dados, lerArrayArmazenado('objetosNormalizados'), origemReplanejamento);
+                const plano = sortMaterias({ reconstruir: true, cargaPlanejada });
+                if (!plano) throw new Error('Não foi possível gerar a jornada. Confira a rotina e as matérias.');
+                window.RevisoesStore.sincronizarPlano({ dados: lerObjetoArmazenado('dadosExame'), ...plano });
                 (window.ProjetoStorage || localStorage).removeItem(CHAVE);
             });
+            sincronizarPraticasAposConfirmacao = editando;
             backupPendente = true;
             document.querySelectorAll('.wizard-shell input, .wizard-shell select, .wizard-shell button').forEach(c => { c.disabled = true; });
             await backupDaJornada();
@@ -238,8 +388,12 @@
         }
         const rascunho = lerObjetoArmazenado(CHAVE);
         const origemSalva = rascunho?.origemReplanejamento;
-        origemReplanejamento = origemSalva && (origemSalva.planoFonteId || null) === (dados?.planoVersaoId || null)
+        const preparandoProjeto = origemSalva === null && !dados?.planoVersaoId && !dados?.revisoesPolitica;
+        origemReplanejamento = preparandoProjeto || (origemSalva && (origemSalva.planoFonteId || null) === (dados?.planoVersaoId || null))
             ? origemSalva : window.Replanejamento.capturar();
+        const cargaDiaria = rascunho?.cargaDiaria ?? dados?.cargaDiaria;
+        el('contar-revisoes-na-carga').checked = cargaDiaria?.incluirRevisoes ?? !origemReplanejamento;
+        el('contar-praticas-na-carga').checked = cargaDiaria?.incluirPraticas ?? true;
         blocosEscolhidos = Number(rascunho?.valores?.['blocos-por-dia']) || Number(dados?.blocosPorDia ?? dados?.materiasPorDia) || null;
         if (rascunho) {
             campos.forEach(id => { if (typeof rascunho.valores?.[id] === 'string') el(id).value = rascunho.valores[id]; });
@@ -247,20 +401,34 @@
             etapa = Math.min(3, Math.max(0, Math.floor(Number(rascunho.etapa) || 0)));
         }
         atualizarBlocos();
+        revisoes = window.WizardRevisoes.iniciar({
+            dados, rascunho, projetoExistente: Boolean(origemReplanejamento),
+            calendarioAtual: () => ({ dataInicioF: el('dataInicio').value, dataFinalF: el('dataFinal').value, listaDiaDaSemana: selecionados() }),
+            aoAlterar: () => {
+                limparErros();
+                guardarRascunho();
+            }
+        });
         for (let n = 0; n < etapa; n++) { if (!validar(n, false)) { etapa = n; break; } }
         sincronizarControles();
         mostrar(etapa, false);
         el('btn-checkAll').addEventListener('change', () => {
             dias.forEach(d => { el(`btn-${d}`).checked = el('btn-checkAll').checked; });
-            sincronizarControles(); guardarRascunho();
+            revisoes.atualizar(); sincronizarControles(); guardarRascunho(); limparErros();
         });
         document.querySelector('.wizard-shell').addEventListener('input', (event) => {
-            if (event.target.closest('#pratica-form')) return;
+            if (event.target.closest('#pratica-form, #wizard-revisoes')) return;
             if (event.target.id === 'btn-checkAll') return;
             if (event.target.id === 'blocos-por-dia') blocosEscolhidos = Number(el('blocos-por-dia').value);
             if (event.target.id === 'horas-por-dia') atualizarBlocos();
-            document.querySelectorAll('[aria-invalid="true"]').forEach(campo => { campo.removeAttribute('aria-invalid'); campo.removeAttribute('aria-describedby'); });
-            sincronizarControles(); guardarRascunho(); el('wizard-erro').textContent = '';
+            if (['dataInicio', 'dataFinal'].includes(event.target.id) || event.target.closest('#btn-dia-semana')) revisoes.atualizar();
+            limparErros(); sincronizarControles(); guardarRascunho();
+        });
+        document.querySelector('.wizard-shell').addEventListener('change', (event) => {
+            if (event.target.id === 'horas-por-dia') {
+                atualizarBlocos();
+                guardarRascunho();
+            }
         });
         el('nome_projetoForm').addEventListener('submit', (event) => { event.preventDefault(); avancar(); });
         el('cadastroForm').addEventListener('submit', guardarRascunho);
@@ -274,4 +442,11 @@
             if (destino < etapa) mostrar(destino);
         }));
     });
+
+    function limparErros() {
+        document.querySelectorAll('[aria-invalid="true"][aria-describedby="wizard-erro"]').forEach(campo => {
+            campo.removeAttribute('aria-invalid'); campo.removeAttribute('aria-describedby');
+        });
+        el('wizard-erro').textContent = '';
+    }
 })();

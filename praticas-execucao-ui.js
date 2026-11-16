@@ -101,6 +101,12 @@
         const extra = el('form', '', 'pratica-extra-form'); extra.id = 'pratica-extra-form';
         extra.append(el('h3', 'Adicionar ocorrência extra'), el('p', 'Usa a duração e a referência desta atividade, sem alterar a frequência normal ou o tempo das matérias.'));
         const dataExtra = campo(extra, 'pratica-extra-data', 'Data da ocorrência extra', 'date', { required: true });
+        const previaExtra = el('p', '', 'carga-diaria-resumo');
+        previaExtra.dataset.cargaExtraPrevia = '';
+        previaExtra.setAttribute('aria-live', 'polite');
+        previaExtra.hidden = true;
+        extra.append(previaExtra);
+        dataExtra.addEventListener('input', atualizarPreviaExtra);
         const erroExtra = el('p'); erroExtra.id = 'pratica-extra-status'; erroExtra.setAttribute('role', 'status');
         const adicionar = el('button', 'Adicionar extra', 'btn btn-primary'); adicionar.type = 'submit';
         extra.append(erroExtra, adicionar); corpo.append(extra);
@@ -259,7 +265,7 @@
         const m = contexto.missao;
         dialogo.querySelector('[data-regra-xp]').textContent = m.tipo === 'taf'
             ? 'O TAF mantém sua progressão por tempo de treino registrado.'
-            : 'O XP é liberado ao concluir a atividade. O cronômetro mede a duração; contar ou registrar tempo não conclui a ocorrência.';
+            : 'Ao terminar o treino, selecione “Concluir atividade” para receber o XP.';
         dialogo.querySelector('[data-abrir-cronometro]').hidden = !m.usaCronometro;
         const formTaf = dialogo.querySelector('#pratica-form-taf');
         formTaf.hidden = m.tipo !== 'taf';
@@ -268,11 +274,11 @@
         if (!dataTaf.value) dataTaf.value = api().hoje();
         const p = m.progressao;
         const zonas = {
-            'abaixo-piso': 'Tempo abaixo do piso: 1 XP por minuto real.',
-            'faixa-operacional': 'Faixa operacional: XP nominal integral.',
-            'acima-teto': 'Tempo acima do teto: XP limitado ao nominal.',
+            'abaixo-piso': 'Treino mais curto · 1 XP por minuto registrado.',
+            'faixa-operacional': 'Tempo dentro da faixa prevista · recompensa completa.',
+            'acima-teto': 'Tempo acima da faixa prevista · recompensa completa, sem bônus.',
             'aguardando-conclusao': 'O XP será calculado após a realização.',
-            'sem-preset': 'Sem preset de XP.',
+            'sem-preset': 'Sem recompensa de XP definida.',
             'tempo-taf': 'TAF: 1 XP por minuto de treinamento registrado.'
         };
         dialogo.querySelector('[data-xp]').textContent = p ? `${p.xp.toLocaleString('pt-BR', { maximumFractionDigits: 2 })} XP · ${zonas[p.zona]}` : '';
@@ -347,6 +353,26 @@
             lista.append(el('li', 'Nenhuma ocorrência agendada para esta atividade.'));
         }
     }
+    function atualizarPreviaExtra() {
+        const previa = dialogoOcorrencias.querySelector('[data-carga-extra-previa]');
+        previa.hidden = true;
+        const storage = window.ProjetoStorage || localStorage;
+        const dados = JSON.parse(storage.getItem('dadosExame') || 'null');
+        const dataPrevista = dialogoOcorrencias.querySelector('#pratica-extra-data').value;
+        if (dados?.cargaDiariaVersao !== 1 || !dataPrevista
+            || window.CalendarioJornada.somarDias(dataPrevista, 0) !== dataPrevista) return;
+        const atividade = window.PraticasStore.obterEstado(dados.projetoId).atividades[atividadeAtual]?.atividade;
+        if (!atividade) return;
+        const materiaDoDia = JSON.parse(storage.getItem('materiaDoDia'));
+        const dia = window.CargaDiaria.consultar({ dados, materiaDoDia }).get(dataPrevista);
+        const { duracaoPlanejadaSegundos } = window.AtividadesPraticas.criarMissao(atividade, { missaoId: 'pratica-extra-previa', dataPrevista });
+        const { duracao } = window.CargaDiaria;
+        const extra = duracaoPlanejadaSegundos == null ? 'Duração livre fora da carga' : `+${duracao(duracaoPlanejadaSegundos)} de prática fora da carga`;
+        const orcamento = dia ? ` · Carga do dia ${duracao(dia.cargaPlanejadaSegundos)} / ${duracao(dia.capacidadeSegundos)}`
+            + (dia.excessoSegundos ? ` · Excesso ${duracao(dia.excessoSegundos)}` : '') : '';
+        previa.textContent = extra + orcamento;
+        previa.hidden = false;
+    }
     function abrirOcorrencias(atividadeId, origem = document.activeElement) {
         if (!dialogoOcorrencias) criarDialogoOcorrencias();
         atividadeAtual = atividadeId;
@@ -354,6 +380,7 @@
         dialogoOcorrencias.querySelector('#pratica-extra-status').textContent = '';
         origemFocoOcorrencias = origem;
         atualizarOcorrencias();
+        atualizarPreviaExtra();
         if (!dialogoOcorrencias.open) dialogoOcorrencias.showModal();
         dialogoOcorrencias.querySelector('[data-fechar-ocorrencias]')?.focus();
     }

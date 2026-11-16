@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function aplicarTema(temaId) {
-        const valido = TEMAS.some(t => t.id === temaId) ? temaId : 'taverna';
+        const valido = TEMAS.some(t => t.id === temaId) ? temaId : 'arcano';
         document.documentElement.setAttribute('data-tema-pixel', valido);
         if (document.body) document.body.setAttribute('data-tema-pixel', valido);
         salvarPreferencia(CHAVE_TEMA, valido);
@@ -64,10 +64,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (btn) btn.setAttribute('aria-pressed', String(ativo === 'on'));
     }
 
-    aplicarTema(lerPreferencia(CHAVE_TEMA, 'taverna'));
+    aplicarTema(lerPreferencia(CHAVE_TEMA, 'arcano'));
 
     document.addEventListener('DOMContentLoaded', () => {
-        aplicarTema(lerPreferencia(CHAVE_TEMA, 'taverna'));
+        aplicarTema(lerPreferencia(CHAVE_TEMA, 'arcano'));
         aplicarScanlines(lerPreferencia(CHAVE_CRT, 'off'));
 
         if (document.querySelector('.pixel-theme-bar')) return;
@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.className = 'pixel-theme-chip';
             btn.dataset.temaPixelBtn = tema.id;
             btn.textContent = tema.rotulo;
-            btn.setAttribute('aria-pressed', String(lerPreferencia(CHAVE_TEMA, 'taverna') === tema.id));
+            btn.setAttribute('aria-pressed', String(lerPreferencia(CHAVE_TEMA, 'arcano') === tema.id));
             btn.addEventListener('click', () => aplicarTema(tema.id));
             barra.appendChild(btn);
         });

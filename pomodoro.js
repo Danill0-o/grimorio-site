@@ -93,13 +93,13 @@
             el('retomar').textContent = descansoPendente ? 'Iniciar descanso' : 'Retomar descanso';
             el('retomar').disabled = botao.disabled;
             const textos = {
-                pronto: 'Foco pronto · inicie seu estudo.',
-                foco: rodando ? 'Foco em andamento.' : 'Foco pausado · clique em Continuar.',
-                'aguarda-pausa': descansoPendente ? 'Foco concluído · inicie o descanso.' : 'Foco concluído · clique em Pausa para descansar.',
+                pronto: 'Pronto para iniciar o foco.',
+                foco: rodando ? 'Foco em andamento.' : 'Foco pausado.',
+                'aguarda-pausa': descansoPendente ? 'Foco concluído · inicie o descanso.' : 'Foco concluído. Selecione Pausa para começar o descanso.',
                 pausa: rodando ? 'Descanso em andamento.' : 'Descanso pausado · retome quando quiser.',
                 'aguarda-foco': 'Descanso concluído · clique em Continuar.'
             };
-            const mensagem = falhou ? 'Pomodoro pausado por falha de armazenamento.' : textos[dados.etapa];
+            const mensagem = falhou ? 'O Pomodoro pausou porque não conseguiu salvar o tempo.' : textos[dados.etapa];
             if (el('status').textContent !== mensagem) el('status').textContent = mensagem;
         }
         function atualizar(evento) {

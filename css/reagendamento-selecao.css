@@ -1,0 +1,224 @@
+#reagendamento-jornada {
+    width: min(76rem, calc(100vw - 1.5rem));
+    max-width: none;
+    max-height: 94dvh;
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    background: var(--pixel-surface) !important;
+    color: var(--texto-comum, var(--pixel-ink)) !important;
+    border: 3px solid var(--pixel-bronze);
+    box-shadow: 0 0 0 3px var(--pixel-border-outer), 8px 8px 0 var(--pixel-shadow);
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+#reagendamento-jornada[open] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-top: 64px;
+}
+#reagendamento-jornada::backdrop { background: rgb(0 0 0 / 78%); }
+#reagendamento-jornada .visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+#reagendamento-jornada h2 {
+    margin: 0;
+    color: var(--texto-comum, var(--pixel-ink)) !important;
+    text-align: center;
+    font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+    text-shadow: none;
+}
+.reagendamento-jornada-etapa {
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-pixel-ui, inherit);
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--texto-comum, var(--pixel-ink)) !important;
+}
+.reagendamento-jornada-dica {
+    margin: 0 0 0.25rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--texto-comum, var(--pixel-ink)) !important;
+}
+.reagendamento-jornada-trilha {
+    --carta: min(20.5rem, 82vw);
+    display: flex;
+    flex-shrink: 0;
+    align-items: stretch;
+    gap: 1.35rem;
+    padding: 1.5rem max(1rem, calc((100% - var(--carta)) / 2)) 1.5rem;
+    overflow-x: auto;
+    overflow-y: visible;
+    scroll-snap-type: x mandatory;
+    scrollbar-color: var(--pixel-bronze) transparent;
+    scrollbar-width: thin;
+}
+.reagendamento-carta-slot {
+    position: relative;
+    display: grid;
+    flex: 0 0 var(--carta);
+    min-width: 0;
+    scroll-snap-align: center;
+    transition: transform 200ms ease, opacity 200ms ease;
+    transform: translateY(8px) scale(0.96);
+    opacity: 0.88;
+}
+.reagendamento-carta-slot.reagendamento-carta-central,
+.reagendamento-carta-slot:hover,
+.reagendamento-carta-slot:focus-within,
+.reagendamento-carta-slot.reagendamento-candidato,
+.reagendamento-carta-slot.reagendamento-origem {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+.reagendamento-jornada-trilha .dia-card {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 0 !important;
+    height: auto;
+    margin: 0 !important;
+    padding: 12px !important;
+    opacity: 1 !important;
+    filter: none !important;
+    transform: none !important;
+    border: 4px solid var(--pixel-bronze) !important;
+    border-top: 8px solid var(--pixel-gold) !important;
+    border-radius: 0 !important;
+    background: var(--pixel-card-bg, var(--pixel-surface)) !important;
+    color: var(--texto-comum, var(--pixel-ink)) !important;
+    box-shadow:
+        0 0 0 3px var(--pixel-border-outer),
+        inset 0 0 0 2px rgba(255, 255, 255, 0.22),
+        6px 6px 0 var(--pixel-shadow) !important;
+}
+.reagendamento-jornada-trilha .dia-card::after { content: none !important; }
+.reagendamento-jornada-trilha .dia-card-atual {
+    border-top-color: var(--pixel-emerald-bright, var(--pixel-emerald)) !important;
+}
+.reagendamento-jornada-trilha .dia-card-concluido {
+    background: var(--pixel-card-done, var(--pixel-surface)) !important;
+    border-top-color: var(--pixel-emerald) !important;
+}
+.reagendamento-jornada-trilha .dia-card-bloqueado {
+    background: var(--pixel-card-locked, var(--pixel-surface-alt)) !important;
+    border-top-style: dashed !important;
+}
+.reagendamento-jornada-trilha .dia-card :is(h3, h4, strong, small, span, p) {
+    color: var(--texto-comum, var(--pixel-ink)) !important;
+    text-shadow: none !important;
+}
+.reagendamento-jornada-trilha .dia-materias .dia-materia-identificacao > strong::after {
+    content: none !important;
+}
+.reagendamento-carta-data {
+    display: inline-block;
+    padding: 2px 6px;
+    border: 1px solid var(--pixel-bronze);
+    background: var(--pixel-surface-elevated);
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+/* O botão de seleção cobre o card sem herdar a skin de botão de ação do tema. */
+#reagendamento-jornada .reagendamento-carta-slot > button.reagendamento-carta-gatilho {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    cursor: pointer;
+    z-index: 2;
+}
+#reagendamento-jornada .reagendamento-carta-slot > button.reagendamento-carta-gatilho:is(:hover, :focus-visible) {
+    background: transparent !important;
+    background-image: none !important;
+    outline: 3px solid var(--pixel-ink);
+    outline-offset: 2px;
+}
+.reagendamento-candidato .dia-card {
+    border-color: #2db563 !important;
+    border-top-color: #2de091 !important;
+}
+.reagendamento-candidato {
+    outline: 4px solid #2db563;
+    outline-offset: 3px;
+    animation: reagendamento-pulso 340ms ease-in-out 2;
+}
+.reagendamento-origem {
+    outline: 3px solid var(--pixel-emerald);
+    outline-offset: 3px;
+}
+.reagendamento-origem::before,
+.reagendamento-candidato::before {
+    position: absolute;
+    top: -12px;
+    left: 12px;
+    z-index: 4;
+    padding: 2px 8px;
+    border: 2px solid var(--pixel-border-outer);
+    background: var(--pixel-surface-elevated);
+    color: var(--texto-comum, var(--pixel-ink));
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    pointer-events: none;
+}
+.reagendamento-origem::before { content: "1º dia · Origem"; }
+.reagendamento-candidato::before { content: "✓ Selecionado"; }
+@keyframes reagendamento-pulso {
+    50% { box-shadow: 0 0 0 8px #2db563; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .reagendamento-candidato { animation: none; }
+    .reagendamento-carta-slot { transition: none; }
+}
+.reagendamento-jornada-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.25rem;
+}
+.reagendamento-jornada-acoes[hidden] { display: none; }
+#reagendamento-jornada .reagendamento-jornada-acoes button {
+    background: var(--pixel-surface-elevated) !important;
+    background-image: none !important;
+    color: var(--texto-comum, var(--pixel-ink)) !important;
+    border: 2px solid var(--pixel-bronze);
+    padding: 0.5rem 0.85rem;
+    min-height: 44px;
+    text-shadow: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+#reagendamento-jornada .reagendamento-jornada-acoes button:is(:hover, :focus, :focus-visible) {
+    background: var(--pixel-surface-alt) !important;
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+}
