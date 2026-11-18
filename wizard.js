@@ -276,7 +276,7 @@
         atualizarAtalhoPlanejamento();
         if (foco) document.querySelector(`[data-painel="${etapa}"] h2`).focus();
     }
-    async function backupDaJornada(somenteDownload = false) {
+    async function backupDaJornada(somenteDownload = false, exportarArquivo = true) {
         const painel = el('wizard-backup-pendente');
         const botoes = painel.querySelectorAll('button');
         botoes.forEach(b => { b.disabled = true; });
@@ -286,9 +286,11 @@
                 await window.PraticasStore?.sincronizarMissoesProjeto?.();
                 sincronizarPraticasAposConfirmacao = false;
             }
-            if (!window.BackupLocal?.salvarRapido) throw new Error('Backup indisponível nesta página.');
-            const offline = !somenteDownload ? await window.ProjetosOffline?.salvar() : null;
-            if (offline?.modo !== 'pasta') await window.BackupLocal.salvarRapido({ somenteDownload });
+            if (exportarArquivo) {
+                if (!window.BackupLocal?.salvarRapido) throw new Error('Backup indisponível nesta página.');
+                const offline = !somenteDownload ? await window.ProjetosOffline?.salvar() : null;
+                if (offline?.modo !== 'pasta') await window.BackupLocal.salvarRapido({ somenteDownload });
+            }
             location.assign('pesomateria.html');
         } catch (e) {
             painel.hidden = false;
@@ -375,7 +377,8 @@
             sincronizarPraticasAposConfirmacao = editando;
             backupPendente = true;
             document.querySelectorAll('.wizard-shell input, .wizard-shell select, .wizard-shell button').forEach(c => { c.disabled = true; });
-            await backupDaJornada();
+            // Exportação automática ao sair do Wizard suspensa por solicitação do usuário.
+            await backupDaJornada(false, false);
         } catch (e) {
             erro('Não foi possível salvar. ' + e.message);
             console.error(e);

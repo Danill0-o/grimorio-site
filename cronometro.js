@@ -213,14 +213,20 @@
             return false;
         }
         if (estado !== 'ocioso') {
-            const iniciarNova = window.confirm(
-                `Há uma sessão de ${rotulo(elementos.materia)} em andamento.\n\n` +
-                `Deseja registrar esse tempo e iniciar ${novaMateria}?\n` +
-                'Escolha “Cancelar” para apenas registrar o tempo atual e zerar o cronômetro.'
-            );
-            if (estado === 'rodando') parar();
-            if (!registrarAtual()) return false;
-            if (!iniciarNova) return false;
+            const idAtual = sessaoId;
+            const registrarAnterior = () => {
+                if (sessaoId !== idAtual || estado === 'ocioso') throw new Error('A sessão mudou. Feche esta janela e confira o cronômetro.');
+                if (estado === 'rodando') parar();
+                return registrarAtual();
+            };
+            window.Dialogos.confirmar({
+                titulo: 'Trocar a sessão?',
+                mensagem: 'Há uma sessão de ' + rotulo(elementos.materia) + ' em andamento. Registre esse tempo antes de iniciar ' + novaMateria + '.',
+                confirmar: 'Registrar e iniciar',
+                acao: () => { if (!registrarAnterior()) return false; return iniciarMateria(projetoMateriaId, opcoes); },
+                alternativa: { texto: 'Registrar e zerar', acao: registrarAnterior }
+            });
+            return false;
         }
 
         if (!Array.from(elementos.materia.options).some((option) => option.value === projetoMateriaId)
@@ -409,14 +415,22 @@
 
     function zerar() {
         if (!elementosAtivos || !pronto || registroPraticaEmCurso || estado !== 'parado') return false;
-        if (!window.confirm('Zerar o cronômetro? O tempo desta sessão será descartado sem registrar progresso.')) return false;
-        try { localStorage.removeItem(chaveTimer()); } catch (erro) { falhaPersistencia(); return false; }
-        reiniciarEstado();
-        atualizarDisplay(elementosAtivos);
-        atualizarControles(elementosAtivos);
-        definirStatus(elementosAtivos, 'Cronômetro zerado. Nenhum tempo foi registrado.');
-        emitirEstado();
-        return true;
+        const idAtual = sessaoId;
+        window.Dialogos.confirmar({
+            titulo: 'Zerar o cronômetro?',
+            mensagem: 'O tempo desta sessão será descartado sem registrar progresso.',
+            confirmar: 'Zerar sem registrar',
+            acao: () => {
+                if (!pronto || registroPraticaEmCurso || estado !== 'parado' || sessaoId !== idAtual) throw new Error('A sessão mudou. Feche esta janela e confira o cronômetro.');
+                try { localStorage.removeItem(chaveTimer()); } catch (erro) { falhaPersistencia(); throw new Error('Não foi possível zerar. O tempo foi preservado. Recarregue a página para tentar novamente.'); }
+                reiniciarEstado();
+                atualizarDisplay(elementosAtivos);
+                atualizarControles(elementosAtivos);
+                definirStatus(elementosAtivos, 'Cronômetro zerado. Nenhum tempo foi registrado.');
+                emitirEstado();
+            }
+        });
+        return false;
     }
 
     function registrarAtual() {
@@ -668,14 +682,12 @@
 
     function excluirSessao(sessao) {
         const pontos = formatarPontos(Number(sessao.duracaoSegundos || 0) / 60);
-        const confirmado = window.confirm(
-            `Excluir este registro de ${sessao.materia} (${pontos})?\n\n` +
-            'O conhecimento, o nível e o progresso correspondentes serão recalculados.'
-        );
-        if (!confirmado) return;
-        window.EstudoStore.excluirSessao(sessao.id);
-        const destino = document.querySelector('.historico-expandir') || document.getElementById('cronometro-materia');
-        destino?.focus();
+        window.Dialogos.confirmar({
+            titulo: 'Excluir registro?',
+            mensagem: 'Excluir este registro de ' + sessao.materia + ' (' + pontos + ')? O conhecimento, o nível e o progresso correspondentes serão recalculados.',
+            confirmar: 'Excluir registro',
+            acao: () => { window.EstudoStore.excluirSessao(sessao.id); }
+        });
     }
 
     function emitirEstado(acao) {

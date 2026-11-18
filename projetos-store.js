@@ -253,7 +253,7 @@
     document.addEventListener('click', event => {
         if (!event.target.closest('a[href]') || !window.CronometroEstudos || window.CronometroEstudos.obterEstado().estado === 'ocioso') return;
         event.preventDefault();
-        alert('Registre o tempo ou zere o cronômetro antes de sair deste projeto.');
+        window.Dialogos.avisar({ titulo: 'Sessão em andamento', mensagem: 'Registre o tempo ou zere o cronômetro antes de sair deste projeto.' });
     }, true);
     } catch (erro) {
         const bloquear = () => { throw new Error('Armazenamento de projetos indisponível', { cause: erro }); };

@@ -3,7 +3,7 @@
     'use strict';
     const arquivos = Object.freeze({ esquerda: 'seta-esquerda.png', direita: 'seta-direita.png',
         cima: 'seta-cima.png', baixo: 'seta-baixo.png', salvar: 'disquete.png',
-        anotar: 'pena.png', excluir: 'lixeira-magnific.png' });
+        anotar: 'pena.png', sino: 'sino.svg', excluir: 'lixeira-magnific.png' });
     function criar(nome) {
         if (!arquivos[nome]) throw new Error('Ícone pixel desconhecido: ' + nome);
         const img = document.createElement('img'); img.src = 'img/icons/' + arquivos[nome];

@@ -225,7 +225,7 @@
         if (!dockEl || !sinetaBtn || !sinetaBadge || !toastEl) return;
         const pendentes = obterAvisosPendentes();
         const totalPendentes = pendentes.length;
-        sinetaBadge.textContent = String(totalPendentes);
+        sinetaBadge.hidden = totalPendentes === 0;
         sinetaBtn.setAttribute('aria-label', `Avisos do Sistema (${totalPendentes})`);
 
         if (existeModalOuPopoverAberto()) {
@@ -388,14 +388,15 @@
         sinetaBtn.setAttribute('aria-haspopup', 'dialog');
         sinetaBtn.setAttribute('aria-label', 'Avisos do Sistema (0)');
 
-        const rotulo = document.createElement('span');
-        rotulo.className = 'sistema-ia-sineta-rotulo';
-        rotulo.textContent = '[SISTEMA] Avisos';
+        const rotulo = escopo.IconesPixel.criar('sino');
+        sinetaBtn.title = 'Avisos do Sistema';
 
         sinetaBadge = document.createElement('span');
         sinetaBadge.id = 'sistema-ia-sineta-badge';
         sinetaBadge.className = 'sistema-ia-sineta-badge';
-        sinetaBadge.textContent = '0';
+        sinetaBadge.textContent = '!';
+        sinetaBadge.setAttribute('aria-hidden', 'true');
+        sinetaBadge.hidden = true;
 
         sinetaBtn.append(rotulo, sinetaBadge);
 

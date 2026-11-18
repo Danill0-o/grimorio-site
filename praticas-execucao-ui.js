@@ -346,9 +346,13 @@
         entradas.sort((a, b) => b.instante.localeCompare(a.instante) || a.id.localeCompare(b.id));
         for (const entrada of entradas) {
             const item = el('li'), excluir = botao('Excluir', () => {
-                if (window.confirm('Excluir este registro? A conclusão e o tempo serão recalculados a partir dos registros restantes.')) {
-                    executar('excluir', () => api().excluir(missaoAtual, entrada.colecao, entrada.id));
-                }
+                const missaoId = missaoAtual;
+                window.Dialogos.confirmar({
+                    titulo: 'Excluir registro da atividade?',
+                    mensagem: 'A conclusão e o tempo serão recalculados a partir dos registros restantes.',
+                    confirmar: 'Excluir registro',
+                    acao: async () => { await api().excluir(missaoId, entrada.colecao, entrada.id); atualizar(); }
+                });
             }, 'btn btn-outline-danger'); excluir.dataset.excluir = entrada.colecao;
             item.append(el('span', entrada.texto), excluir); lista.append(item);
         }

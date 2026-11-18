@@ -17,3 +17,10 @@
 .nota-balao form { max-height: calc(100dvh - 72px); overflow: auto; }
 .nota-balao::before { content: ''; position: absolute; left: -14px; top: 34px; width: 24px; height: 24px; background: #fff9e8; border-left: 2px solid #674724; border-bottom: 2px solid #674724; transform: rotate(45deg); }
 @media (max-width: 600px) { .nota-balao::before { display: none; } }
+
+/* Título funcional: legibilidade em todos os temas, inclusive Fliperama. */
+.nota-balao #nota-titulo { color: var(--texto-destaque, var(--pixel-ink)) !important; text-shadow: none !important; }
+
+.nota-balao { background: var(--pixel-surface); color: var(--texto-comum, var(--pixel-ink)); }
+.nota-balao::before { background: var(--pixel-surface); }
+.nota-balao :is(label,small,p) { color: var(--texto-comum, var(--pixel-ink)) !important; }

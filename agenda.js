@@ -459,10 +459,6 @@
         const seletor = document.getElementById('carta-seletor');
         seletor?.addEventListener('change', () => centralizarCarta(seletor.value));
         document.getElementById('carta-atual')?.addEventListener('click', () => centralizarCartaAtual());
-        document.getElementById('revisoes-habilitadas').addEventListener('change', event => {
-            try { window.RevisoesStore.definirHabilitadas(event.target.checked); }
-            catch (_) { document.getElementById('revisoes-status').textContent = 'Não foi possível salvar a preferência. Tente novamente.'; }
-        });
         document.getElementById('carta-proximo')?.addEventListener('click', () => {
             if (indiceProximo !== null) centralizarCarta(indiceProximo);
         });
@@ -704,10 +700,12 @@
             const icone=document.createElement('img');icone.src='img/icons/lixeira-magnific.png';icone.alt='';icone.width=18;icone.height=18;icone.className='extra-excluir-icone';icone.setAttribute('aria-hidden','true');excluir.append(icone);excluir.title='Excluir estudo extra';excluir.setAttribute('aria-label','Excluir estudo extra');
             excluir.addEventListener('click',async()=>{
                 const nome=extra.projetoMateriaId?window.IdentidadeStore.nomeMateria(extra.projetoMateriaId):'sem matéria selecionada';
-                if(!window.confirm('Excluir o estudo extra de '+nome+'? O tempo, o XP e as revisões vinculados a este extra serão removidos.'))return;
-                excluir.disabled=true;
-                try{await window.EstudoExtra.excluir(extra.blocoId,contexto.projetoId);document.querySelector('[data-dia="'+extra.diaJornada+'"] .dia-extra-adicionar')?.focus();}
-                catch(e){document.getElementById('cronometro-status').textContent=e.message;excluir.disabled=false;}
+                await window.Dialogos.confirmar({
+                    titulo: 'Excluir estudo extra?',
+                    mensagem: 'Excluir o estudo extra de '+nome+'? O tempo, o XP e as revisões vinculados a este extra serão removidos.',
+                    confirmar: 'Excluir estudo extra',
+                    acao: async()=>{await window.EstudoExtra.excluir(extra.blocoId,contexto.projetoId);}
+                });
             });
             item.append(excluir);
             const identificacao = document.createElement('span');
@@ -961,7 +959,7 @@
         try {
             await window.RevisoesStore[acao](revisao.id);
             const linha = [...document.querySelectorAll('[data-revisao-id]')].find(el => el.dataset.revisaoId === revisao.id);
-            (linha?.querySelector('button') || document.getElementById('revisoes-habilitadas')).focus({preventScroll:true});
+            (linha?.querySelector('button') || document.querySelector('.revisoes-info')).focus({preventScroll:true});
         } catch (_) { document.getElementById('revisoes-status').textContent = 'Não foi possível salvar a revisão. Tente novamente.'; }
     }
 

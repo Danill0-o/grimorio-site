@@ -91,8 +91,7 @@ async function salvar(id=window.ProjetosStore?.idAtual(),{descarregar=false}={})
  ocupado=true;try{return await window.BackupLocal.executarExclusivo(()=>navigator.locks.request('projetos:gestao',()=>salvarInterno(id,descarregar)));}finally{ocupado=false;}
 }
 async function carregar(id){await pronta;configuracao=lerConfig();const ref=configuracao.projetos[id];if(ref)caches.set(id,await conferir(await obter(ref.revisao||ref),id));return snapshot(id);}
-async function trocar(id){const atual=window.ProjetosStore?.idAtual();if(atual&&atual!==id){const r=JSON.parse(fachada.getItem(`projetoV1:${atual}:registro`)||'null');if(r&&!r.removido)await salvar(atual,{descarregar:true});}if(id)await carregar(id);}
-function aviso(e,destino){let p=document.getElementById('offline-erro');if(!p){p=document.createElement('p');p.id='offline-erro';p.setAttribute('role','alert');p.tabIndex=-1;document.body.prepend(p);}p.textContent='Não foi possível salvar o projeto na pasta. A navegação foi interrompida e os dados foram preservados. '+e.message;p.focus();if(destino){const b=document.createElement('button');b.type='button';b.setAttribute('data-backup-recuperacao','');b.textContent='Continuar sem novo backup';b.onclick=()=>location.assign(destino);p.append(document.createElement('br'),b);}}
+async function trocar(id){if(id)await carregar(id);}
 pronta=(async()=>{
  if(navigator.locks&&!nativo.getItem('grimorioRestauracaoV1')){let liberar;const entrou=new Promise(resolve=>{window.__offlineLease=navigator.locks.request('grimorio:uso',{mode:'shared'},async()=>{resolve();await new Promise(r=>{liberar=r;});});});await entrou;window.__liberarOfflineLease=()=>liberar();}
  configuracao=lerConfig();if(configuracao.versao!==1||!configuracao.projetos||!Array.isArray(configuracao.apagadas))throw Error('Índice local offline inválido.');
@@ -115,11 +114,5 @@ pronta=(async()=>{
 })();
 window.ProjetosOffline={pronta,salvar,carregar,trocar,async autorizarPasta(){if(typeof window.showDirectoryPicker!=='function')throw Error('Navegador sem acesso direto a pastas.');const handle=await window.showDirectoryPicker({mode:'readwrite'});await new Promise((resolve,reject)=>{const r=indexedDB.open('grimorioBackupPastaV1',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('diretorio'))r.result.createObjectStore('diretorio');};r.onerror=()=>reject(r.error);r.onsuccess=()=>{const db=r.result,tx=db.transaction('diretorio','readwrite');tx.objectStore('diretorio').put(handle,'pastaFixa');tx.oncomplete=()=>{db.close();resolve();};tx.onabort=()=>reject(tx.error);};});location.reload();},async organizar(){if(!await window.BackupLocal.obterPastaSalva())await window.BackupLocal.configurarPastaFixa();const projetos=window.ProjetosStore.listar(),erros=[];let salvos=0;for(const p of projetos){try{const r=await salvar(p.id,{descarregar:true});if(r.descarregado)salvos++;else erros.push('Pasta indisponível; projeto mantido no navegador.');}catch(e){erros.push(e.message);}}return {salvos,erros};},get descarregados(){return Object.keys(configuracao.projetos);}};
 window.addEventListener('storage',e=>{if(e.key?.startsWith(APAGADA)){const key=decodeURIComponent(e.key.slice(APAGADA.length));window.dispatchEvent(new StorageEvent('storage',{key,newValue:fachada.getItem(key),url:e.url}));}});
-document.addEventListener('click',event=>{
- const a=event.target.closest?.('a[href]');if(event.defaultPrevented||!a||a.download||a.hasAttribute('data-backup-recuperacao')||a.target==='_blank'||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||event.button!==0)return;
- const destino=new URL(a.href,location.href);if(destino.origin!==location.origin||destino.pathname===location.pathname&&destino.search===location.search)return;
- const id=window.ProjetosStore?.idAtual();if(!id||!window.BackupLocal?.executarExclusivo)return;
- if(window.CronometroEstudos?.obterEstado().estado!=='ocioso'&&window.CronometroEstudos)return;
- event.preventDefault();salvar(id).then(()=>location.assign(destino.href)).catch(e=>aviso(e,destino.href));
-});
+// Navegar e trocar de projeto não exportam arquivos. Backups exigem ação manual.
 })();

@@ -387,9 +387,7 @@ function removerLinhaTabela(tabela, novaLinha) { // Add um botão que remove a l
     botaoRemover.addEventListener("click", function() {
         const dialog = document.getElementById('wizard-remover-materia-dialog');
         if (!dialog) {
-            if (window.confirm(`Excluir matéria ${nomeMateria} do planejamento? O histórico de estudo será preservado.`)) {
-                executarExclusaoLinha();
-            }
+            window.Dialogos.confirmar({ titulo: 'Excluir matéria do planejamento?', mensagem: 'Excluir '+nomeMateria+'? O histórico de estudo será preservado.', confirmar: 'Excluir matéria', acao: executarExclusaoLinha });
             return;
         }
         const nomeEl = document.getElementById('wizard-remover-nome');

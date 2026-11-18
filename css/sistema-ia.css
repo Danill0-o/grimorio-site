@@ -14,11 +14,13 @@
 button.sistema-ia-sineta-btn:not(.wizard-link):not(.skip-link) {
     display: inline-flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 0.5rem;
-    width: 100%;
+    width: 44px;
+    height: 44px;
+    position: relative;
     min-height: 44px;
-    padding: 0.45rem 0.75rem;
+    padding: 5px;
     font-family: var(--font-pixel-ui);
     font-size: 0.76rem;
     font-weight: 700;
@@ -42,24 +44,31 @@ button.sistema-ia-sineta-btn:not(.wizard-link):not(.skip-link):focus-visible {
     background-color: var(--pixel-btn-sec-hover) !important;
 }
 
-.sistema-ia-sineta-rotulo {
-    color: var(--pixel-btn-sec-text);
-    overflow-wrap: anywhere;
-    text-align: left;
-}
-
 .sistema-ia-sineta-badge {
-    display: inline-flex;
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 1.5rem;
-    padding: 0.1rem 0.4rem;
-    font-family: var(--font-pixel-ui);
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--pixel-btn-text);
-    background-color: var(--pixel-btn-bg);
-    border: 2px solid var(--pixel-border-outer);
+    width: 14px;
+    height: 17px;
+    font: bold 13px/1 var(--font-pixel-ui);
+    color: var(--texto-comum);
+    background: var(--pixel-surface);
+    border: 1px solid var(--pixel-ink);
+}
+.sistema-ia-sineta-badge[hidden] { display: none; }
+@media (max-width: 1099px) {
+    .jornada-menu:has(.sistema-ia-dock) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 44px;
+        align-items: start;
+        column-gap: 10px;
+        padding: 8px;
+    }
+    .jornada-menu > #jornada-menu-aberto { min-width: 0; }
+    .jornada-menu > .sistema-ia-dock { margin: 0; }
 }
 
 .sistema-ia-toast {
