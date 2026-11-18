@@ -282,7 +282,7 @@
                 if (estado === 'ocioso') {
                     selecionarPratica(missao);
                     atualizarControles(elementos);
-                    definirStatus(elementos, `Atividade prática · ${missao.nome} selecionada. Use Iniciar para medir o tempo e Concluir atividade para liberar o XP.`);
+                    definirStatus(elementos, '');
                 } else if (contextoSessao.tipo !== 'pratica' || contextoSessao.missaoId !== missaoId) {
                     definirStatus(elementos, 'Registre ou zere a sessão atual antes de iniciar outra sessão.', true);
                 }

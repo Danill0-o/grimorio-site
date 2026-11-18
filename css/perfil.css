@@ -23,18 +23,139 @@
     gap: 24px;
     align-items: center;
 }
-.perfil-avatar-quadro {
+.perfil-avatar-envoltorio {
     position: relative;
+    display: inline-block;
     width: 108px;
     height: 108px;
+    flex-shrink: 0;
+}
+.perfil-avatar-quadro,
+.perfil-page button.perfil-avatar-quadro,
+.perfil-page button.perfil-avatar-quadro:hover:not(:disabled),
+.perfil-page button.perfil-avatar-quadro:focus-visible,
+.perfil-page button.perfil-avatar-quadro:active:not(:disabled) {
+    position: relative;
+    display: block;
+    width: 108px;
+    height: 108px;
+    min-height: 44px;
     padding: 4px;
-    background: var(--pixel-nav-bg);
-    border: 4px solid var(--pixel-bronze);
+    overflow: visible;
+    font-family: var(--font-body);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    color: #f7e4b2 !important;
+    background: var(--pixel-nav-bg) !important;
+    border: 4px solid var(--pixel-bronze) !important;
+    border-radius: 0 !important;
+    text-shadow: none !important;
     box-shadow:
         0 0 0 3px var(--pixel-border-outer),
         inset 0 0 0 2px var(--pixel-gold),
-        6px 6px 0 var(--pixel-shadow);
+        6px 6px 0 var(--pixel-shadow) !important;
     flex-shrink: 0;
+}
+.perfil-page button.perfil-avatar-quadro:hover:not(:disabled),
+.perfil-page button.perfil-avatar-quadro:focus-visible {
+    border-color: var(--pixel-gold-bright) !important;
+    transform: translate(-1px, -1px);
+}
+.perfil-page button.perfil-avatar-quadro:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow:
+        0 0 0 3px var(--pixel-border-outer),
+        inset 0 0 0 2px var(--pixel-gold),
+        3px 3px 0 var(--pixel-shadow) !important;
+}
+.perfil-page button.perfil-avatar-quadro.is-iddqd-ativo,
+.perfil-page button.perfil-avatar-quadro.is-iddqd-ativo:hover:not(:disabled),
+.perfil-page button.perfil-avatar-quadro.is-iddqd-ativo:focus-visible {
+    border-color: #fde047 !important;
+    box-shadow:
+        0 0 0 3px #f59e0b,
+        inset 0 0 0 3px #fef08a,
+        0 0 18px rgba(253, 224, 71, 0.9),
+        6px 6px 0 var(--pixel-shadow) !important;
+}
+.perfil-avatar-olhos-iddqd {
+    position: absolute;
+    inset: 4px;
+    display: block;
+    width: calc(100% - 8px);
+    height: calc(100% - 8px);
+    pointer-events: none;
+    z-index: 2;
+    filter: drop-shadow(0 0 4px #fde047);
+}
+.perfil-avatar-hesoyam-hud {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 104px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    pointer-events: none;
+    z-index: 4;
+}
+.perfil-hesoyam-hp {
+    width: 96px;
+    height: 9px;
+    background-color: #450a0a;
+    border: 2px solid #000000;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.85);
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.perfil-hesoyam-hp-fill {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background-color: #dc2626;
+}
+.perfil-hesoyam-painel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 2px 6px;
+    background-color: #090b14;
+    border: 2px solid #000000;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.85);
+}
+.perfil-hesoyam-dinheiro {
+    font-family: var(--font-pixel-title);
+    font-size: 0.62rem;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: 0.02em;
+    color: #4ade80;
+    background-color: #090b14;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    white-space: nowrap;
+}
+.perfil-hesoyam-estrelas {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    font-size: 0.72rem;
+    line-height: 1;
+    background-color: #090b14;
+    white-space: nowrap;
+}
+.perfil-hesoyam-estrelas-ativas {
+    color: #fde047;
+    background-color: #090b14;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+}
+.perfil-hesoyam-estrelas-vazias {
+    color: #94a3b8;
+    background-color: #090b14;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
 }
 .perfil-avatar-quadro img {
     display: block;
@@ -773,13 +894,166 @@
     border-color: var(--pixel-gold) !important;
 }
 
+.perfil-ocultas-subsecao {
+    margin-top: 32px;
+    padding-top: 26px;
+    border-top: 3px dashed var(--pixel-bronze);
+}
+.perfil-ocultas-titulo {
+    margin: 4px 0 0;
+    font-size: 1.25rem;
+    color: var(--pixel-ink);
+}
+.perfil-oculta-fala {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    font-style: italic;
+    color: var(--pixel-ink);
+    background: var(--pixel-surface-elevated);
+    border-left: 4px solid var(--pixel-gold);
+    overflow-wrap: anywhere;
+}
+.perfil-conquista-card.is-oculta-desbloqueada {
+    border-color: var(--pixel-gold-bright);
+}
+.perfil-conquista-card.is-oculta-desbloqueada .perfil-conquista-emblema {
+    border-color: var(--pixel-gold-bright);
+    color: #ffe07d;
+}
+
+/* Easter eggs Etapa 2 (fala do retrato, selo fictício, reclamação 0 XP e isca no rodapé) */
+.perfil-avatar-fala {
+    margin: 18px 0 0;
+    padding: 10px 14px;
+    max-width: 100%;
+    background: var(--pixel-surface-elevated);
+    color: var(--pixel-ink);
+    border: 2px solid var(--pixel-bronze);
+    border-left: 4px solid var(--pixel-gold);
+    box-shadow: 3px 3px 0 var(--pixel-shadow);
+    font-size: 0.94rem;
+    overflow-wrap: anywhere;
+}
+.perfil-selo-ficticio {
+    display: inline-block;
+    margin: 8px 0 0;
+    padding: 4px 10px;
+    max-width: 100%;
+    font-family: var(--font-pixel-ui);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--pixel-ink);
+    background: var(--pixel-card-done);
+    border: 2px solid var(--pixel-emerald);
+    box-shadow: 2px 2px 0 var(--pixel-shadow);
+    overflow-wrap: anywhere;
+}
+.perfil-ocultas-regra {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 6px;
+}
+.perfil-page button.perfil-reclamacao-xp-btn {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 4px 8px;
+    margin: 0;
+    font-family: var(--font-body);
+    font-size: inherit;
+    font-weight: 400;
+    line-height: 1.45;
+    letter-spacing: normal;
+    text-transform: none;
+    text-align: left;
+    color: var(--pixel-ink-muted) !important;
+    background: transparent !important;
+    border: 1px dashed transparent !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transform: none;
+}
+.perfil-page button.perfil-reclamacao-xp-btn:hover:not(:disabled),
+.perfil-page button.perfil-reclamacao-xp-btn:focus-visible,
+.perfil-page button.perfil-reclamacao-xp-btn:active:not(:disabled) {
+    color: var(--pixel-ink) !important;
+    background: var(--pixel-surface-elevated) !important;
+    border-color: var(--pixel-bronze) !important;
+    box-shadow: none !important;
+    transform: none;
+}
+.perfil-reclamacao-status {
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: var(--pixel-ink);
+    background: var(--pixel-surface-elevated);
+    border-left: 4px solid var(--pixel-gold);
+    overflow-wrap: anywhere;
+}
+.perfil-isca-rodape {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    max-width: 100%;
+}
+.perfil-page button.perfil-isca-btn {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 6px 14px;
+    white-space: normal;
+    font-family: var(--font-pixel-ui);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: none;
+    color: #f7e4b2 !important;
+    background: var(--pixel-nav-bg) !important;
+    border: 2px dashed var(--pixel-gold) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+.perfil-page button.perfil-isca-btn:hover:not(:disabled),
+.perfil-page button.perfil-isca-btn:focus-visible {
+    color: #fff8dc !important;
+    background: var(--pixel-border-outer) !important;
+    border-color: var(--pixel-gold-bright) !important;
+    box-shadow: 2px 2px 0 var(--pixel-shadow) !important;
+    transform: translate(-1px, -1px);
+}
+.perfil-page button.perfil-isca-btn:active:not(:disabled) {
+    color: #fff8dc !important;
+    background: var(--pixel-border-outer) !important;
+    transform: translate(1px, 1px);
+    box-shadow: none !important;
+}
+.perfil-isca-fala {
+    margin: 0;
+    max-width: 100%;
+    font-size: 0.84rem;
+    color: #f7e4b2;
+    overflow-wrap: anywhere;
+}
+
 @media (max-width: 900px) {
     .perfil-retencao-grade { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 700px) {
     .perfil-ficha-cabecalho { grid-template-columns: 1fr; gap: 18px; }
-    .perfil-avatar-quadro { width: 92px; height: 92px; }
+    .perfil-avatar-quadro,
+    .perfil-page button.perfil-avatar-quadro,
+    .perfil-page button.perfil-avatar-quadro:hover:not(:disabled),
+    .perfil-page button.perfil-avatar-quadro:focus-visible,
+    .perfil-page button.perfil-avatar-quadro:active:not(:disabled) { width: 92px; height: 92px; }
     .perfil-stats { grid-template-columns: 1fr; gap: 10px; }
     .perfil-mini-stats { grid-template-columns: 1fr; }
     .perfil-ritmo-7d { grid-template-columns: repeat(4, minmax(0, 1fr)); }
@@ -793,4 +1067,38 @@
             linear-gradient(90deg, var(--pixel-surface-elevated) 0%, var(--pixel-surface) 84%, rgba(15, 10, 6, .45) 100%),
             url('../img/assets/pixel-mage.jpg') !important;
     }
+}
+
+:root[data-tema-pixel="fliperama"] .jornada-hero.perfil-hero {
+    background-image:
+        linear-gradient(90deg, #1c0f36 0%, #140a26 68%, rgb(20 10 38 / .48) 100%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 160' shape-rendering='crispEdges'%3E%3Crect x='232' y='26' width='76' height='8' fill='%23ffe14d' fill-opacity='.34'/%3E%3Crect x='218' y='38' width='104' height='8' fill='%23ffe14d' fill-opacity='.28'/%3E%3Crect x='210' y='50' width='120' height='6' fill='%23ff2ea6' fill-opacity='.30'/%3E%3Crect x='210' y='60' width='120' height='6' fill='%23ff2ea6' fill-opacity='.26'/%3E%3Crect x='230' y='58' width='32' height='102' fill='%23090412' fill-opacity='.88'/%3E%3Crect x='298' y='64' width='30' height='96' fill='%23090412' fill-opacity='.88'/%3E%3Crect x='170' y='118' width='190' height='2' fill='%2300f5ff' fill-opacity='.35'/%3E%3Crect x='170' y='132' width='190' height='2' fill='%23ff2ea6' fill-opacity='.32'/%3E%3Crect x='170' y='146' width='190' height='2' fill='%2300f5ff' fill-opacity='.30'/%3E%3C/svg%3E") !important;
+    background-size: cover, auto 100% !important;
+    background-position: center, right 12px center !important;
+}
+
+@media (max-width: 700px) {
+    :root[data-tema-pixel="fliperama"] .jornada-hero.perfil-hero {
+        background-image:
+            linear-gradient(90deg, #1c0f36 0%, #140a26 84%, rgb(20 10 38 / .58) 100%),
+            url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 160' shape-rendering='crispEdges'%3E%3Crect x='232' y='26' width='76' height='8' fill='%23ffe14d' fill-opacity='.26'/%3E%3Crect x='218' y='38' width='104' height='8' fill='%23ff2ea6' fill-opacity='.24'/%3E%3Crect x='170' y='118' width='190' height='2' fill='%2300f5ff' fill-opacity='.28'/%3E%3Crect x='170' y='132' width='190' height='2' fill='%23ff2ea6' fill-opacity='.26'/%3E%3C/svg%3E") !important;
+    }
+}
+
+:root[data-tema-pixel="fliperama"] .perfil-nivel-emblema {
+    background-color: #0d051a;
+    color: var(--pixel-gold);
+    border-color: var(--pixel-arcade-cyan, #00f5ff);
+    box-shadow: inset 0 0 0 2px var(--pixel-arcade-magenta, #ff2ea6), 3px 3px 0 var(--pixel-shadow);
+}
+
+:root[data-tema-pixel="fliperama"] .perfil-avatar-nivel {
+    background-color: #0d051a;
+    color: var(--pixel-gold);
+    border-color: var(--pixel-arcade-cyan, #00f5ff);
+}
+
+:root[data-tema-pixel="fliperama"] .perfil-conquista-card.is-oculta-desbloqueada {
+    border-color: var(--pixel-gold);
+    box-shadow: inset 0 0 0 2px var(--pixel-arcade-cyan, #00f5ff), 4px 4px 0 var(--pixel-shadow);
 }

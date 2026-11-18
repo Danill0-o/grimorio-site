@@ -153,8 +153,8 @@
             if (missoesPorId.has(m.missaoId)) falhar('ocorrência duplicada');
             missoesPorId.set(m.missaoId, m);
             const data = civil(m.dataPrevista);
-            const externa = m.tipo === 'taf';
-            if (m.duracaoPlanejadaSegundos !== null || !externa) inteiro(m.duracaoPlanejadaSegundos, 'duração da prática', 1);
+            const externa = m.tipo === 'taf' || m.consomeCargaEstudo === false;
+            if (m.duracaoPlanejadaSegundos !== null || m.tipo !== 'taf') inteiro(m.duracaoPlanejadaSegundos, 'duração da prática', 1);
             inteiro(m.tempoRegistradoSegundos, 'tempo registrado da prática');
             if (typeof m.concluida !== 'boolean') falhar('conclusão da prática inválida');
             if (m.extraAvulsa != null && typeof m.extraAvulsa !== 'boolean') falhar('tipo de ocorrência inválido');

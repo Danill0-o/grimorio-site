@@ -40,30 +40,27 @@
 .routine-values { display: grid; gap: 26px; }
 #horas-por-dia { width: 155px; max-width: 100%; }
 
-.wizard-paper :is(#wizard-revisoes, #carga-diaria) {
+.wizard-paper #wizard-revisoes {
     margin-top: 24px;
     padding-top: 18px;
     border-top: 2px solid var(--pixel-bronze);
     color: var(--texto-comum);
 }
-:is(#wizard-revisoes, #carga-diaria) > legend { float: none; display: block; width: 100%; }
-#carga-diaria > legend { color: var(--texto-destaque); font-weight: 700; }
-#carga-diaria-ajuda { margin: 0 0 8px; color: var(--texto-secundario); }
-.carga-diaria-escolhas { display: flex; flex-wrap: wrap; gap: 0 16px; }
-.carga-diaria-escolhas label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; cursor: pointer; }
-.carga-diaria-escolhas input[type=checkbox] { flex: none; accent-color: var(--pixel-btn-bg); }
-#carga-diaria-previa dt { color: var(--texto-secundario); }
-#carga-diaria-previa dd { color: var(--texto-comum); }
+#wizard-revisoes > legend { float: none; display: block; width: 100%; }
+.wizard-revisoes-carga { display: grid; gap: 4px; padding-top: 8px; border-top: 1px dashed var(--pixel-bronze); }
+.wizard-revisoes-opcoes .wizard-revisoes-carga label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; width: fit-content; cursor: pointer; }
+.wizard-revisoes-carga input[type=checkbox] { flex: none; width: 1.15rem; height: 1.15rem; accent-color: var(--pixel-btn-bg); cursor: pointer; }
+#contar-revisoes-na-carga-ajuda { color: var(--texto-secundario); font-size: .85rem; }
 .wizard-revisoes-titulo { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--texto-destaque); font-weight: 700; }
-#revisoes-ajuda-botao { flex: 0 0 22px; transform: none; }
-#revisoes-ajuda-botao:is(:hover, :focus-visible) {
+.criacao-page .wizard-paper button.info-contextual { flex: 0 0 22px; transform: none; }
+.criacao-page .wizard-paper button.info-contextual:is(:hover, :focus-visible) {
     background: var(--pixel-btn-hover) !important;
     color: var(--pixel-btn-text) !important;
 }
-#revisoes-ajuda { max-height: calc(100dvh - 16px); overflow-y: auto; }
-#revisoes-ajuda p { margin: 0 0 .6rem; color: var(--texto-comum); }
-#revisoes-ajuda p:last-child { margin-bottom: 0; }
-#revisoes-ajuda strong { color: var(--texto-destaque); }
+.criacao-page .ajuda-contextual { max-height: calc(100dvh - 16px); overflow-y: auto; }
+.criacao-page .ajuda-contextual p { margin: 0 0 .6rem; color: var(--texto-comum); }
+.criacao-page .ajuda-contextual p:last-child { margin-bottom: 0; }
+.criacao-page .ajuda-contextual strong { color: var(--texto-destaque); }
 .wizard-revisoes-escolha { clear: both; display: flex; gap: 16px; }
 .wizard-revisoes-escolha label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding-inline: 6px; cursor: pointer; }
 .wizard-revisoes-escolha input { accent-color: var(--pixel-btn-bg); }
@@ -73,7 +70,9 @@
 .wizard-revisoes-opcoes label { display: grid; gap: 6px; min-width: 0; }
 .wizard-revisoes-opcoes select { min-height: 44px; min-width: 0; }
 .wizard-revisoes-opcoes > label { width: min(100%, 16rem); }
-.wizard-revisoes-catalogo { display: grid; gap: 8px; grid-template-columns: minmax(0, 1fr) auto; align-items: end; max-width: 42rem; margin-top: 12px; }
+.wizard-revisoes-intervalos { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 6px 18px; margin: 10px 0 4px; }
+.wizard-revisoes-opcoes .wizard-revisoes-intervalos label { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: var(--texto-comum); cursor: pointer; }
+.wizard-revisoes-intervalos input[type=checkbox] { flex: none; width: 1.15rem; height: 1.15rem; accent-color: var(--pixel-btn-bg); cursor: pointer; }
 #revisoes-aviso { margin: 8px 0 0; color: var(--texto-destaque); font-weight: 600; }
 #revisoes-selecionadas, #revisoes-previa { list-style: none; margin: 0 0 8px; padding: 0; display: flex; gap: 8px; flex-wrap: wrap; }
 #revisoes-selecionadas:empty { display: none; }
@@ -83,15 +82,16 @@
 #revisoes-selecionadas button:hover { background: var(--pixel-surface-elevated) !important; }
 #revisoes-previa li { padding: 4px 8px; }
 #revisoes-previa { display: grid; justify-items: start; }
-:is(#wizard-revisoes, #carga-diaria) :is(button, input):focus-visible { outline: 2px solid var(--pixel-ink) !important; outline-offset: 2px; }
-@media (max-width: 575px) {
-    .wizard-revisoes-catalogo { grid-template-columns: minmax(0, 1fr); justify-items: start; }
-    .wizard-revisoes-catalogo label { width: 100%; }
-}
+#wizard-revisoes :is(button, input):focus-visible,
+.praticas-cadastro .form-check-input:focus-visible { outline: 2px solid var(--pixel-ink) !important; outline-offset: 2px; }
 
 .subject-count { display: grid; grid-template-columns: repeat(4, 44px); gap: 8px; }
-.subject-fields { display: grid; grid-template-columns: minmax(160px, 1fr) 82px 72px minmax(150px, .7fr) auto; gap: 16px; align-items: end; }
-.subject-fields label { min-width: 0; }
+.subject-fields { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(112px, .55fr) minmax(92px, .45fr) minmax(150px, .7fr) auto; gap: 16px; align-items: start; }
+.subject-fields label, .campo-com-ajuda { min-width: 0; }
+.campo-com-ajuda > .form-control, .campo-com-ajuda > .form-range { margin-top: 8px; }
+.campo-rotulo-ajuda { display: inline-flex; align-items: center; gap: 6px; min-height: 22px; }
+.campo-rotulo-ajuda label { margin: 0; line-height: 1.2; }
+.campo-adicionar { align-self: start; margin-top: 30px; }
 .wizard-grimorio-acoes {
     display: flex;
     flex-wrap: wrap;
@@ -430,9 +430,9 @@
 @media (max-width: 850px) {
     .routine-layout { grid-template-columns: 1fr; gap: 30px; }
     .routine-values { grid-template-columns: 1fr 1fr; }
-    .subject-fields { grid-template-columns: minmax(0, 1fr) 82px 72px; }
-    .subject-fields label:nth-child(4) { grid-column: 1 / 3; }
-    .subject-fields button { grid-column: 3; justify-self: end; }
+    .subject-fields { grid-template-columns: minmax(0, 1fr) minmax(112px, auto) minmax(92px, auto); }
+    .campo-afinidade { grid-column: 1 / 3; }
+    .campo-adicionar { grid-column: 3; align-self: end; justify-self: end; margin-top: 0; }
 }
 @media (max-width: 575px) {
     .wizard-shell { width: calc(100% - 24px); margin-top: 24px; }
@@ -442,9 +442,11 @@
     .weekdays { gap: 4px; }
     .choice span { font-size: .8rem; }
     .subject-fields { grid-template-columns: 1fr 1fr; gap: 18px; }
-    .subject-fields label:first-child, .subject-fields label:nth-child(4) { grid-column: 1 / -1; }
-    .subject-fields input[type=number] { max-width: 95px; }
-    .subject-fields button { grid-column: 1 / -1; justify-self: start; }
+    .campo-materia, .campo-afinidade { grid-column: 1 / -1; }
+    .campo-questoes { grid-column: 1; }
+    .campo-peso { grid-column: 2; }
+    .subject-fields input[type=number] { max-width: 112px; }
+    .campo-adicionar { grid-column: 1 / -1; justify-self: start; margin-top: 0; }
     .wizard-summary div { grid-template-columns: 1fr; gap: 4px; }
     #table-materias { min-width: 500px; }
     .wizard-actions { gap: 8px; }
@@ -567,12 +569,30 @@
 }
 
 #pratica-detalhes { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; min-width: 0; }
-#pratica-detalhes > label { min-width: 0; grid-column: 1 / -1; }
+#pratica-detalhes > label,
+#pratica-detalhes > .pratica-carga-grupo { min-width: 0; grid-column: 1 / -1; }
 #pratica-detalhes > .form-check { grid-column: 1 / -1; }
+.pratica-carga-grupo small { margin-top: 2px; color: var(--pixel-ink); }
 #pratica-xp-personalizado { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 @media (max-width: 600px) { #pratica-xp-personalizado { grid-template-columns: minmax(0, 1fr); } }
 
-.tempo-prova-campo { color: var(--pixel-ink) !important; background: var(--pixel-surface); padding: 8px; }
+.pratica-importancia > legend {
+    float: none;
+    display: block;
+    width: 100%;
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--pixel-ink);
+    margin-bottom: 4px;
+}
+.pratica-importancia > legend small { font-weight: 400; color: var(--pixel-ink); }
+.pratica-importancia-dica { margin: 0 0 12px !important; font-size: .88rem; color: var(--pixel-ink); }
+.wizard-confirmacao-erro {
+    margin: 12px 0 0;
+    color: var(--texto-destaque) !important;
+    font-weight: 600;
+}
+.wizard-confirmacao-erro:empty { display: none; }
 
 /* Diálogo de confirmação de remoção de matéria no Wizard */
 .wizard-confirmacao-dialog {

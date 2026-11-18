@@ -1,45 +1,159 @@
-var hoveredDatasetIndex = -1;
-document.addEventListener('DOMContentLoaded', function() {
-    if (window.location.href.includes('pesomateria.html')) {
-        const ctx = document.getElementById('graficoPizza');
-        
-        const { nomeMaterias, valoresMaterias } = getDataToChart();
-        if (!ctx || !nomeMaterias.length || typeof Chart === 'undefined') return;
-        new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: nomeMaterias,
-            datasets: [{
-            label: 'Peso real',
-            data: valoresMaterias,
-            backgroundColor: ['#356b5c', '#b58a45', '#7c4c39', '#6a7861', '#a97b62', '#717b84', '#8a7543'],
-            borderColor: '#e5cf9d',
-            borderWidth: 3,
-            hoverOffset: 12
-            }]
-        },
-        options: {
-            animation: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? false : undefined,
-            plugins: {
-                title:{
-                    display: true,
-                    text:"Peso real de cada matéria",
-                    color: '#513c21',
-                    font: { family: 'Georgia', size: 16 }
-                },
+function formatarDuracaoPlanejamento(minutos) {
+    const segundos = Math.max(0, Math.round((Number(minutos) || 0) * 60));
+    const totalMin = Math.round(segundos / 60);
+    if (segundos > 0 && totalMin === 0) return `${segundos}s`;
+    const horas = Math.floor(totalMin / 60);
+    const mins = totalMin % 60;
+    if (horas > 0 && mins > 0) return `${horas}h${String(mins).padStart(2, '0')}min`;
+    if (horas > 0) return `${horas}h`;
+    return `${mins}min`;
+}
 
-              legend: {
-                labels: {
-                    usePointStyle: true,
-                    color: '#513c21'
-                },
-                position: 'bottom',
-                responsive: true,
-            }
-          }
-        }});
+function renderizarGraficoPlanejamento() {
+    const container = document.getElementById('grafico-pesos-planejamento');
+    if (!container || !window.GraficoRosca) return;
+    const objetosNormalizados = lerArrayLocalStorage('objetosNormalizados');
+    if (!objetosNormalizados.length) {
+        const bloco = container.closest('.planejamento-grafico');
+        if (bloco) bloco.hidden = true;
+        return;
     }
-});
+    const distribuicao = lerArrayLocalStorage('lista_distribuicao_materias');
+    const porId = new Map(distribuicao.map(item => [item.projetoMateriaId, Number(item.Materia_distribuida) || 0]));
+    const porNome = new Map(distribuicao.map(item => [item.Materia, Number(item.Materia_distribuida) || 0]));
+    const minutosPlano = new Map();
+    Object.values(lerObjetoLocalStorage('materiaDoDia') || {}).forEach(blocos => {
+        if (!Array.isArray(blocos)) return;
+        blocos.forEach(bloco => {
+            const chave = bloco.projetoMateriaId || bloco.materia;
+            if (!chave) return;
+            minutosPlano.set(chave, (minutosPlano.get(chave) || 0) + (Number(bloco.metaSegundos) || 0) / 60);
+        });
+    });
+
+    const itens = objetosNormalizados.map(objeto => {
+        const pesoPct = Number(String(objeto.questoesEmPorcentagem).replace(',', '.').replace('%', '')) || 0;
+        const peso = Number(objeto.pesoQuestoes) || pesoPct;
+        const minutos = porId.has(objeto.projetoMateriaId)
+            ? porId.get(objeto.projetoMateriaId)
+            : porNome.has(objeto.Materia)
+                ? porNome.get(objeto.Materia)
+                : (minutosPlano.get(objeto.projetoMateriaId) ?? minutosPlano.get(objeto.Materia) ?? 0);
+        return {
+            nome: objeto.Materia,
+            valor: peso,
+            minutos,
+            valorTexto: formatarDuracaoPlanejamento(minutos)
+        };
+    });
+    const totalMinutos = itens.reduce((soma, item) => soma + item.minutos, 0);
+    window.GraficoRosca.renderizar(container, {
+        titulo: 'Peso real de cada matéria',
+        subtitulo: 'Tempo distribuído e participação proporcional de cada matéria no plano teórico',
+        tituloTag: 'h2',
+        ariaLabel: 'Proporção dos pesos reais e carga distribuída de cada matéria.',
+        centroRotulo: 'Carga teórica',
+        centroValor: formatarDuracaoPlanejamento(totalMinutos),
+        itens
+    });
+    renderizarGraficoCargaPlanejamento(totalMinutos);
+}
+
+function renderizarGraficoCargaPlanejamento(totalMinutosTeoria) {
+    const secao = document.getElementById('carga-diaria-previa');
+    const alvo = document.getElementById('carga-diaria-grafico') || secao;
+    if (!secao || !alvo || !window.GraficoRosca) return;
+    const dadosExame = lerObjetoLocalStorage('dadosExame');
+    const materiaDoDia = lerObjetoLocalStorage('materiaDoDia') || {};
+    if (!dadosExame) {
+        secao.hidden = true;
+        alvo.replaceChildren();
+        return;
+    }
+
+    let teoriaSegundos = 0;
+    const blocos = Object.values(materiaDoDia).flat();
+    if (blocos.some(b => Number.isFinite(Number(b?.metaSegundos)))) {
+        teoriaSegundos = blocos.reduce((soma, b) => soma + (Number(b?.metaSegundos) || 0), 0);
+    } else {
+        teoriaSegundos = Math.round((Number(totalMinutosTeoria) || 0) * 60);
+    }
+
+    let revisoesSegundos = 0;
+    if (dadosExame.cargaDiaria?.incluirRevisoes && Array.isArray(dadosExame.cargaDiariaPlano?.grupos)) {
+        for (const grupo of dadosExame.cargaDiariaPlano.grupos) {
+            if (grupo?.estado !== 'reservada') continue;
+            const itens = Array.isArray(grupo.itens) ? grupo.itens : [];
+            const duracaoGrupo = Number(grupo.duracaoSegundos);
+            revisoesSegundos += Number.isFinite(duracaoGrupo)
+                ? duracaoGrupo
+                : itens.reduce((s, it) => s + (Number(it?.duracaoSegundos) || 0), 0);
+        }
+    }
+
+    let missoes = Array.isArray(dadosExame.cargaDiariaPlano?.praticas) ? dadosExame.cargaDiariaPlano.praticas : [];
+    try {
+        const proj = window.PraticasStore?.projetarMissoesProjeto?.(dadosExame.projetoId, { dados: dadosExame, materiaDoDia });
+        if (Array.isArray(proj?.missoes)) missoes = proj.missoes;
+    } catch (_) {}
+
+    let datasEstudo = new Set();
+    try {
+        const mapa = window.CalendarioJornada?.mapear?.(dadosExame, Object.keys(materiaDoDia).length);
+        if (mapa?.porDia) datasEstudo = new Set(Object.values(mapa.porDia));
+    } catch (_) {}
+
+    let praticasNaCargaSegundos = 0;
+    let praticasExtrasSegundos = 0;
+    for (const m of missoes) {
+        if (!m || m.extraAvulsa || m.duracaoPlanejadaSegundos == null) continue;
+        const dur = Math.max(0, Number(m.duracaoPlanejadaSegundos) || 0);
+        if (m.consomeCargaEstudo && (!datasEstudo.size || datasEstudo.has(m.dataPrevista))) {
+            praticasNaCargaSegundos += dur;
+        } else {
+            praticasExtrasSegundos += dur;
+        }
+    }
+
+    const praticasTotalSegundos = praticasNaCargaSegundos + praticasExtrasSegundos;
+    const totalGeralSegundos = teoriaSegundos + revisoesSegundos + praticasTotalSegundos;
+    const subtextoPraticas = praticasNaCargaSegundos > 0 && praticasExtrasSegundos > 0
+        ? `${formatarDuracaoPlanejamento(praticasNaCargaSegundos / 60)} no tempo diário · ${formatarDuracaoPlanejamento(praticasExtrasSegundos / 60)} adicionais`
+        : praticasExtrasSegundos > 0 ? 'Adicionais ao tempo diário' : '';
+
+    window.GraficoRosca.renderizar(alvo, {
+        titulo: 'Distribuição da carga horária',
+        subtitulo: 'Tempo planejado no período entre teoria, revisões e atividades práticas',
+        tituloTag: 'h2',
+        tituloId: 'carga-diaria-grafico-titulo',
+        ariaLabel: 'Distribuição da carga horária entre teoria, revisões e atividades práticas.',
+        centroRotulo: 'Total planejado',
+        centroValor: formatarDuracaoPlanejamento(totalGeralSegundos / 60),
+        vazio: 'Sem carga horária prevista para exibir no gráfico.',
+        itens: [
+            {
+                nome: 'Teoria',
+                valor: teoriaSegundos,
+                valorTexto: formatarDuracaoPlanejamento(teoriaSegundos / 60),
+                cor: 'var(--rosca-cor-teoria, var(--pixel-emerald))'
+            },
+            {
+                nome: 'Revisões',
+                valor: revisoesSegundos,
+                valorTexto: formatarDuracaoPlanejamento(revisoesSegundos / 60),
+                cor: 'var(--pixel-mana)'
+            },
+            {
+                nome: 'Atividades práticas',
+                valor: praticasTotalSegundos,
+                valorTexto: formatarDuracaoPlanejamento(praticasTotalSegundos / 60),
+                cor: 'var(--pixel-xp)',
+                subtexto: subtextoPraticas
+            }
+        ]
+    });
+    secao.hidden = false;
+}
 
 class conteudoProgramatico {
     constructor(materia, Nquestoes, peso, afinidade) {
@@ -114,9 +228,15 @@ if (document.getElementById('cadastroForm') !== null) {
         let adicionada;
         try {
         const globalId = document.getElementById('materia-catalogo')?.value;
-        const escolhida = globalId ? window.MateriasStore.resolverMateriaGlobal(globalId) : null;
+        const nomeDigitado = document.getElementById('materia').value.trim();
+        const nomeNormalizado = window.MateriasStore.normalizarNome(nomeDigitado);
+        const materiasRemovidas = globalId ? [] : window.MateriasStore.listarProjetosMaterias(window.ProjetosStore.idAtual())
+            .filter(participacao => participacao.removida)
+            .map(participacao => window.MateriasStore.resolverMateriaGlobal(participacao.materiaGlobalId));
+        const escolhida = globalId ? window.MateriasStore.resolverMateriaGlobal(globalId)
+            : materiasRemovidas.find(materia => materia.status === 'ativa' && materia.nomeNormalizado === nomeNormalizado);
         if (escolhida && escolhida.status !== 'ativa') throw new Error('Esta matéria não está mais disponível no catálogo.');
-        const materia = escolhida?.nomeCanonico || document.getElementById("materia").value.trim();
+        const materia = escolhida?.nomeCanonico || nomeDigitado;
         if (!materia) return;
         if (!escolhida && materia.length > 60) throw new Error('O nome da matéria deve ter no máximo 60 caracteres.');
         const Nquestoes = parseInt(document.getElementById("Nquestoes").value, 10);
@@ -142,7 +262,8 @@ if (document.getElementById('cadastroForm') !== null) {
         document.getElementById("materia").value = "";
         document.getElementById("Nquestoes").value = "";
         document.getElementById("peso").value = 1;
-        document.getElementById("afinidade").value = "";
+        document.getElementById("afinidade").value = "1";
+        document.getElementById("afinidade").dispatchEvent(new Event("input"));
         document.getElementById('materia-catalogo').value = '';
         document.getElementById('materia').readOnly = false;
         document.getElementById('wizard-erro').textContent = '';
@@ -326,33 +447,27 @@ function copiaParaPesoMateria (){ //incompleta
         return;
     }
 
-    for (const objeto of objetosCopia) {
-        // Crie uma nova linha (<tr>) para cada objeto
-        const novaLinha = document.createElement("tr");
-        const celulaIndice = document.createElement("td");
-
-        // Defina o índice sem formatação
-        celulaIndice.textContent = indice;
-        novaLinha.appendChild(celulaIndice);
-        indice++;
-        // Percorra as chaves do objeto
-        for (const chave in objeto) {
-            if (objeto.hasOwnProperty(chave) && chave !== "projetoMateriaId") {
-                // Crie uma nova célula (<td>) para cada chave e atribua o valor
-                const celula = document.createElement("td");
-                celula.textContent = objeto[chave];
-    
-                // Adicione a célula à linha
-                novaLinha.appendChild(celula);
+    if (tabela) {
+        for (const objeto of objetosCopia) {
+            const novaLinha = document.createElement("tr");
+            const celulaIndice = document.createElement("td");
+            celulaIndice.textContent = indice;
+            novaLinha.appendChild(celulaIndice);
+            indice++;
+            for (const chave in objeto) {
+                if (objeto.hasOwnProperty(chave) && chave !== "projetoMateriaId") {
+                    const celula = document.createElement("td");
+                    celula.textContent = objeto[chave];
+                    novaLinha.appendChild(celula);
+                }
             }
+            tabela.appendChild(novaLinha);
         }
-       
-        // Adicione a linha à tabela
-        tabela.appendChild(novaLinha);
     }
     distribui_materias()
     sortMaterias();
     atualizarResumoPlanejamento();
+    renderizarGraficoPlanejamento();
 };
 function fillTotalQuestoes() {
     totalQuestoes = objetosSalvos.reduce((total, objeto) => total + objeto.Nquestoes, 0);

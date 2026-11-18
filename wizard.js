@@ -2,7 +2,7 @@
 (function () {
     const CHAVE = 'wizardProjeto';
     const dias = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
-    const campos = ['nome_exame', 'dataInicio', 'dataFinal', 'duracao-prova', 'horas-por-dia', 'blocos-por-dia', 'materia', 'Nquestoes', 'peso', 'afinidade'];
+    const campos = ['nome_exame', 'dataInicio', 'dataFinal', 'horas-por-dia', 'blocos-por-dia', 'materia', 'Nquestoes', 'peso', 'afinidade'];
     const el = (id) => document.getElementById(id);
     let etapa = 0;
     let blocosEscolhidos = null;
@@ -10,6 +10,13 @@
     let sincronizarPraticasAposConfirmacao = false;
     let origemReplanejamento = null;
     let revisoes;
+    let inicioWizardMs = Date.now();
+    let incluirPraticasLegado = true;
+
+    function hojeLocalIso() {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    }
 
     function atualizarBlocos() {
         function duracaoSessao(minutos) {
@@ -48,10 +55,23 @@
         el('btn-checkAll').checked = quantidade === 7;
         el('btn-checkAll').indeterminate = quantidade > 0 && quantidade < 7;
     }
+    function atividadesAtivasProjeto(projetoId) {
+        if (!projetoId || !window.PraticasStore?.obterEstado) return [];
+        try {
+            return Object.values(window.PraticasStore.obterEstado(projetoId).atividades || {})
+                .filter(r => !r.removida);
+        } catch (_) {
+            return [];
+        }
+    }
+    function resolverIncluirPraticas(projetoId = lerObjetoArmazenado('dadosExame')?.projetoId) {
+        if (incluirPraticasLegado !== false) return true;
+        return atividadesAtivasProjeto(projetoId).some(r => r.atividade.tipo !== 'taf' && r.atividade.incluirNaCarga === true);
+    }
     function escolhasDeCarga() {
         return {
             incluirRevisoes: el('contar-revisoes-na-carga').checked,
-            incluirPraticas: el('contar-praticas-na-carga').checked
+            incluirPraticas: resolverIncluirPraticas()
         };
     }
     function guardarRascunho() {
@@ -69,8 +89,6 @@
     function validar(numero, exibir = true) {
         const falhar = (texto, campo) => exibir ? erro(texto, campo) : false;
         if (numero === 0) {
-            const tempo = el('duracao-prova');
-            if (tempo.value && (!tempo.checkValidity() || !Number.isSafeInteger(Number(tempo.value) * 60))) return falhar('Informe a duração da prova em minutos, usando um número inteiro maior que zero.', tempo);
             if (!el('nome_exame').value.trim()) return falhar('Informe o nome do projeto.', el('nome_exame'));
             for (const id of ['dataInicio', 'dataFinal']) {
                 if (!el(id).value || !el(id).checkValidity()) return falhar('Informe as duas datas válidas.', el(id));
@@ -122,8 +140,6 @@
             dados.cargaDiaria = escolhasDeCarga();
         }
         window.IdentidadeStore?.garantirProjeto(dados);
-        if (el('duracao-prova').value) dados.duracaoProvaSegundos = Number(el('duracao-prova').value) * 60;
-        else delete dados.duracaoProvaSegundos;
         (window.ProjetoStorage || localStorage).setItem('dadosExame', JSON.stringify(dados));
     }
     function calcularCargaDiaria(dados, materiasNormalizadas, origem) {
@@ -131,11 +147,19 @@
         const politica = calendario.politicaProjeto(dados);
         const inicio = calendario.somarDias(dados.dataInicioF, 0);
         const fim = calendario.somarDias(dados.dataFinalF, 0);
+        const porIdAtividade = new Map(atividadesAtivasProjeto(dados.projetoId).map(r => [r.atividade.atividadeId, r.atividade]));
         const missoes = window.PraticasStore.projetarMissoesProjeto(dados.projetoId, { dados, materiasNormalizadas, base: true }).missoes
             .filter(missao => missao.dataPrevista >= inicio && missao.dataPrevista <= fim && missao.duracaoPlanejadaSegundos != null)
-            .map(({ missaoId, dataPrevista, duracaoPlanejadaSegundos, consomeCargaEstudo }) => ({
-                missaoId, dataPrevista, duracaoPlanejadaSegundos, consomeCargaEstudo
-            }));
+            .map(({ missaoId, atividadeId, dataPrevista, duracaoPlanejadaSegundos, consomeCargaEstudo }) => {
+                const atividade = porIdAtividade.get(atividadeId);
+                const legadoExterno = incluirPraticasLegado === false && atividade && typeof atividade.incluirNaCarga !== 'boolean';
+                return {
+                    missaoId,
+                    dataPrevista,
+                    duracaoPlanejadaSegundos,
+                    consomeCargaEstudo: legadoExterno ? false : consomeCargaEstudo
+                };
+            });
         const disponibilidadeDiariaSegundos = Math.round(dados.minutosPorDia * 60);
         const carga = window.AtividadesPraticas.modelarCargaDiaria({
             dataInicio: inicio,
@@ -159,46 +183,6 @@
         });
         return { carga, projecao, missoes, politica };
     }
-    function resumirCargaDiaria({ carga, projecao, politica }, dados, plano) {
-        const { cargaDiaria } = dados;
-        const excepcionais = carga.dias.filter(dia => dia.excepcional).length;
-        const revisoesNaCarga = !politica.ativadas ? 'Revisões desativadas.'
-            : cargaDiaria.incluirRevisoes ? 'Revisões incluídas.' : 'Revisões fora da carga.';
-        const praticasNaCarga = cargaDiaria.incluirPraticas ? 'Práticas regulares incluídas.' : 'Práticas fora da carga.';
-        const diasPraticas = excepcionais === 1 ? '1 dia reservado para práticas.' : `${excepcionais} dias reservados para práticas.`;
-        const diasTeoricos = Object.values(plano.materiaDoDia);
-        const totais = { teoria: 0, praticas: 0, revisoes: 0, extras: 0 };
-        const capacidade = Math.round(dados.minutosPorDia * 60);
-        let indice = 0, excesso = 0, diasComExcesso = 0;
-        carga.dias.forEach((dia, i) => {
-            const teoria = dia.ehEstudo ? diasTeoricos[indice++].reduce((soma, bloco) => soma + bloco.metaSegundos, 0) : 0;
-            const { revisoesProtegidasSegundos, revisoesReservadasSegundos } = projecao.dias[i];
-            const revisoes = cargaDiaria.incluirRevisoes ? revisoesProtegidasSegundos + revisoesReservadasSegundos : 0;
-            totais.teoria += teoria;
-            totais.praticas += dia.praticasRegularesSegundos;
-            totais.revisoes += revisoes;
-            totais.extras += dia.praticasExtrasSegundos;
-            const saldo = teoria + revisoes + dia.praticasRegularesSegundos - (dia.ehEstudo ? capacidade : 0);
-            if (saldo > 0) { excesso += saldo; diasComExcesso++; }
-        });
-        const duracao = window.CargaDiaria.duracao;
-        const resumo = [revisoesNaCarga, praticasNaCarga, diasPraticas,
-            `No período, ${duracao(totais.teoria)} de teoria, ${duracao(totais.revisoes)} de revisões reservadas e ${duracao(totais.praticas)} de práticas na carga.`];
-        if (totais.extras) resumo.push(`${duracao(totais.extras)} de práticas fora da carga.`);
-        if (diasComExcesso) resumo.push(`Excesso planejado de ${duracao(excesso)} em ${diasComExcesso} ${diasComExcesso === 1 ? 'data' : 'datas'}.`);
-        if (!politica.ativadas || !cargaDiaria.incluirRevisoes) return resumo.join(' ');
-
-        let reservadas = 0;
-        let semVaga = 0;
-        for (const grupo of projecao.grupos) {
-            if (grupo.estado === 'reservada') reservadas += grupo.itens.length;
-            else semVaga += grupo.itens.length;
-        }
-        resumo.push(reservadas === 1 ? '1 revisão com reserva na simulação.' : `${reservadas} revisões com reserva na simulação.`);
-        if (semVaga) resumo.push(semVaga === 1 ? '1 revisão sem vaga até o fim do projeto.' : `${semVaga} revisões sem vaga até o fim do projeto.`);
-        if (projecao.dias.some(dia => dia.excessoProtegidoSegundos > 0)) resumo.push('Há dias em que revisões já registradas excedem o tempo disponível.');
-        return resumo.join(' ');
-    }
     function resumo() {
         const pares = [
             ['Projeto', el('nome_exame').value.trim()],
@@ -211,7 +195,6 @@
             ['Matérias cadastradas', el('table-body').children.length],
             ['Total de questões', el('totalQuestoes').value]
         ];
-        if (el('duracao-prova').value) pares.push(['Duração da prova', `${el('duracao-prova').value} min`]);
         el('wizard-resumo').replaceChildren(...pares.map(([rotulo, valor]) => {
             const linha = document.createElement('div');
             const dt = document.createElement('dt'); const dd = document.createElement('dd');
@@ -271,14 +254,6 @@
                 aviso.textContent = `Depois de reservar tempo para os treinos, o plano prioriza as matérias de maior peso na prova. Algumas matérias ficarão fora do cronograma.`;
                 el('wizard-resumo').append(aviso);
             }
-            const linha = document.createElement('div');
-            linha.id = 'carga-diaria-previa';
-            const rotulo = document.createElement('dt');
-            const valor = document.createElement('dd');
-            rotulo.textContent = 'Prévia da carga diária';
-            valor.textContent = plano ? resumirCargaDiaria(cargaPlanejada, dadosResumo, plano) : 'Prévia indisponível.';
-            linha.append(rotulo, valor);
-            el('wizard-resumo').append(linha);
         }
     }
     function mostrar(numero, foco = true) {
@@ -294,7 +269,7 @@
         el('wizard-voltar').hidden = etapa === 0;
         el('wizard-avancar').textContent = etapa === 3 ? 'Gerar cronograma' : 'Continuar ';
         if (etapa !== 3) el('wizard-avancar').append(window.IconesPixel.criar('direita'));
-        if (etapa !== 1 && el('revisoes-ajuda').matches(':popover-open')) el('revisoes-ajuda').hidePopover();
+        document.querySelectorAll('.ajuda-contextual:popover-open').forEach(p => p.hidePopover());
         el('wizard-erro').textContent = '';
         if (etapa === 3) resumo();
         guardarRascunho();
@@ -330,7 +305,19 @@
             if (etapa >= 2 && window.PraticasCadastro && !window.PraticasCadastro.podeAvancar()) return;
             if (!validar(etapa)) return;
             const editando = Boolean(origemReplanejamento);
-            if (etapa === 1) revisoes.fixar();
+            if (etapa === 1) {
+                revisoes.fixar();
+                try {
+                    const hoje = hojeLocalIso();
+                    window.SistemaIaStore?.atualizarTelemetria?.(t => {
+                        const atual = t.edicoesRotinaHoje || { data: '', contagem: 0 };
+                        t.edicoesRotinaHoje = atual.data === hoje
+                            ? { data: hoje, contagem: Number(atual.contagem || 0) + 1 }
+                            : { data: hoje, contagem: 1 };
+                    });
+                    window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                } catch (_) {}
+            }
             guardarRascunho();
             if (etapa === 0 && !editando) salvarProjeto(false);
             if (etapa === 1 && !editando) salvarProjeto(true);
@@ -343,6 +330,15 @@
             await salvarObjetos();
             if (!editando && window.PraticasStore?.sincronizarMissoesProjeto) {
                 await window.PraticasStore.sincronizarMissoesProjeto(lerObjetoArmazenado('dadosExame'), lerArrayArmazenado('objetosNormalizados'));
+            }
+            if (incluirPraticasLegado === false && resolverIncluirPraticas()) {
+                const dadosAtuais = lerObjetoArmazenado('dadosExame');
+                const pendentes = atividadesAtivasProjeto(dadosAtuais?.projetoId)
+                    .filter(r => r.atividade.tipo !== 'taf' && typeof r.atividade.incluirNaCarga !== 'boolean');
+                for (const registro of pendentes) {
+                    await window.PraticasStore.editarAtividade(dadosAtuais.projetoId, registro.atividade.atividadeId, { incluirNaCarga: false }, registro.revisao);
+                }
+                incluirPraticasLegado = true;
             }
             await window.ProjetosStore.confirmarPlano(() => {
                 if (editando) {
@@ -366,6 +362,16 @@
                 window.RevisoesStore.sincronizarPlano({ dados: lerObjetoArmazenado('dadosExame'), ...plano });
                 (window.ProjetoStorage || localStorage).removeItem(CHAVE);
             });
+            try {
+                if (!editando && (Date.now() - inicioWizardMs) < 60000) {
+                    if (window.SistemaIaCatalogo?.desbloquearComAviso) {
+                        window.SistemaIaCatalogo.desbloquearComAviso('assinou_sem_ler');
+                    } else {
+                        window.SistemaIaStore?.registrarDesbloqueio?.('assinou_sem_ler');
+                    }
+                    window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                }
+            } catch (_) {}
             sincronizarPraticasAposConfirmacao = editando;
             backupPendente = true;
             document.querySelectorAll('.wizard-shell input, .wizard-shell select, .wizard-shell button').forEach(c => { c.disabled = true; });
@@ -380,7 +386,6 @@
         const dados = lerObjetoArmazenado('dadosExame');
         if (dados) {
             el('nome_exame').value = dados.nomeExame || '';
-            el('duracao-prova').value = dados.duracaoProvaSegundos ? String(dados.duracaoProvaSegundos / 60) : '';
             el('dataInicio').value = converterDataBrasileiraParaISO(dados.dataInicioF);
             el('dataFinal').value = converterDataBrasileiraParaISO(dados.dataFinalF);
             el('horas-por-dia').value = dados.horasPorDia || converterMinutosParaHoras(dados.minutosPorDia || 0);
@@ -393,7 +398,7 @@
             ? origemSalva : window.Replanejamento.capturar();
         const cargaDiaria = rascunho?.cargaDiaria ?? dados?.cargaDiaria;
         el('contar-revisoes-na-carga').checked = cargaDiaria?.incluirRevisoes ?? !origemReplanejamento;
-        el('contar-praticas-na-carga').checked = cargaDiaria?.incluirPraticas ?? true;
+        incluirPraticasLegado = cargaDiaria?.incluirPraticas ?? true;
         blocosEscolhidos = Number(rascunho?.valores?.['blocos-por-dia']) || Number(dados?.blocosPorDia ?? dados?.materiasPorDia) || null;
         if (rascunho) {
             campos.forEach(id => { if (typeof rascunho.valores?.[id] === 'string') el(id).value = rascunho.valores[id]; });
@@ -432,6 +437,44 @@
         });
         el('nome_projetoForm').addEventListener('submit', (event) => { event.preventDefault(); avancar(); });
         el('cadastroForm').addEventListener('submit', guardarRascunho);
+        function abrirAlertaGerenciarMaterias(evento) {
+            guardarRascunho();
+            if (evento.metaKey || evento.ctrlKey || evento.shiftKey || evento.altKey || evento.button !== 0) return;
+            const dialog = el('wizard-gerenciar-materias-dialog');
+            if (!dialog) return;
+            evento.preventDefault();
+            const link = evento.currentTarget;
+            const destino = link.getAttribute('href') || 'materias.html';
+            const btnConfirmar = dialog.querySelector('[data-confirmar]');
+            const btnsCancelar = [...dialog.querySelectorAll('[data-cancelar]')];
+            const fecharDialogo = () => {
+                if (dialog.open) dialog.close();
+                limpar();
+                link.focus();
+            };
+            const onCancel = e => {
+                e.preventDefault();
+                fecharDialogo();
+            };
+            const onConfirmar = () => {
+                guardarRascunho();
+                if (dialog.open) dialog.close();
+                limpar();
+                location.assign(destino);
+            };
+            function limpar() {
+                btnConfirmar?.removeEventListener('click', onConfirmar);
+                btnsCancelar.forEach(b => b.removeEventListener('click', fecharDialogo));
+                dialog.removeEventListener('cancel', onCancel);
+            }
+            btnConfirmar?.addEventListener('click', onConfirmar);
+            btnsCancelar.forEach(b => b.addEventListener('click', fecharDialogo));
+            dialog.addEventListener('cancel', onCancel);
+            dialog.showModal();
+            const focoCancelar = dialog.querySelector('button[data-cancelar]:not(.pixel-fechar)') || btnsCancelar[0];
+            focoCancelar?.focus();
+        }
+        el('atalho-gerenciar-materias')?.addEventListener('click', abrirAlertaGerenciarMaterias);
         el('wizard-avancar').addEventListener('click', avancar);
         el('wizard-backup-repetir').addEventListener('click', () => backupDaJornada());
         el('wizard-backup-baixar').addEventListener('click', () => backupDaJornada(true));

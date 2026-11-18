@@ -464,6 +464,14 @@
     }
 
     function notificarRegistro(sessoes) {
+        try {
+            const scanlinesAtivo = (typeof document !== 'undefined' && document.body?.getAttribute('data-scanlines') === 'on')
+                || localStorage.getItem('grimorioScanlinesPixelV1') === 'on';
+            if (scanlinesAtivo && Array.isArray(sessoes) && sessoes.length) {
+                const segs = sessoes.reduce((acc, s) => acc + Math.max(0, Math.round(Number(s?.duracaoSegundos) || 0)), 0);
+                if (segs > 0) window.SistemaIaStore?.incrementarTelemetria?.('segundosScanlines', segs);
+            }
+        } catch (_) {}
         window.dispatchEvent(new CustomEvent('estudo:registrado', {
             detail: { sessoes, pontosConhecimento: somarPontos(sessoes) }
         }));

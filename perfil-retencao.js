@@ -585,6 +585,14 @@
             };
         });
 
+        const conquistasDesbloqueadas = conquistas.filter(c => c.desbloqueada);
+        const catalogoOcultas = escopo.SistemaIaCatalogo || (typeof require === 'function' ? require('./sistema-ia-catalogo') : null);
+        const conquistasOcultas = catalogoOcultas?.avaliarOcultas
+            ? catalogoOcultas.avaliarOcultas({ ...entrada, melhorSequencia }, diasMap, diasOrdenados)
+            : [];
+        const ocultasDesbloqueadas = conquistasOcultas.filter(c => c.desbloqueada);
+        const todasDesbloqueadas = [...conquistasDesbloqueadas, ...ocultasDesbloqueadas];
+
         return {
             hojeIso,
             constancia: {
@@ -617,7 +625,10 @@
                 outrosPct: pct(outrosSegundos)
             },
             conquistas,
-            conquistasDesbloqueadas: conquistas.filter(c => c.desbloqueada)
+            conquistasDesbloqueadas,
+            conquistasOcultas,
+            ocultasDesbloqueadas,
+            todasDesbloqueadas
         };
     }
 

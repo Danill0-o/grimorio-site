@@ -43,6 +43,37 @@
         window.QuestMarcadores?.vincular(b, 'Missao', missao.missaoId);
         b.setAttribute('aria-label', `Abrir atividade prática ${missao.nome} de ${data(missao.dataPrevista)}`); return b;
     }
+    function confirmarExclusaoExtra(missao) {
+        const dialog = el('dialog', '', 'pratica-dialogo');
+        dialog.id = 'pratica-extra-excluir-dialog';
+        dialog.setAttribute('aria-labelledby', 'pratica-extra-excluir-titulo');
+        const titulo = el('h2', 'Excluir atividade extra');
+        titulo.id = 'pratica-extra-excluir-titulo';
+        const mensagem = el('p', `Excluir a ocorrência extra de ${missao.nome} em ${data(missao.dataPrevista)}? O tempo, a avaliação e o XP desta ocorrência serão retirados dos totais.`);
+        const erro = el('p', '', 'pratica-erro');
+        erro.setAttribute('role', 'alert');
+        const origem = document.activeElement;
+        const cancelar = botao('Cancelar', () => dialog.close());
+        const confirmar = botao('Excluir atividade extra', async () => {
+            confirmar.disabled = true;
+            try {
+                await window.PraticasStore.excluirMissaoExtra(window.ProjetosStore.idAtual(), missao.missaoId);
+                dialog.close();
+            } catch (e) { erro.textContent = e.message; confirmar.disabled = false; }
+        });
+        const acoes = el('div', '', 'pratica-acoes');
+        acoes.append(cancelar, confirmar);
+        const conteudo = el('div', '', 'pratica-dialogo-conteudo');
+        conteudo.append(titulo, mensagem, erro, acoes);
+        dialog.append(conteudo);
+        dialog.addEventListener('close', () => {
+            dialog.remove();
+            (origem?.isConnected ? origem : document.getElementById('abrir-praticas'))?.focus();
+        }, { once: true });
+        document.body.append(dialog);
+        dialog.showModal();
+        cancelar.focus();
+    }
     function campo(form, id, rotulo, tipo, atributos = {}) {
         const label = el('label', rotulo, 'pratica-campo'); label.htmlFor = id;
         const input = el(tipo === 'textarea' ? 'textarea' : 'input');
@@ -479,5 +510,5 @@
     window.addEventListener('storage', e => { if (e.key?.startsWith('praticasProjetoV1:')) recarregar(); });
     window.addEventListener('focus', recarregar);
     window.addEventListener('cronometro:estado', atualizarControles);
-    window.PraticasExecucaoUI = Object.freeze({ abrir, abrirOcorrencias, botaoAbrir });
+    window.PraticasExecucaoUI = Object.freeze({ abrir, abrirOcorrencias, botaoAbrir, confirmarExclusaoExtra });
 })();

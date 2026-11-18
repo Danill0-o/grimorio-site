@@ -3,14 +3,14 @@
 <head>
 <script type="application/grimorio" src="icones-pixel.js?v=controles-20261102"></script>
 <meta charset="UTF-8">
-<script src="tema-inicial.js?v=arcano-padrao"></script>
+<script src="tema-inicial.js?v=etapa4-20261116"></script>
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=tema-inicial-20261102"></script>
-    <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=carga-diaria-20261113"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
+    <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=carga-diaria-20261113"></script><script type="application/grimorio" src="praticas-schema.js?v=pratica-excluir-20261118"></script>
     <script type="application/grimorio" src="reagendamento-schema.js?v=reagendamento-r6"></script>
     <script type="application/grimorio" src="backup-local.js?v=revisoes-configuraveis-20261112"></script>
-    <script type="application/grimorio" src="acessibilidade.js?v=arcano-padrao"></script>
-    <script type="application/grimorio" src="projetos-store.js?v=revisoes-configuraveis-20261112"></script><script type="application/grimorio" src="praticas-store.js?v=carga-diaria-4-20261114"></script>
+    <script type="application/grimorio" src="acessibilidade.js?v=konami-20261116"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=revisoes-configuraveis-20261112"></script><script type="application/grimorio" src="praticas-store.js?v=pratica-excluir-20261118"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar projeto de estudos</title>
     <script type="application/grimorio">
@@ -22,7 +22,7 @@
     </script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
     <link rel="stylesheet" href="css/style.css?v=temas3-20261022">
-    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/grimorio.css?v=konami-20261116">
     <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
 
 <link rel="stylesheet" href="css/wizard.css?v=revisoes-intervalos-20261115">
@@ -30,7 +30,7 @@
 
 <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022"><link rel="stylesheet" href="css/jornada-interface.css?v=carga-diaria-5">
 <script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
-<link rel="stylesheet" href="css/icones-pixel.css?v=revisoes-configuraveis-20261112"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101">
+<link rel="stylesheet" href="css/icones-pixel.css?v=revisoes-configuraveis-20261112"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101"><link rel="stylesheet" href="css/sistema-ia.css?v=etapa4-20261116">
     <script type="application/grimorio" src="carga-diaria.js?v=carga-diaria-5"></script>
 </head>
 
@@ -49,7 +49,6 @@
 <label class="project-name" for="nome_exame">Nome do projeto<input class="form-control" id="nome_exame" placeholder="Ex.: ENEM ou Receita Federal" required></label>
 <label for="dataInicio">Data de início<input class="form-control" type="date" id="dataInicio" required></label>
 <label for="dataFinal">Data da prova<input class="form-control" type="date" id="dataFinal" required></label>
-<label class="tempo-prova-campo" for="duracao-prova">Duração da prova (minutos, opcional)<input class="form-control" type="number" id="duracao-prova" min="1" step="1" inputmode="numeric"></label>
 </div></section>
 <section data-painel="1" aria-labelledby="titulo-rotina" hidden>
 <p class="wizard-chapter">Etapa 2 de 4</p><h2 id="titulo-rotina" tabindex="-1">Quando você vai estudar?</h2><p>Escolha os dias da semana e quanto tempo você tem por dia.</p>
@@ -59,8 +58,8 @@
 <label class="choice"><input type="checkbox" id="btn-Dom"><span>Dom</span></label><label class="choice"><input type="checkbox" id="btn-Seg"><span>Seg</span></label><label class="choice"><input type="checkbox" id="btn-Ter"><span>Ter</span></label><label class="choice"><input type="checkbox" id="btn-Qua"><span>Qua</span></label><label class="choice"><input type="checkbox" id="btn-Qui"><span>Qui</span></label><label class="choice"><input type="checkbox" id="btn-Sex"><span>Sex</span></label><label class="choice"><input type="checkbox" id="btn-Sab"><span>Sáb</span></label>
 </div></fieldset>
 <div class="routine-values">
-<label for="horas-por-dia">Tempo de estudo por dia <small>(horas e minutos)</small><input type="time" class="form-control" id="horas-por-dia" required></label>
-<div><label for="blocos-por-dia">Sessões de estudo por dia<select class="form-select" id="blocos-por-dia" aria-describedby="distribuicao-ajuda" required disabled><option value="">Informe antes o tempo por dia</option></select></label><p id="distribuicao-ajuda">Uma matéria pode aparecer em mais de uma sessão no mesmo dia. As revisões são opcionais e ficam fora do tempo informado.</p></div>
+<label for="horas-por-dia">Tempo de estudo por dia <small>(duração total por dia, HH:MM)</small><input type="time" class="form-control" id="horas-por-dia" required></label>
+<div><label for="blocos-por-dia">Sessões de estudo por dia<select class="form-select" id="blocos-por-dia" aria-describedby="distribuicao-ajuda" required disabled><option value="">Informe antes o tempo por dia</option></select></label><p id="distribuicao-ajuda">Uma matéria pode aparecer em mais de uma sessão no mesmo dia. Caso utilize revisões espaçadas, escolha abaixo se elas entram ou ficam fora da sua carga diária de estudo.</p></div>
 </div></div>
 <fieldset id="wizard-revisoes">
 <legend><span class="wizard-revisoes-titulo">Deseja utilizar revisões espaçadas? <button type="button" id="revisoes-ajuda-botao" class="info-contextual" data-ajuda-contextual popovertarget="revisoes-ajuda" aria-label="Sobre revisões espaçadas">i</button></span></legend>
@@ -79,16 +78,21 @@
 <div id="revisoes-personalizar" hidden>
 <h3>Quando deseja revisar o conteúdo?</h3>
 <ul id="revisoes-selecionadas"></ul>
-<button type="button" class="btn btn-outline-secondary" id="revisoes-adicionar" aria-expanded="false" aria-controls="revisoes-catalogo">+ Adicionar revisão</button>
-<div id="revisoes-catalogo" class="wizard-revisoes-catalogo" hidden>
-<label for="revisoes-periodo">Período disponível<select class="form-select" id="revisoes-periodo"></select></label>
-<button type="button" class="btn btn-outline-secondary" id="revisoes-confirmar-periodo">Adicionar período</button>
+<div id="revisoes-intervalos-lista" class="wizard-revisoes-intervalos" role="group" aria-label="Intervalos de revisão">
+<label for="revisoes-intervalo-proximo"><input type="checkbox" id="revisoes-intervalo-proximo" data-revisao-intervalo="proximo"> <span id="revisoes-rotulo-proximo">No próximo dia de estudo</span></label>
+<label for="revisoes-intervalo-7d"><input type="checkbox" id="revisoes-intervalo-7d" data-revisao-intervalo="7d"> <span id="revisoes-rotulo-7d">7 dias após o estudo de origem</span></label>
+<label for="revisoes-intervalo-28d"><input type="checkbox" id="revisoes-intervalo-28d" data-revisao-intervalo="28d"> <span>28 dias após o estudo de origem</span></label>
+<label for="revisoes-intervalo-84d"><input type="checkbox" id="revisoes-intervalo-84d" data-revisao-intervalo="84d"> <span>84 dias após o estudo de origem</span></label>
 </div>
 </div>
 <div id="revisoes-exemplo" hidden>
 <h3>Como ficam suas revisões?</h3>
 <p id="revisoes-exemplo-origem">Se você estudar um conteúdo hoje, poderá revisá-lo nestes intervalos.</p>
 <ul id="revisoes-previa"></ul>
+</div>
+<div id="wizard-revisoes-carga" class="wizard-revisoes-carga">
+<label for="contar-revisoes-na-carga"><input type="checkbox" id="contar-revisoes-na-carga" checked> Contar revisões no tempo diário</label>
+<small id="contar-revisoes-na-carga-ajuda">Quando marcado, o tempo reservado para revisões divide a carga diária com as matérias.</small>
 </div>
 </div>
 </fieldset>
@@ -113,13 +117,34 @@
 <button type="button" id="materia-limpar-vinculo" class="btn btn-sm btn-outline-secondary">Digitar outra matéria</button>
 </div>
 <select id="materia-catalogo" hidden aria-hidden="true"><option value="">Criar nova matéria</option></select>
-<form id="cadastroForm" class="subject-fields">
-<label for="materia">Matéria<input class="form-control" id="materia" maxlength="60" aria-describedby="materia-limite" required><small id="materia-limite">Máximo de 60 caracteres.</small></label>
-<label for="Nquestoes">Questões<input class="form-control" type="number" id="Nquestoes" min="1" max="99" required></label>
-<label for="peso">Peso<input class="form-control" type="number" id="peso" min="1" max="99" value="1" required></label>
-<label for="afinidade">Afinidade<input type="range" class="form-range" id="afinidade" min="0.5" max="1.5" step="0.5" value="1"><span class="affinity-labels"><span>Baixa</span><span>Média</span><span>Alta</span></span></label>
-<button type="submit" class="btn btn-primary">Adicionar matéria</button></form>
-<p class="form-text">Use Baixa para matérias em que precisa de mais tempo e Alta para as que você já domina.</p>
+<div class="subject-fields">
+<label class="campo-materia" for="materia">Matéria<input class="form-control" id="materia" maxlength="60" form="cadastroForm" aria-describedby="materia-limite" required><small id="materia-limite">Máximo de 60 caracteres.</small></label>
+<div class="campo-com-ajuda campo-questoes">
+<div class="campo-rotulo-ajuda"><label for="Nquestoes">Questões</label><button type="button" id="questoes-ajuda-botao" class="info-contextual" data-ajuda-contextual popovertarget="questoes-ajuda" aria-label="Sobre o número de questões">i</button></div>
+<input class="form-control" type="number" id="Nquestoes" form="cadastroForm" min="1" max="99" required>
+<div id="questoes-ajuda" class="ajuda-contextual" popover aria-labelledby="questoes-ajuda-titulo">
+<p id="questoes-ajuda-titulo"><strong>Número de questões</strong></p>
+<p>Deve corresponder ao número de questões dessa matéria, conforme informado no edital ou na prova anterior.</p>
+</div>
+</div>
+<div class="campo-com-ajuda campo-peso">
+<div class="campo-rotulo-ajuda"><label for="peso">Peso</label><button type="button" id="peso-ajuda-botao" class="info-contextual" data-ajuda-contextual popovertarget="peso-ajuda" aria-label="Sobre o peso da matéria">i</button></div>
+<input class="form-control" type="number" id="peso" form="cadastroForm" min="1" max="99" value="1" required>
+<div id="peso-ajuda" class="ajuda-contextual" popover aria-labelledby="peso-ajuda-titulo">
+<p id="peso-ajuda-titulo"><strong>Peso da matéria</strong></p>
+<p>Deve corresponder ao peso que essa matéria recebeu, de acordo com o edital ou a prova anterior.</p>
+</div>
+</div>
+<div class="campo-com-ajuda campo-afinidade">
+<div class="campo-rotulo-ajuda"><label for="afinidade">Afinidade</label><button type="button" id="afinidade-ajuda-botao" class="info-contextual" data-ajuda-contextual popovertarget="afinidade-ajuda" aria-label="Sobre a afinidade com a matéria">i</button></div>
+<input type="range" class="form-range" id="afinidade" form="cadastroForm" min="0.5" max="1.5" step="0.5" value="1"><span class="affinity-labels"><span>Baixa</span><span>Média</span><span>Alta</span></span>
+<div id="afinidade-ajuda" class="ajuda-contextual" popover aria-labelledby="afinidade-ajuda-titulo">
+<p id="afinidade-ajuda-titulo"><strong>Afinidade com a matéria</strong></p>
+<p>Use Baixa para matérias em que precisa de mais tempo, Média para ritmo equilibrado e Alta para as que você já domina.</p>
+</div>
+</div>
+<form id="cadastroForm" class="campo-adicionar"><button type="submit" class="btn btn-primary">Adicionar matéria</button></form>
+</div>
 <div id="table-materias-div" class="subject-table-wrap">
 <table id="table-materias"><caption>Matérias adicionadas</caption>
 <thead><tr><th scope="col">#</th><th scope="col">Matéria</th><th scope="col">Questões</th><th scope="col">Peso</th><th scope="col">Afinidade</th><th scope="col">Excluir</th></tr></thead><tbody id="table-body"></tbody></table>
@@ -139,10 +164,13 @@
 <label for="pratica-xp-linhas" id="pratica-xp-linhas-grupo">Quantidade de linhas<input id="pratica-xp-linhas" class="form-control" type="number" min="0.5" step="any"></label>
 <label for="pratica-xp-tempo" id="pratica-xp-tempo-grupo">Tempo de referência (minutos)<input id="pratica-xp-tempo" class="form-control" type="number" min="0.0166666667" step="any"></label>
 </div>
-<label class="form-check" for="pratica-duracao-referencia"><input class="form-check-input" id="pratica-duracao-referencia" type="checkbox" checked>Usar o tempo sugerido para essa quantidade de linhas</label>
-<label class="form-check tempo-prova-campo" id="pratica-tempo-prova-grupo" for="pratica-tempo-prova" hidden><input class="form-check-input" id="pratica-tempo-prova" type="checkbox">Usar o tempo da prova</label>
+<label class="form-check" for="pratica-duracao-referencia"><input class="form-check-input" id="pratica-duracao-referencia" type="checkbox" checked><span id="pratica-duracao-referencia-rotulo">Usar o tempo sugerido para este modelo</span></label>
 <label for="pratica-duracao"><span id="pratica-duracao-rotulo">Duração planejada (minutos)</span><input id="pratica-duracao" class="form-control" type="number" min="0" step="any" inputmode="decimal" aria-describedby="pratica-duracao-ajuda"><small id="pratica-duracao-ajuda">Informe sua estimativa.</small></label>
-<fieldset class="pratica-importancia"><p id="pratica-importancia-ajuda" hidden></p><div class="pratica-pontuacao">
+<div id="pratica-incluir-carga-grupo" class="pratica-carga-grupo">
+<label class="form-check" for="pratica-incluir-carga"><input class="form-check-input" id="pratica-incluir-carga" type="checkbox" checked>Contar esta atividade no tempo diário</label>
+<small id="pratica-incluir-carga-ajuda">Desmarque se quiser fazer esta atividade fora do tempo diário de estudo.</small>
+</div>
+<fieldset class="pratica-importancia"><legend>Peso na prova <small>(opcional na frequência manual)</small></legend><p id="pratica-importancia-ajuda" class="pratica-importancia-dica">Informe quantos pontos esta atividade vale na prova para sugerirmos ou calcularmos a frequência ideal de treino.</p><div class="pratica-pontuacao">
 <label for="pratica-pontos">Pontuação máxima da atividade<input id="pratica-pontos" class="form-control" type="number" min="0" step="any" inputmode="decimal"></label>
 <label for="pratica-total" id="pratica-total-grupo">Pontuação total da prova (questões e atividade)<input id="pratica-total" class="form-control" type="number" min="0" step="any" inputmode="decimal"></label>
 </div></fieldset>
@@ -165,14 +193,6 @@
 <ul id="praticas-lista" class="praticas-lista" aria-label="Atividades práticas cadastradas"></ul>
 <div id="praticas-previa-capacidade" class="praticas-previa-capacidade" hidden aria-live="polite"></div>
 </section>
-<fieldset id="carga-diaria" aria-describedby="carga-diaria-ajuda">
-<legend>Carga diária</legend>
-<p id="carga-diaria-ajuda">O que você marcar aqui divide o tempo diário disponível com o estudo das matérias.</p>
-<div class="carga-diaria-escolhas">
-<label for="contar-revisoes-na-carga"><input type="checkbox" id="contar-revisoes-na-carga" checked> Contar revisões no tempo diário</label>
-<label for="contar-praticas-na-carga"><input type="checkbox" id="contar-praticas-na-carga" checked> Contar atividades práticas no tempo diário</label>
-</div>
-</fieldset>
 <dialog id="livro-materias-dialog" class="livro-aberto-dialog" aria-labelledby="livro-materias-titulo">
 <div class="livro-aberto-capa">
 <header class="livro-aberto-topo">
@@ -202,9 +222,8 @@
 </dialog>
 </section>
 <section data-painel="3" aria-labelledby="titulo-revisar" hidden>
-<p class="wizard-chapter">Etapa 4 de 4</p><h2 id="titulo-revisar" tabindex="-1">Confira seu plano</h2><p>Revise os dados antes de gerar o cronograma. O Grimório também prepara uma cópia de segurança.</p>
+<p class="wizard-chapter">Etapa 4 de 4</p><h2 id="titulo-revisar" tabindex="-1">Confira seu plano</h2><p>Revise os dados antes de gerar o cronograma.</p>
 <dl id="wizard-resumo" class="wizard-summary"></dl>
-<section id="praticas-resumo" class="praticas-cadastro" aria-labelledby="praticas-resumo-titulo" hidden><h3 id="praticas-resumo-titulo">Atividades práticas</h3><p>Confira as atividades e as datas previstas antes de finalizar.</p><ul id="praticas-resumo-lista"></ul><div id="praticas-resumo-capacidade" class="praticas-previa-capacidade" hidden></div></section>
 </section>
 <p id="wizard-erro" role="alert"></p>
 <section id="wizard-backup-pendente" hidden aria-labelledby="wizard-backup-titulo">
@@ -222,7 +241,7 @@
     <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
 </footer>
 <script type="application/grimorio" src="materias-store.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script><script type="application/grimorio" src="historico-repository.js?v=reagendamento-r6"></script>
-<script type="application/grimorio" src="materias-busca.js"></script><script type="application/grimorio" src="calendario-jornada.js?v=revisoes-intervalos-20261115"></script><script type="application/grimorio" src="revisoes-projecao.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="replanejamento.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="estudo-store.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="distribuicao.js?v=vagas-distribuicao-20261113"></script><script type="application/grimorio" src="script.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="catalogo-ui.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="dados-inicio.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="praticas-cadastro.js?v=sugestao-frequencia"></script><script type="application/grimorio" src="notas-blocos.js"></script><script type="application/grimorio" src="revisoes-materializacao.js?v=carga-diaria-5"></script><script type="application/grimorio" src="revisoes-store.js?v=carga-diaria-5"></script><script type="application/grimorio" src="reagendamento-fontes.js?v=r5"></script><script type="application/grimorio" src="reagendamento-store.js?v=carga-diaria-5"></script><script type="application/grimorio" src="wizard-revisoes.js?v=revisoes-intervalos-20261115"></script><script type="application/grimorio" src="wizard.js?v=carga-diaria-5"></script>
+<script type="application/grimorio" src="materias-busca.js"></script><script type="application/grimorio" src="calendario-jornada.js?v=revisoes-intervalos-20261115"></script><script type="application/grimorio" src="revisoes-projecao.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script><script type="application/grimorio" src="replanejamento.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="estudo-store.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="distribuicao.js?v=vagas-distribuicao-20261113"></script><script type="application/grimorio" src="script.js?v=recadastro-20261116"></script><script type="application/grimorio" src="catalogo-ui.js?v=fusao-xp-20261102"></script><script type="application/grimorio" src="dados-inicio.js?v=carga-diaria-4-20261114"></script><script type="application/grimorio" src="praticas-cadastro.js?v=sugestao-frequencia"></script><script type="application/grimorio" src="notas-blocos.js"></script><script type="application/grimorio" src="revisoes-materializacao.js?v=carga-diaria-5"></script><script type="application/grimorio" src="revisoes-store.js?v=carga-diaria-5"></script><script type="application/grimorio" src="reagendamento-fontes.js?v=r5"></script><script type="application/grimorio" src="reagendamento-store.js?v=carga-diaria-5"></script><script type="application/grimorio" src="wizard-revisoes.js?v=revisoes-intervalos-20261115"></script><script type="application/grimorio" src="wizard.js?v=carga-diaria-5"></script><script type="application/grimorio" src="sistema-ia-store.js?v=avisos-20261116" defer></script><script type="application/grimorio" src="sistema-ia-catalogo.js?v=etapa4-20261116" defer></script><script type="application/grimorio" src="sistema-ia-avisos.js?v=konami-20261116" defer></script>
 </div></div>
 <dialog id="wizard-remover-materia-dialog" class="wizard-confirmacao-dialog" aria-labelledby="wizard-remover-titulo" aria-describedby="wizard-remover-descricao">
     <button type="button" class="pixel-fechar" aria-label="Fechar janela" data-cancelar>Fechar</button>
@@ -233,6 +252,30 @@
         <div class="wizard-confirmacao-acoes">
             <button type="button" class="btn btn-secondary" data-cancelar autofocus>Cancelar</button>
             <button type="button" class="btn btn-danger acao-perigosa" data-confirmar>Remover matéria</button>
+        </div>
+    </div>
+</dialog>
+<dialog id="wizard-remover-atividade-dialog" class="wizard-confirmacao-dialog" aria-labelledby="wizard-remover-atividade-titulo" aria-describedby="wizard-remover-atividade-descricao">
+    <button type="button" class="pixel-fechar" aria-label="Fechar janela" data-cancelar>Fechar</button>
+    <div class="wizard-confirmacao-conteudo">
+        <h2 id="wizard-remover-atividade-titulo">Remover atividade prática do planejamento?</h2>
+        <p id="wizard-remover-atividade-descricao">A atividade <strong id="wizard-remover-atividade-nome"></strong> será removida do cadastro deste projeto.</p>
+        <p class="wizard-confirmacao-aviso">Seu histórico de realizações, sessões e XP acumulado serão preservados com segurança.</p>
+        <p id="wizard-remover-atividade-erro" class="wizard-confirmacao-erro" role="alert"></p>
+        <div class="wizard-confirmacao-acoes">
+            <button type="button" class="btn btn-secondary" data-cancelar autofocus>Cancelar</button>
+            <button type="button" class="btn btn-danger acao-perigosa" data-confirmar>Remover atividade</button>
+        </div>
+    </div>
+</dialog>
+<dialog id="wizard-gerenciar-materias-dialog" class="wizard-confirmacao-dialog" aria-labelledby="wizard-gerenciar-titulo" aria-describedby="wizard-gerenciar-descricao">
+    <button type="button" class="pixel-fechar" aria-label="Fechar janela" data-cancelar>Fechar</button>
+    <div class="wizard-confirmacao-conteudo">
+        <h2 id="wizard-gerenciar-titulo">Sair para gerenciar matérias?</h2>
+        <p id="wizard-gerenciar-descricao">Você sairá do assistente, mas o rascunho permanecerá salvo para concluir depois.</p>
+        <div class="wizard-confirmacao-acoes">
+            <button type="button" class="btn btn-secondary" data-cancelar autofocus>Cancelar</button>
+            <button type="button" class="btn btn-primary" data-confirmar>Ir para Gerenciar matérias</button>
         </div>
     </div>
 </dialog>

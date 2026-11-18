@@ -6,7 +6,7 @@
     const diasSemana = Object.freeze(['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab']);
     const periodicidades = Object.freeze(['semanal', 'quinzenal', 'mensal']);
     const modosInicio = Object.freeze(['inicio', 'data', 'estagio']);
-    const camposAtividade = ['atividadeId', 'projetoId', 'nome', 'tipo', 'duracaoPlanejadaSegundos', 'importanciaProva', 'agendamento', 'presetXpId', 'perfilXp', 'pesoProva', 'duracaoModo'];
+    const camposAtividade = ['atividadeId', 'projetoId', 'nome', 'tipo', 'duracaoPlanejadaSegundos', 'importanciaProva', 'agendamento', 'presetXpId', 'perfilXp', 'pesoProva', 'duracaoModo', 'incluirNaCarga'];
     const camposAtividadeObrigatorios = ['atividadeId', 'projetoId', 'nome', 'tipo', 'duracaoPlanejadaSegundos', 'importanciaProva'];
     const camposMissao = ['versao', 'missaoId', 'atividadeId', 'projetoId', 'dataPrevista', 'duracaoPlanejadaSegundos'];
     const camposConclusao = ['versao', 'conclusaoId', 'missaoId', 'atividadeId', 'projetoId', 'registradoEm'];
@@ -61,6 +61,9 @@
     function regrasDoTipo(tipo) {
         if (!tipos.includes(tipo)) falhar('tipo de atividade inválido');
         return { consomeCargaEstudo: tipo !== 'taf', usaCronometro: tipo !== 'taf', geraRevisoes: false };
+    }
+    function atividadeConsomeCarga(atividade) {
+        return regrasDoTipo(atividade.tipo).consomeCargaEstudo && atividade.incluirNaCarga !== false;
     }
     function importancia(valor) {
         if (valor === null) return null;
@@ -154,6 +157,11 @@
                 if (!p || p.alvoSegundos !== dados.duracaoPlanejadaSegundos) falhar('duração deve corresponder à referência selecionada');
             }
             extras.duracaoModo = dados.duracaoModo;
+        }
+        if (Object.hasOwn(dados, 'incluirNaCarga')) {
+            if (typeof dados.incluirNaCarga !== 'boolean') falhar('inclusão na carga diária inválida');
+            if (dados.tipo === 'taf' && dados.incluirNaCarga) falhar('TAF não consome carga de estudo');
+            extras.incluirNaCarga = dados.incluirNaCarga;
         }
         if (agendamento?.modo === 'automatico') {
             const peso = Object.hasOwn(dados,'pesoProva') ? dados.pesoProva : dados.importanciaProva?.pontos;
@@ -570,6 +578,7 @@
         });
         for (const atividade of ordemExecucao) {
             const regras = regrasDoTipo(atividade.tipo);
+            const consomeCarga = atividadeConsomeCarga(atividade);
             const geradas = gerarMissoesAtividade({
                 atividade,
                 dataInicio: calendario.inicio,
@@ -581,7 +590,7 @@
                 ...(dados.planoTeoricoBase !== undefined ? { planoTeoricoBase: dados.planoTeoricoBase } : {}),
                 ...(dados.gerarMissaoId !== undefined ? { gerarMissaoId: dados.gerarMissaoId } : {})
             });
-            if (!geradas.recomendacao && geradas.agendada && regras.consomeCargaEstudo && pesos && pesos.atividades[atividade.atividadeId].pesoRelativo !== null) {
+            if (!geradas.recomendacao && geradas.agendada && consomeCarga && pesos && pesos.atividades[atividade.atividadeId].pesoRelativo !== null) {
                 const datas = calendario.diasEstudo.filter(d=>d.dataPrevista>=geradas.dataInicioAtiva).map(d=>d.dataPrevista);
                 geradas.recomendacao = {...window.PraticasRecomendacoes.recomendarDatas({datasElegiveis:datas,
                     pesoRelativo:pesos.atividades[atividade.atividadeId].pesoRelativo,duracaoSegundos:atividade.duracaoPlanejadaSegundos,
@@ -596,14 +605,14 @@
                     tempoPlanejadoTotalSegundos = somarSegundos(tempoPlanejadoTotalSegundos, missao.duracaoPlanejadaSegundos);
                 }
                 const listaData = missoesPorData.get(missao.dataPrevista) || [];
-                listaData.push({ missao, atividade, consomeCargaEstudo: regras.consomeCargaEstudo });
+                listaData.push({ missao, atividade, consomeCargaEstudo: consomeCarga });
                 missoesPorData.set(missao.dataPrevista, listaData);
             }
             atividadesPlanejadas.push({
                 atividadeId: atividade.atividadeId,
                 nome: atividade.nome,
                 tipo: atividade.tipo,
-                consomeCargaEstudo: regras.consomeCargaEstudo,
+                consomeCargaEstudo: consomeCarga,
                 agendada: geradas.agendada,
                 periodicidade: atividade.agendamento?.modo === 'automatico' ? 'automatica' : atividade.agendamento ? atividade.agendamento.periodicidade : null,
                 diasSemana: atividade.agendamento?.modo === 'automatico' ? [...calendario.rotina] : atividade.agendamento ? [...atividade.agendamento.diasSemana] : [],
@@ -639,7 +648,7 @@
             for (const missao of todasMissoes) {
                 const atividade = mapaAtividades.get(missao.atividadeId);
                 const lista = missoesPorData.get(missao.dataPrevista)||[];
-                lista.push({missao,atividade,consomeCargaEstudo:regrasDoTipo(atividade.tipo).consomeCargaEstudo});
+                lista.push({missao,atividade,consomeCargaEstudo:atividadeConsomeCarga(atividade)});
                 missoesPorData.set(missao.dataPrevista,lista);
             }
         }

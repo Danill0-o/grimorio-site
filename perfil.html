@@ -3,28 +3,32 @@
 <head>
 <script type="application/grimorio" src="icones-pixel.js?v=controles-20261102"></script>
 <meta charset="UTF-8">
-<script src="tema-inicial.js?v=arcano-padrao"></script>
+<script src="tema-inicial.js?v=etapa4-20261116"></script>
 <script src="armazenamento-offline.js?v=excluir-extra-20261030"></script>
 <script src="iniciar-offline.js?v=tema-inicial-20261102"></script>
-    <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=praticas-e6-20261026"></script>
+    <script type="application/grimorio" src="praticas-progressao.js?v=praticas-ui-20261029"></script><script type="application/grimorio" src="praticas-recomendacoes.js?v=praticas-e8-20261026"></script><script type="application/grimorio" src="atividades-praticas.js?v=praticas-tipos-20261029"></script><script type="application/grimorio" src="praticas-schema.js?v=pratica-excluir-20261118"></script>
     <script type="application/grimorio" src="reagendamento-schema.js?v=r2-20261103"></script>
     <script type="application/grimorio" src="backup-local.js?v=revisoes-configuraveis-20261112"></script>
-    <script type="application/grimorio" src="acessibilidade.js?v=arcano-padrao"></script>
+    <script type="application/grimorio" src="acessibilidade.js?v=konami-20261116"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Seu Grimório — Perfil</title>
-    <link rel="stylesheet" href="css/grimorio.css?v=estavel-20261023">
+    <link rel="stylesheet" href="css/grimorio.css?v=konami-20261116">
     <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
-    <link rel="stylesheet" href="css/perfil.css?v=milestones-20261115">
+    <link rel="stylesheet" href="css/perfil.css?v=sistema-ia-etapa2-20261116">
+    <link rel="stylesheet" href="css/sistema-ia.css?v=etapa4-20261116">
     <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
-    <script type="application/grimorio" src="projetos-store.js?v=revisoes-configuraveis-20261112"></script><script type="application/grimorio" src="praticas-store.js?v=carga-diaria-4-20261114"></script>
+    <script type="application/grimorio" src="projetos-store.js?v=revisoes-configuraveis-20261112"></script><script type="application/grimorio" src="praticas-store.js?v=pratica-excluir-20261118"></script>
     <script type="application/grimorio" src="materias-store.js?v=fusao-xp-20261102"></script>
     <script type="application/grimorio" src="identidade-store.js?v=d061-20261101"></script>
     <script type="application/grimorio" src="historico-repository.js?v=excluir-extra-20261030"></script>
     <script type="application/grimorio" src="calendario-jornada.js?v=revisoes-intervalos-20261115"></script><script type="application/grimorio" src="estudo-extra.js?v=excluir-extra-20261030"></script>
     <script type="application/grimorio" src="estudo-store.js?v=carga-diaria-4-20261114"></script>
-    <script type="application/grimorio" src="perfil-identidade.js?v=etapa1-20261115" defer></script>
-    <script type="application/grimorio" src="perfil-retencao.js?v=milestones-20261115" defer></script>
-    <script type="application/grimorio" src="perfil.js?v=milestones-20261115" defer></script>
+    <script type="application/grimorio" src="sistema-ia-store.js?v=avisos-20261116" defer></script>
+    <script type="application/grimorio" src="perfil-identidade.js?v=etapa3-20261116" defer></script>
+    <script type="application/grimorio" src="sistema-ia-catalogo.js?v=etapa4-20261116" defer></script>
+    <script type="application/grimorio" src="sistema-ia-avisos.js?v=konami-20261116" defer></script>
+    <script type="application/grimorio" src="perfil-retencao.js?v=etapa1-ia-20261116" defer></script>
+    <script type="application/grimorio" src="perfil.js?v=ajustes-20261116" defer></script>
     <script type="application/grimorio" src="praticas-perfil.js?v=etapa3-20261115" defer></script>
 
 <link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
@@ -35,9 +39,19 @@
     <header class="container">
         <section class="jornada-hero perfil-hero perfil-ficha" aria-labelledby="perfil-titulo"><div class="perfil-hero-conteudo">
             <div class="perfil-ficha-cabecalho">
-                <div class="perfil-avatar-quadro" aria-hidden="true">
-                    <img id="perfil-avatar-img" src="img/avatars/mago.svg" width="96" height="96" alt="">
-                    <span id="perfil-avatar-nivel" class="perfil-avatar-nivel">Nv. 1</span>
+                <div id="perfil-avatar-envoltorio" class="perfil-avatar-envoltorio">
+                    <button type="button" id="perfil-avatar-btn" class="perfil-avatar-quadro" aria-label="Retrato do estudante">
+                        <img id="perfil-avatar-img" src="img/avatars/mago.svg" width="96" height="96" alt="">
+                        <svg id="perfil-avatar-olhos-iddqd" class="perfil-avatar-olhos-iddqd" viewBox="0 0 24 24" width="96" height="96" shape-rendering="crispEdges" aria-hidden="true" hidden></svg>
+                        <span id="perfil-avatar-nivel" class="perfil-avatar-nivel">Nv. 1</span>
+                    </button>
+                    <div id="perfil-avatar-hesoyam-hud" class="perfil-avatar-hesoyam-hud" aria-hidden="true" hidden>
+                        <div id="perfil-hesoyam-hp" class="perfil-hesoyam-hp"><span class="perfil-hesoyam-hp-fill"></span></div>
+                        <div class="perfil-hesoyam-painel">
+                            <span id="perfil-hesoyam-dinheiro" class="perfil-hesoyam-dinheiro">$250000</span>
+                            <span id="perfil-hesoyam-estrelas" class="perfil-hesoyam-estrelas"><span class="perfil-hesoyam-estrelas-ativas">★★★</span><span class="perfil-hesoyam-estrelas-vazias">☆☆☆</span></span>
+                        </div>
+                    </div>
                 </div>
                 <div class="perfil-ficha-info">
                     <div class="perfil-ficha-topo">
@@ -46,9 +60,11 @@
                     </div>
                     <h1 id="perfil-titulo">Estudante do Grimório</h1>
                     <p id="perfil-classe-titulo" class="perfil-classe-titulo">Iniciante · Mago Arcano</p>
+                    <p id="perfil-selo-ficticio" class="perfil-selo-ficticio" hidden>+$250.000 (fictícios) · 0 XP real</p>
                     <p class="perfil-intro-apoio">Acompanhe sua evolução global, seus níveis por matéria e suas atividades práticas.</p>
                 </div>
             </div>
+            <p id="perfil-avatar-fala" class="perfil-avatar-fala" role="status" aria-live="polite" hidden></p>
             <dl class="perfil-stats">
                 <div class="jornada-stat"><dt>Tempo total registrado</dt><dd id="perfil-tempo">—</dd></div>
                 <div class="jornada-stat"><dt>Matérias estudadas</dt><dd id="perfil-materias">—</dd></div>
@@ -135,6 +151,32 @@
             <p class="perfil-xp-regra">Marcos calculados automaticamente pelo seu histórico. Conquistas desbloqueadas liberam títulos para equipar na sua ficha.</p>
             <p id="perfil-conquistas-vazio" class="perfil-conquistas-vazio" role="status" hidden></p>
             <ul id="perfil-conquistas-lista" class="perfil-conquistas-grade"></ul>
+            <div id="perfil-conquistas-ocultas" class="perfil-ocultas-subsecao">
+                <div class="perfil-conquistas-cabecalho">
+                    <div>
+                        <p class="jornada-kicker">SISTEMA IA · DESAFIO SECRETO</p>
+                        <h3 id="ocultas-titulo" class="perfil-ocultas-titulo">Conquistas ocultas</h3>
+                    </div>
+                    <div class="perfil-conquistas-topo-acoes">
+                        <label class="perfil-conquistas-filtro-campo" for="perfil-ocultas-filtro">
+                            <span>Exibir</span>
+                            <select id="perfil-ocultas-filtro">
+                                <option value="todas">Todas as ocultas</option>
+                                <option value="desbloqueadas">Descobertas</option>
+                                <option value="bloqueadas">Secretas (???)</option>
+                            </select>
+                        </label>
+                        <p id="perfil-ocultas-resumo" class="perfil-nivel-emblema">0 de 93 descobertas</p>
+                    </div>
+                </div>
+                <p class="perfil-xp-regra perfil-ocultas-regra">
+                    <span>Todas ficam ocultas (???) até você acionar o gatilho surpresa.</span>
+                    <button type="button" id="perfil-reclamacao-xp-btn" class="perfil-reclamacao-xp-btn">Nenhuma conquista oculta concede bônus de XP — apenas comentários do Sistema e títulos equipáveis.</button>
+                </p>
+                <p id="perfil-reclamacao-status" class="perfil-reclamacao-status" role="status" aria-live="polite" hidden></p>
+                <p id="perfil-ocultas-vazio" class="perfil-conquistas-vazio" role="status" hidden></p>
+                <ul id="perfil-ocultas-lista" class="perfil-conquistas-grade" aria-labelledby="ocultas-titulo"></ul>
+            </div>
         </section>
         <section class="perfil-vitrine-secao" aria-labelledby="dominio-titulo">
             <div class="perfil-vitrine-cabecalho">
@@ -213,5 +255,14 @@
         </form>
     </dialog>
 </div></div>
+<footer class="site-rodape">
+    <img class="site-rodape-borda" src="img/assets/Divider.png" alt="" width="1786" height="236" loading="lazy">
+    <p><strong>GRIMÓRIO</strong></p>
+    <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
+    <div class="perfil-isca-rodape">
+        <button type="button" id="perfil-isca-btn" class="perfil-isca-btn" aria-label="Cantinho misterioso decorativo do rodapé">✦ ??? · Cantinho Misterioso</button>
+        <p id="perfil-isca-fala" class="perfil-isca-fala" role="status" aria-live="polite" hidden></p>
+    </div>
+</footer>
 </body>
 </html>

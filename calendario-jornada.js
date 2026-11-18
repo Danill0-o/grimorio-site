@@ -182,7 +182,11 @@
         const rotina = obterRotina(dados);
         const origem = rotina.length ? proximoDia(dados.dataInicioF, dados) : null;
         const contexto = contextoRevisoes(origem, dados);
-        const opcoes = contexto ? estendida.flatMap(periodo => {
+        const usaProximo = periodosSelecionados.some(periodo => periodo?.tipo === 'proximoEstudo');
+        const catalogoBase = usaProximo
+            ? estendida
+            : [proximoEstudo, { tipo: 'semanasAposOrigem', semanas: 1 }, ...estendida.slice(2)];
+        const opcoes = contexto ? catalogoBase.flatMap(periodo => {
             const prevista = projetarPeriodo(periodo, contexto, dados);
             return [{ periodo: { ...periodo }, data: prevista?.data ?? null }];
         }) : [];
@@ -192,7 +196,7 @@
             estendida: validarPoliticaRevisoes(dados, criarPolitica('estendida')),
             personalizado: opcoes.some(opcao => opcao.data)
         };
-        const chavesCatalogo = new Set(estendida.map(chavePeriodo));
+        const chavesCatalogo = new Set([...estendida, { tipo: 'semanasAposOrigem', semanas: 1 }].map(chavePeriodo));
         const disponiveis = periodosSelecionados.every(periodo => chavesCatalogo.has(chavePeriodo(periodo)))
             ? opcoes.filter(({ periodo }) => !periodosSelecionados.some(selecionado => chavePeriodo(selecionado) === chavePeriodo(periodo))) : [];
         return { origem, opcoes: disponiveis, modalidades, diaria: rotina.length === semana.length };

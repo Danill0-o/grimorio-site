@@ -21,6 +21,82 @@
 
     let ultimasDesbloqueadas = [];
     let ultimoNivelGlobal = 1;
+    let renderizando = false;
+    let timerDelayIddqd = null;
+    let timerExpiraIddqd = null;
+    let iddqdAtivo = false;
+    let timerExpiraHesoyam = null;
+    let hesoyamAtivo = false;
+
+    const OLHOS_IDDQD_POR_AVATAR = Object.freeze({
+        mago: [[9, 13, 2, 2], [13, 13, 2, 2]],
+        guardia: [[9, 12, 2, 1], [13, 12, 2, 1]],
+        escriba: [[8, 12, 3, 2], [13, 12, 3, 2]],
+        alquimista: [[8, 10, 3, 3], [13, 10, 3, 3]],
+        explorador: [[9, 12, 2, 2], [13, 12, 2, 2]]
+    });
+
+    const FALAS_CUTUCADA = Object.freeze({
+        1: 'Sim?',
+        3: 'Isso é um avatar, não um botão.',
+        5: 'O Sistema está registrando este comportamento. Em PDF. Com assinatura.',
+        7: 'Meu limite é secreto. Dica: não é sete.',
+        9: 'Cada clique seu é um minuto a menos de estudo. Eu cobro por clique.',
+        11: 'Mas será o Benedito?',
+        12: '...não.'
+    });
+
+    function atualizarOlhosIddqdSvg(avatarId) {
+        const svg = el('perfil-avatar-olhos-iddqd');
+        if (!svg) return;
+        const coords = OLHOS_IDDQD_POR_AVATAR[avatarId] || OLHOS_IDDQD_POR_AVATAR.mago;
+        const ns = 'http://www.w3.org/2000/svg';
+        const rects = coords.map(([x, y, w, h]) => {
+            const r = document.createElementNS(ns, 'rect');
+            r.setAttribute('x', String(x));
+            r.setAttribute('y', String(y));
+            r.setAttribute('width', String(w));
+            r.setAttribute('height', String(h));
+            r.setAttribute('fill', '#fde047');
+            return r;
+        });
+        svg.replaceChildren(...rects);
+    }
+
+    function focarAvatarPerfil() {
+        const btn = el('perfil-avatar-btn');
+        if (!btn) return null;
+        try {
+            btn.scrollIntoView({ block: 'center', behavior: 'instant' });
+        } catch (_) {
+            try { btn.scrollIntoView(); } catch (__) {}
+        }
+        try {
+            btn.focus({ preventScroll: true });
+        } catch (_) {
+            try { btn.focus(); } catch (__) {}
+        }
+        return btn;
+    }
+
+    function definirVisibilidade(nodo, visivel) {
+        if (!nodo) return;
+        nodo.hidden = !visivel;
+        if (visivel) nodo.removeAttribute('hidden');
+        else nodo.setAttribute('hidden', '');
+    }
+
+    function mostrarFalaAvatar(texto) {
+        const box = el('perfil-avatar-fala');
+        if (!box) return;
+        if (!texto) {
+            definirVisibilidade(box, false);
+            box.textContent = '';
+            return;
+        }
+        definirVisibilidade(box, true);
+        box.textContent = texto;
+    }
 
     function renderizarIdentidade(nivelGlobal = 1, conquistasDesbloqueadas = ultimasDesbloqueadas) {
         const identidade = window.PerfilIdentidade ? window.PerfilIdentidade.obter() : {
@@ -32,6 +108,9 @@
         const classeEl = el('perfil-classe-titulo');
         const avatarImg = el('perfil-avatar-img');
         const avatarNivel = el('perfil-avatar-nivel');
+        const seloFicticio = el('perfil-selo-ficticio');
+        const hudHesoyam = el('perfil-avatar-hesoyam-hud');
+        const olhosSvg = el('perfil-avatar-olhos-iddqd');
         const patente = window.PerfilRetencao
             ? window.PerfilRetencao.resolverTituloEquipado(identidade.tituloEquipadoId, conquistasDesbloqueadas, nivelGlobal).rotulo
             : (window.PerfilIdentidade ? window.PerfilIdentidade.tituloGlobalPorNivel(nivelGlobal) : 'Iniciante');
@@ -40,6 +119,10 @@
         if (classeEl) classeEl.textContent = `${patente} · ${identidade.avatar.nome}`;
         if (avatarImg) avatarImg.src = identidade.avatar.arquivo;
         if (avatarNivel) avatarNivel.textContent = `Nv. ${numero(nivelGlobal)}`;
+        atualizarOlhosIddqdSvg(identidade.avatar.id);
+        definirVisibilidade(olhosSvg, iddqdAtivo);
+        definirVisibilidade(seloFicticio, hesoyamAtivo);
+        definirVisibilidade(hudHesoyam, hesoyamAtivo);
         return identidade;
     }
 
@@ -170,6 +253,18 @@
             }
         }
 
+        function criarBotaoEquipar(item) {
+            if (!item.desbloqueada || !window.PerfilIdentidade) return null;
+            const equipado = identidade.tituloEquipadoId === item.id;
+            const btn = elemento('button', equipado ? 'Título equipado' : `Equipar "${item.tituloRecompensa}"`, 'btn btn-outline-secondary perfil-conquista-equipar');
+            btn.type = 'button';
+            btn.setAttribute('aria-pressed', equipado ? 'true' : 'false');
+            btn.addEventListener('click', () => {
+                window.PerfilIdentidade.salvar({ tituloEquipadoId: equipado ? null : item.id });
+            });
+            return btn;
+        }
+
         const cardsConquistas = conquistasVisiveis.map(item => {
             const card = elemento('li', undefined, `perfil-conquista-card ${item.desbloqueada ? 'is-desbloqueada' : 'is-bloqueada'}`);
             card.dataset.conquistaId = item.id;
@@ -192,19 +287,73 @@
             );
             card.append(topo, criterio, status);
 
-            if (item.desbloqueada && window.PerfilIdentidade) {
-                const equipado = identidade.tituloEquipadoId === item.id;
-                const btn = elemento('button', equipado ? 'Título equipado' : `Equipar "${item.tituloRecompensa}"`, 'btn btn-outline-secondary perfil-conquista-equipar');
-                btn.type = 'button';
-                btn.setAttribute('aria-pressed', equipado ? 'true' : 'false');
-                btn.addEventListener('click', () => {
-                    window.PerfilIdentidade.salvar({ tituloEquipadoId: equipado ? null : item.id });
-                });
-                card.append(btn);
-            }
+            const btn = criarBotaoEquipar(item);
+            if (btn) card.append(btn);
             return card;
         });
         listaConquistas.replaceChildren(...cardsConquistas);
+
+        const listaOcultas = el('perfil-ocultas-lista');
+        const resumoOcultas = el('perfil-ocultas-resumo');
+        const vazioOcultas = el('perfil-ocultas-vazio');
+        if (listaOcultas && Array.isArray(retencao.conquistasOcultas)) {
+            const todasOcultas = retencao.conquistasOcultas;
+            const descobertas = retencao.ocultasDesbloqueadas || [];
+            if (resumoOcultas) {
+                resumoOcultas.textContent = `${descobertas.length} de ${todasOcultas.length} descobertas`;
+            }
+
+            const filtroOcultas = el('perfil-ocultas-filtro')?.value || 'todas';
+            const mostrarSegredos = filtroOcultas !== 'desbloqueadas' && todasOcultas.some(item => !item.desbloqueada);
+            const ocultasOrdenadas = filtroOcultas === 'bloqueadas' ? [] : todasOcultas.filter(item => item.desbloqueada);
+
+            if (vazioOcultas) {
+                if (ocultasOrdenadas.length === 0 && !mostrarSegredos) {
+                    vazioOcultas.hidden = false;
+                    vazioOcultas.textContent = filtroOcultas === 'desbloqueadas'
+                        ? 'Nenhuma conquista oculta descoberta ainda.'
+                        : 'Parabéns: você já revelou todas as conquistas ocultas!';
+                } else {
+                    vazioOcultas.hidden = true;
+                    vazioOcultas.textContent = '';
+                }
+            }
+
+            const cardsOcultas = ocultasOrdenadas.map(item => {
+                const card = elemento('li', undefined, 'perfil-conquista-card is-desbloqueada is-oculta-desbloqueada');
+                card.dataset.conquistaId = item.id;
+
+                const topo = elemento('div', undefined, 'perfil-conquista-topo');
+                const emblema = elemento('span', 'IA', 'perfil-conquista-emblema');
+                emblema.setAttribute('aria-hidden', 'true');
+                const meta = elemento('div', undefined, 'perfil-conquista-meta');
+                meta.append(
+                    elemento('span', `${item.categoria} · Sistema IA`, 'perfil-conquista-categoria'),
+                    elemento('h3', item.nome, 'perfil-conquista-nome')
+                );
+                topo.append(emblema, meta);
+
+                const fala = elemento('blockquote', item.fala, 'perfil-oculta-fala');
+                const status = elemento('p', `Descoberta · Título: ${item.tituloRecompensa}`, 'perfil-conquista-status');
+                card.append(topo, fala, status);
+                const btn = criarBotaoEquipar(item);
+                if (btn) card.append(btn);
+                return card;
+            });
+            if (mostrarSegredos) {
+                const card = elemento('li', undefined, 'perfil-conquista-card is-bloqueada is-oculta-bloqueada');
+                const topo = elemento('div', undefined, 'perfil-conquista-topo');
+                const emblema = elemento('span', '???', 'perfil-conquista-emblema');
+                emblema.setAttribute('aria-hidden', 'true');
+                const meta = elemento('div', undefined, 'perfil-conquista-meta');
+                meta.append(elemento('span', 'Conquista Oculta', 'perfil-conquista-categoria'),
+                    elemento('h3', '???', 'perfil-conquista-nome'));
+                topo.append(emblema, meta);
+                card.append(topo, elemento('p', 'Segredos por descobrir', 'perfil-conquista-status'));
+                cardsOcultas.push(card);
+            }
+            listaOcultas.replaceChildren(...cardsOcultas);
+        }
     }
 
     const PATENTES_BRASAO = Object.freeze({
@@ -276,25 +425,49 @@
         return card;
     }
 
+    function carregarDadosPerfil() {
+        const materias = EstudoStore.listarDominioGlobal()
+            .filter(m => MateriasStore.resolverMateriaGlobal(m.materiaGlobalId).status !== 'excluida');
+        const sessoes = EstudoStore.listarSessoes();
+        const global = EstudoStore.obterProgressaoGlobal();
+        const total = sessoes.reduce((soma, sessao) => soma + Number(sessao.duracaoSegundos), 0) + global.segundosPraticas;
+        const projetos = ProjetosStore.listar().length;
+        const praticas = window.PraticasStore?.listarProgressao ? window.PraticasStore.listarProgressao() : [];
+        const identidadeAtual = window.PerfilIdentidade?.obter?.();
+        const retencao = window.PerfilRetencao
+            ? window.PerfilRetencao.calcular({ sessoes, materias, global, praticas, identidade: identidadeAtual })
+            : null;
+        return { materias, sessoes, global, total, projetos, praticas, identidadeAtual, retencao };
+    }
+
+    function registrarVisitaMural() {
+        if (!window.SistemaIaStore || !window.PerfilRetencao) return;
+        try {
+            const { retencao } = carregarDadosPerfil();
+            const hojeIso = retencao?.hojeIso || window.PerfilRetencao.dataCivilLocal(new Date());
+            const totalSemFiscal = (retencao?.todasDesbloqueadas || []).filter(c => c.id !== 'fiscal_trofeus').length;
+            window.SistemaIaStore.atualizarTelemetria(t => {
+                const atual = t.visitasMuralHoje || { data: '', contagem: 0, ultimoTotal: 0 };
+                if (atual.data !== hojeIso || totalSemFiscal > atual.ultimoTotal) {
+                    t.visitasMuralHoje = { data: hojeIso, contagem: 1, ultimoTotal: totalSemFiscal };
+                } else {
+                    t.visitasMuralHoje = { data: hojeIso, contagem: atual.contagem + 1, ultimoTotal: totalSemFiscal };
+                }
+            });
+        } catch (_) {}
+    }
+
     function renderizar() {
+        if (renderizando) return;
         const lista = el('perfil-dominio');
         const status = el('perfil-status');
         if (!lista || !status) return;
+        renderizando = true;
         try {
-            const materias = EstudoStore.listarDominioGlobal()
-                .filter(m => MateriasStore.resolverMateriaGlobal(m.materiaGlobalId).status !== 'excluida');
-            const sessoes = EstudoStore.listarSessoes();
-            const global = EstudoStore.obterProgressaoGlobal();
-            const total = sessoes.reduce((soma, sessao) => soma + Number(sessao.duracaoSegundos), 0) + global.segundosPraticas;
-            const projetos = ProjetosStore.listar().length;
-            const praticas = window.PraticasStore?.listarProgressao ? window.PraticasStore.listarProgressao() : [];
-
-            const retencao = window.PerfilRetencao
-                ? window.PerfilRetencao.calcular({ sessoes, materias, global, praticas })
-                : null;
+            const { materias, global, total, projetos, retencao } = carregarDadosPerfil();
 
             ultimoNivelGlobal = global.nivel;
-            ultimasDesbloqueadas = retencao ? retencao.conquistasDesbloqueadas : [];
+            ultimasDesbloqueadas = retencao ? (retencao.todasDesbloqueadas || retencao.conquistasDesbloqueadas) : [];
             const identidade = renderizarIdentidade(global.nivel, ultimasDesbloqueadas);
             renderizarRetencao(retencao, identidade);
 
@@ -351,10 +524,14 @@
             if (resumoDominio) resumoDominio.textContent = '—';
             const listaConquistas = el('perfil-conquistas-lista');
             if (listaConquistas) listaConquistas.replaceChildren();
+            const listaOcultas = el('perfil-ocultas-lista');
+            if (listaOcultas) listaOcultas.replaceChildren();
             const lista7d = el('perfil-ritmo-7d');
             if (lista7d) lista7d.replaceChildren();
             status.textContent = 'Não foi possível carregar seu perfil. Os dados foram preservados. Verifique o armazenamento e recarregue para tentar novamente.';
             console.error(erro);
+        } finally {
+            renderizando = false;
         }
     }
 
@@ -436,13 +613,18 @@
         form.addEventListener('submit', e => {
             e.preventDefault();
             try {
-                window.PerfilIdentidade.salvar({
+                const iaAntes = window.SistemaIaStore?.ler?.();
+                const eraUsurpadorAntes = Boolean(iaAntes?.telemetria?.usurpadorAplicado || iaAntes?.desbloqueadas?.usurpador_do_trono);
+                const salvo = window.PerfilIdentidade.salvar({
                     nomeExibicao: inputNome.value,
                     avatarId: avatarSelecionado,
                     tituloEquipadoId: selectTitulo ? (selectTitulo.value || null) : undefined
                 });
                 dialogo.close();
                 renderizar();
+                if (!eraUsurpadorAntes && window.SistemaIaStore?.estaDesbloqueada?.('usurpador_do_trono') && salvo?.nomePersonalizado === 'Sisteminha Júnior') {
+                    mostrarFalaAvatar('Você tentou se chamar "Sistema"? Aqui só cabe um. Cargo concedido: Sisteminha Júnior.');
+                }
                 abrir.focus();
             } catch (erro) {
                 if (statusDialogo) statusDialogo.textContent = 'Não foi possível salvar suas preferências neste navegador.';
@@ -451,18 +633,226 @@
         });
     }
 
+    function iniciarEasterEggs() {
+        const avatarBtn = el('perfil-avatar-btn');
+        let cutucadasTimestamps = [];
+        avatarBtn?.addEventListener('click', () => {
+            const agora = Date.now();
+            cutucadasTimestamps = cutucadasTimestamps.filter(t => agora - t <= 60000);
+            cutucadasTimestamps.push(agora);
+            const n = cutucadasTimestamps.length;
+            const identidade = window.PerfilIdentidade?.obter?.() || {};
+            const benedito = Boolean(window.SistemaIaCatalogo?.ehNomeBenedito?.(identidade));
+            const jaDesbloqueada = Boolean(window.SistemaIaStore?.estaDesbloqueada?.('cutucada_13'));
+
+            if (jaDesbloqueada) {
+                mostrarFalaAvatar(benedito
+                    ? 'Ainda por aqui, Benedito? O retrato continua firme.'
+                    : 'Você já cruzou meu limite antes. Agora volte para o estudo.');
+                return;
+            }
+            if (n >= 13) {
+                if (window.SistemaIaCatalogo?.desbloquearComAviso) {
+                    window.SistemaIaCatalogo.desbloquearComAviso('cutucada_13');
+                } else {
+                    window.SistemaIaStore?.registrarDesbloqueio?.('cutucada_13');
+                }
+                mostrarFalaAvatar(benedito
+                    ? 'Treze cutucadas! E não é que era mesmo o Benedito?'
+                    : 'Treze cutucadas! Azar do número 13 — conquista desbloqueada.');
+                renderizar();
+                window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                return;
+            }
+            if (Object.hasOwn(FALAS_CUTUCADA, n)) {
+                mostrarFalaAvatar(FALAS_CUTUCADA[n]);
+            }
+        });
+
+        const reclamacaoBtn = el('perfil-reclamacao-xp-btn');
+        const reclamacaoStatus = el('perfil-reclamacao-status');
+        reclamacaoBtn?.addEventListener('click', () => {
+            const res = window.SistemaIaStore?.incrementarTelemetria?.('cliquesReclamacaoXp', 1);
+            const total = Number(res?.telemetria?.cliquesReclamacaoXp || 0);
+            const desbloqueada = window.SistemaIaStore?.estaDesbloqueada?.('reclamacao_xp');
+            const atingiuMeta = total >= window.SistemaIaCatalogo.CLIQUES_RECLAMACAO_XP;
+            if (reclamacaoStatus) {
+                reclamacaoStatus.hidden = false;
+                reclamacaoStatus.textContent = !atingiuMeta && !desbloqueada
+                    ? `Protocolo nº ${total}: o Departamento de Reclamações foi extinto em 2019 (0 XP).`
+                    : `Protocolo nº ${total} atendido! Conquista "Departamento de Reclamações" desbloqueada (continua valendo 0 XP).`;
+            }
+            if (atingiuMeta && !desbloqueada) {
+                renderizar();
+                window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+            }
+        });
+
+        const iscaBtn = el('perfil-isca-btn');
+        const iscaFala = el('perfil-isca-fala');
+        iscaBtn?.addEventListener('click', () => {
+            const res = window.SistemaIaStore?.incrementarTelemetria?.('cliquesIsca', 1);
+            const total = Number(res?.telemetria?.cliquesIsca || 0);
+            if (iscaFala) {
+                iscaFala.hidden = false;
+                if (total < 5) iscaFala.textContent = 'Plaquinha oficial: "NADA AQUI".';
+                else if (total < 10) iscaFala.textContent = `Sério. Não há segredo nenhum neste cantinho (${total} cliques).`;
+                else if (total < 20) iscaFala.textContent = `Você ainda está clicando na plaquinha que diz "nada"? (${total}/???)`;
+                else if (total === 20) iscaFala.textContent = '20 cliques! Eu sabia que você ia clicar. (Nada continua acontecendo.)';
+                else if (total < 100) iscaFala.textContent = `A plaquinha ainda diz "nada". Cliques acumulados: ${total}.`;
+                else iscaFala.textContent = `100+ cliques na plaquinha "nada"! Obstinado Sem Causa (${total} cliques).`;
+            }
+            if (total === 20 || total === 100 || (total > 20 && !window.SistemaIaStore?.estaDesbloqueada?.('isca_decorativa')) || (total > 100 && !window.SistemaIaStore?.estaDesbloqueada?.('isca_decorativa_100'))) {
+                renderizar();
+                window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+            }
+        });
+
+        function ativarEfeitoIddqd() {
+            const btn = focarAvatarPerfil();
+            window.SistemaIaStore?.incrementarTelemetria?.('codigoIddqdCount', 1);
+            if (window.SistemaIaCatalogo?.desbloquearComAviso) {
+                window.SistemaIaCatalogo.desbloquearComAviso('modo_deus_iddqd');
+            } else {
+                window.SistemaIaStore?.registrarDesbloqueio?.('modo_deus_iddqd');
+            }
+            if (timerDelayIddqd) clearTimeout(timerDelayIddqd);
+            if (timerExpiraIddqd) clearTimeout(timerExpiraIddqd);
+            iddqdAtivo = false;
+            btn?.classList.remove('is-iddqd-ativo');
+            definirVisibilidade(el('perfil-avatar-olhos-iddqd'), false);
+            renderizar();
+            window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+
+            const delayMs = Number.isFinite(window.__sistemaIaDelayIddqdMs)
+                ? Math.max(0, Number(window.__sistemaIaDelayIddqdMs))
+                : 1000;
+            const duracaoMs = Number.isFinite(window.__sistemaIaDuracaoEfeitoMs)
+                ? Math.max(50, Number(window.__sistemaIaDuracaoEfeitoMs))
+                : 60000;
+
+            timerDelayIddqd = setTimeout(() => {
+                timerDelayIddqd = null;
+                iddqdAtivo = true;
+                const idAtual = window.PerfilIdentidade?.obter?.()?.avatarId || 'mago';
+                atualizarOlhosIddqdSvg(idAtual);
+                definirVisibilidade(el('perfil-avatar-olhos-iddqd'), true);
+                el('perfil-avatar-btn')?.classList.add('is-iddqd-ativo');
+                timerExpiraIddqd = setTimeout(() => {
+                    timerExpiraIddqd = null;
+                    iddqdAtivo = false;
+                    el('perfil-avatar-btn')?.classList.remove('is-iddqd-ativo');
+                    definirVisibilidade(el('perfil-avatar-olhos-iddqd'), false);
+                }, duracaoMs);
+            }, delayMs);
+        }
+
+        window.AtivarEfeitoIddqdPerfil = ativarEfeitoIddqd;
+
+        function acionarCodigoConsole() {
+            const btn = focarAvatarPerfil();
+            window.SistemaIaStore?.atualizarTelemetria?.(t => {
+                t.codigoConsole = true;
+            });
+            if (window.SistemaIaCatalogo?.desbloquearComAviso) {
+                window.SistemaIaCatalogo.desbloquearComAviso('console_curioso');
+            } else {
+                window.SistemaIaStore?.registrarDesbloqueio?.('console_curioso');
+            }
+            if (timerExpiraHesoyam) clearTimeout(timerExpiraHesoyam);
+            hesoyamAtivo = true;
+            btn?.classList.add('is-hesoyam-ativo');
+            definirVisibilidade(el('perfil-avatar-hesoyam-hud'), true);
+            definirVisibilidade(el('perfil-selo-ficticio'), true);
+            renderizar();
+            window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+
+            const duracaoMs = Number.isFinite(window.__sistemaIaDuracaoEfeitoMs)
+                ? Math.max(50, Number(window.__sistemaIaDuracaoEfeitoMs))
+                : 60000;
+            timerExpiraHesoyam = setTimeout(() => {
+                timerExpiraHesoyam = null;
+                hesoyamAtivo = false;
+                el('perfil-avatar-btn')?.classList.remove('is-hesoyam-ativo');
+                definirVisibilidade(el('perfil-avatar-hesoyam-hud'), false);
+                definirVisibilidade(el('perfil-selo-ficticio'), false);
+            }, duracaoMs);
+            return 'Nice try! Sem Nível 100 de graça — mas você ganhou +$250.000 (fictícios) e a conquista Bisbilhoteiro de Código.';
+        }
+
+        try {
+            console.log(
+                '%c// TODO: apagar antes de subir para produção\n%cCódigo secreto para pular direto para o Nível 100: %cHESOYAM%c (É verdade esse bilete)',
+                'color: #94a3b8; font-style: italic;',
+                'color: #fde047; font-weight: bold;',
+                'color: #34d399; font-weight: bold; background: #090b14; padding: 2px 6px;',
+                'color: #fde047;'
+            );
+        } catch (_) {}
+
+        if (!Object.getOwnPropertyDescriptor(window, 'HESOYAM')) {
+            const executarHesoyam = () => acionarCodigoConsole();
+            executarHesoyam.toString = () => acionarCodigoConsole();
+            Object.defineProperty(window, 'HESOYAM', {
+                enumerable: false,
+                configurable: true,
+                get() {
+                    acionarCodigoConsole();
+                    return executarHesoyam;
+                }
+            });
+        }
+        if (!Object.getOwnPropertyDescriptor(window, 'sistema')) {
+            Object.defineProperty(window, 'sistema', {
+                enumerable: false,
+                configurable: true,
+                value: Object.freeze({ ola: () => acionarCodigoConsole() })
+            });
+        }
+
+        let bufferHesoyam = '';
+        let ultimoTempoHesoyam = 0;
+        const limparHesoyam = () => { bufferHesoyam = ''; };
+        document.addEventListener('focusin', limparHesoyam);
+        window.addEventListener('blur', limparHesoyam);
+        document.addEventListener('keydown', e => {
+            if (e.repeat || e.ctrlKey || e.metaKey || e.altKey || typeof e.key !== 'string' || e.key.length !== 1) return;
+            const target = e.target;
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable || target.closest?.('[contenteditable="true"]'))) return;
+            const agora = Date.now();
+            if (agora - ultimoTempoHesoyam > 1500) bufferHesoyam = '';
+            ultimoTempoHesoyam = agora;
+            const ch = e.key.toLowerCase();
+            bufferHesoyam += ch;
+            if (!'hesoyam'.startsWith(bufferHesoyam)) {
+                bufferHesoyam = ch === 'h' ? 'h' : '';
+            }
+            if (bufferHesoyam === 'hesoyam') {
+                bufferHesoyam = '';
+                acionarCodigoConsole();
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         iniciarDialogoIdentidade();
+        iniciarEasterEggs();
         el('perfil-conquistas-filtro')?.addEventListener('change', renderizar);
+        el('perfil-ocultas-filtro')?.addEventListener('change', renderizar);
         el('perfil-dominio-ordem')?.addEventListener('change', renderizar);
         el('perfil-dominio-filtro')?.addEventListener('change', renderizar);
+        registrarVisitaMural();
         renderizar();
     });
-    for (const evento of ['estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'materias:excluida', 'praticas:alteradas', 'perfil:identidade-alterada', 'pageshow']) {
+    for (const evento of ['estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'materias:excluida', 'praticas:alteradas', 'revisoes:alteradas', 'perfil:identidade-alterada', 'sistema-ia:atualizado']) {
         window.addEventListener(evento, renderizar);
     }
+    window.addEventListener('pageshow', e => {
+        if (e.persisted) registrarVisitaMural();
+        renderizar();
+    });
     window.addEventListener('storage', e => {
-        if (!e.key || e.key === window.PerfilIdentidade?.CHAVE || e.key.startsWith('historicoOperacaoV1:') || e.key.startsWith('projetoV1:') || e.key.startsWith('praticasProjetoV1:') || e.key === 'materiasDominioV1') {
+        if (!e.key || e.key === window.PerfilIdentidade?.CHAVE || e.key === window.SistemaIaStore?.CHAVE || e.key.startsWith('historicoOperacaoV1:') || e.key.startsWith('projetoV1:') || e.key.startsWith('praticasProjetoV1:') || e.key === 'materiasDominioV1') {
             renderizar();
         }
     });

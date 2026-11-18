@@ -78,6 +78,12 @@
                 const eraFoco = dados.etapa === 'foco';
                 dados.etapa = eraFoco ? 'aguarda-pausa' : 'aguarda-foco';
                 rodando = false; bip(eraFoco ? 2 : 1);
+                if (eraFoco) {
+                    try {
+                        window.SistemaIaStore?.incrementarTelemetria?.('pomodorosFocoConcluidosSeq', 1);
+                        window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                    } catch (_) {}
+                }
             }
         }
         function renderizar(timer) {
@@ -142,7 +148,18 @@
             habilitarAudio(); atualizar();
             if (botao.disabled) return;
             if (dados.ativo) {
-                dados.ativo = false; preparar(); atualizar(); return;
+                const desligouEmFoco = dados.etapa === 'foco';
+                dados.ativo = false; preparar(); atualizar();
+                if (desligouEmFoco) {
+                    try {
+                        window.SistemaIaStore?.atualizarTelemetria?.(t => {
+                            t.pomodoroDesligadoEmFoco = Number(t.pomodoroDesligadoEmFoco || 0) + 1;
+                            t.pomodorosFocoConcluidosSeq = 0;
+                        });
+                        window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                    } catch (_) {}
+                }
+                return;
             }
             foco.value = formato(dados.focoSegundos); pausa.value = formato(dados.pausaSegundos);
             padrao.checked = dados.focoSegundos === 1500 && dados.pausaSegundos === 300;

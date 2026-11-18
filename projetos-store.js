@@ -216,7 +216,13 @@
         },
         criar, selecionar, validarAtual: validar, temAtual: () => Boolean(selecionado), idAtual: () => selecionado,
         arquivar: id=>gerenciar(id,()=>storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:true})),true),
-        restaurar: id=>gerenciar(id,()=>storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:false}))),
+        restaurar: id=>gerenciar(id,()=>{
+            storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:false}));
+            try {
+                window.SistemaIaStore?.incrementarTelemetria?.('projetosRestaurados', 1, storage);
+                window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+            } catch (_) {}
+        }),
         excluir: id=>gerenciar(id,()=>excluir(id),true),
         duplicar: (id,destino=uuid())=>gerenciar(id,()=>duplicar(id,destino)),
         listar() {

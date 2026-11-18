@@ -346,13 +346,24 @@
 .dia-missao-item.dia-missao-concluida { border-left-color: var(--pixel-gold); }
 .dia-missao-detalhe, .dia-missao-estado { display: block; }
 .dia-missao-estado { font-weight: 700; }
+.dia-missao-acoes { display: flex; align-items: center; gap: 8px; width: 100%; }
+.dia-missao-acoes > button:first-child { flex: 1; min-width: 0; white-space: normal; }
+.dia-missao-acoes > .materia-excluir-icone { flex: 0 0 44px; width: 44px; height: 44px; }
 
 .jornada-page .estudo-extra { position: relative; padding-right: 48px; }
 .jornada-page .estudo-extra button.extra-excluir { position: absolute; top: 2px; right: 2px; width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 4px; background: transparent !important; color: var(--pixel-ink) !important; border: 0 !important; box-shadow: none !important; font-size: 16px; }
 .jornada-page .estudo-extra button.extra-excluir:hover, .jornada-page .estudo-extra button.extra-excluir:focus-visible { outline: 2px solid currentColor; }
 
 .jornada-page .extra-excluir-icone { display: block; width: 18px; height: 18px; object-fit: contain; pointer-events: none; filter: none; }
-.jornada-page[data-tema-pixel="arcano"] .extra-excluir-icone, [data-tema-pixel="arcano"] .jornada-page .extra-excluir-icone { filter: brightness(0) invert(1); }
+.jornada-page[data-tema-pixel="arcano"] .extra-excluir-icone,
+[data-tema-pixel="arcano"] .jornada-page .extra-excluir-icone,
+.jornada-page[data-tema-pixel="fliperama"] .extra-excluir-icone,
+[data-tema-pixel="fliperama"] .jornada-page .extra-excluir-icone { filter: brightness(0) invert(1); }
+
+[data-tema-pixel="fliperama"] #jornada-cards .dia-card-atual {
+    border-color: var(--pixel-arcade-cyan, #00f5ff);
+    box-shadow: inset 0 0 0 2px #ff2ea6, 0 0 16px rgb(0 245 255 / .24), 4px 4px 0 var(--pixel-border-outer);
+}
 .jornada-page .site-rodape .credito-lixeira { display: block; margin-top: 12px; font-size: .75rem; }
 
 /* Expansão sob clique das matérias no card do dia */

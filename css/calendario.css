@@ -144,6 +144,23 @@
     border-color: #38bdf8 !important;
     color: #ffffff !important;
 }
+[data-tema-pixel="fliperama"] #calendario-dias .calendario-dia {
+    background-color: #170d2e !important;
+    background-image: linear-gradient(180deg, #21103d 0%, #140a26 100%) !important;
+    border-color: #7b42f6 !important;
+    color: #f8f4ff !important;
+}
+[data-tema-pixel="fliperama"] #calendario-dias .calendario-dia:hover {
+    background-color: #102b52 !important;
+    background-image: none !important;
+    border-color: #00f5ff !important;
+    color: #ffe14d !important;
+    box-shadow: 0 0 10px rgb(0 245 255 / .35);
+}
+[data-tema-pixel="fliperama"] .calendario-popup-etapa {
+    background-color: #075e63 !important;
+    color: #ffffff !important;
+}
 
 #calendario-dias .calendario-dia[data-hoje="true"] {
     border-color: var(--pixel-emerald-bright) !important;
@@ -518,5 +535,12 @@
 .calendario-voltar-jornada { margin: .75rem 0; text-decoration: none; }
 
 .jornada-hero.calendario-intro { background-image: linear-gradient(90deg,var(--pixel-surface-elevated) 0%,var(--pixel-surface) 70%,rgba(15,10,6,.45) 100%), url('../img/assets/crest-calendar.jpeg') !important; background-size: cover, auto 100% !important; background-position: center, right center !important; background-repeat: no-repeat !important; }
+:root[data-tema-pixel="fliperama"] .jornada-hero.calendario-intro {
+    background-image:
+        linear-gradient(90deg, #1c0f36 0%, #140a26 66%, rgb(20 10 38 / .48) 100%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 360 160' shape-rendering='crispEdges'%3E%3Crect x='232' y='26' width='76' height='8' fill='%23ffe14d' fill-opacity='.34'/%3E%3Crect x='218' y='38' width='104' height='8' fill='%23ffe14d' fill-opacity='.28'/%3E%3Crect x='210' y='50' width='120' height='6' fill='%23ff2ea6' fill-opacity='.30'/%3E%3Crect x='210' y='60' width='120' height='6' fill='%23ff2ea6' fill-opacity='.26'/%3E%3Crect x='218' y='70' width='104' height='6' fill='%23ff2ea6' fill-opacity='.22'/%3E%3Crect x='230' y='58' width='32' height='102' fill='%23090412' fill-opacity='.88'/%3E%3Crect x='298' y='64' width='30' height='96' fill='%23090412' fill-opacity='.88'/%3E%3Crect x='170' y='118' width='190' height='2' fill='%2300f5ff' fill-opacity='.35'/%3E%3Crect x='170' y='132' width='190' height='2' fill='%23ff2ea6' fill-opacity='.32'/%3E%3Crect x='170' y='146' width='190' height='2' fill='%2300f5ff' fill-opacity='.30'/%3E%3C/svg%3E") !important;
+    background-size: cover, auto 100% !important;
+    background-position: center, right 12px center !important;
+}
 .calendario-intro > * { max-width: 70%; }
 @media(max-width:700px) { .calendario-intro > * { max-width: 100%; } .jornada-hero.calendario-intro { background-image: linear-gradient(90deg,var(--pixel-surface-elevated) 0%,var(--pixel-surface) 78%,rgba(15,10,6,.45) 100%), url('../img/assets/crest-calendar.jpeg') !important; } }

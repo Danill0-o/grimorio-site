@@ -671,7 +671,21 @@
                 missao.concluidasAtividade, Math.max(1, missao.planejadasAtividade),
                 `Progresso de ${missao.nome} neste projeto: ${missao.concluidasAtividade} de ${missao.planejadasAtividade} atividades práticas concluídas (${percentual}%)`));
             item.append(identificacao);
-            if (window.PraticasExecucaoUI) item.append(window.PraticasExecucaoUI.botaoAbrir(missao));
+            if (window.PraticasExecucaoUI) {
+                const acoes = document.createElement('div');
+                acoes.className = 'dia-missao-acoes';
+                acoes.append(window.PraticasExecucaoUI.botaoAbrir(missao));
+                if (missao.extraAvulsa) {
+                    const excluir = document.createElement('button');
+                    excluir.type = 'button';
+                    excluir.className = 'materia-excluir-icone';
+                    excluir.setAttribute('aria-label', `Excluir atividade extra ${missao.nome}`);
+                    excluir.append(window.IconesPixel.criar('excluir'));
+                    excluir.addEventListener('click', () => window.PraticasExecucaoUI.confirmarExclusaoExtra(missao));
+                    acoes.append(excluir);
+                }
+                item.append(acoes);
+            }
             lista.append(item);
         });
         card.append(titulo, lista);

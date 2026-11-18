@@ -48,7 +48,6 @@ document.addEventListener('DOMContentLoaded',()=>{
    const metas=JSON.parse((window.ProjetoStorage||localStorage).getItem('lista_distribuicao_materias')||'[]');
    const materias=JSON.parse((window.ProjetoStorage||localStorage).getItem('objetosNormalizados')||'[]');
    document.querySelectorAll('#table-body-peso tr').forEach((tr,i)=>{const percentual=tr.cells[3];if(percentual)percentual.textContent=percentual.textContent.replace(/%/g,'')+'%';const td=document.createElement('td');const meta=metas.find(m=>m.projetoMateriaId===materias[i]?.projetoMateriaId);td.textContent=meta?(Number(meta.Materia_distribuida)/60).toLocaleString('pt-BR',{maximumFractionDigits:2}):'—';tr.append(td);});
-   const cores=()=>{const grafico=window.Chart?.getChart('graficoPizza');if(!grafico)return;const cor=getComputedStyle(document.documentElement).getPropertyValue('--pixel-ink').trim();grafico.options.plugins.title.color=cor;grafico.options.plugins.legend.labels.color=cor;grafico.update('none');};cores();new MutationObserver(cores).observe(document.documentElement,{attributes:true,attributeFilter:['data-tema-pixel']});
   }
  });
  const ordem=e=>['abrir-praticas','atalho-praticas'].includes(e.id)?4:e.id==='reagendamento-jornada-abrir'?4.5:e.id==='jornada-temas'?9:({'perfil.html':0,'home.html':1,'agenda.html':2,'calendario.html':3,'pesomateria.html':5,'index.html':6,'materias.html':7,'historico.html':8}[e.getAttribute('href')?.split('?')[0]]??-1);

@@ -70,6 +70,7 @@
     function obterMissao(estado, missaoId) {
         id(missaoId);
         if (!Object.hasOwn(estado.missoes, missaoId)) falhar('atividade prática inexistente');
+        if (estado.exclusoes.missoes?.[missaoId]) falhar('ocorrência extra excluída');
         return estado.missoes[missaoId];
     }
     function inserir(colecao, campoId, entrada) {
@@ -104,7 +105,7 @@
         return escrever(projetoId, estado => {
             const registro = obterAtividade(estado, atividadeId, true);
             if (!alteracoes || typeof alteracoes !== 'object' || Array.isArray(alteracoes)
-                || Object.keys(alteracoes).some(k => !['nome', 'tipo', 'duracaoPlanejadaSegundos', 'importanciaProva', 'agendamento', 'presetXpId', 'perfilXp', 'pesoProva', 'duracaoModo'].includes(k))) falhar('alterações inválidas');
+                || Object.keys(alteracoes).some(k => !['nome', 'tipo', 'duracaoPlanejadaSegundos', 'importanciaProva', 'agendamento', 'presetXpId', 'perfilXp', 'pesoProva', 'duracaoModo', 'incluirNaCarga'].includes(k))) falhar('alterações inválidas');
             const atualizada = dominio.validarAtividade({ ...registro.atividade, ...alteracoes });
             if (igual(atualizada, registro.atividade)) return registro;
             if (atualizada.tipo !== registro.atividade.tipo
@@ -132,6 +133,7 @@
             const registro = obterAtividade(estado, atividadeId, true);
             // Retry conserva o snapshot original, inclusive após editar duração.
             if (dados && Object.hasOwn(estado.missoes, dados.missaoId)) {
+                if (estado.exclusoes.missoes?.[dados.missaoId]) falhar('ocorrência extra excluída');
                 const anterior = estado.missoes[dados.missaoId];
                 const configuracao = { ...registro.atividade, duracaoPlanejadaSegundos: anterior.duracaoPlanejadaSegundos };
                 delete configuracao.duracaoModo; // retry usa a duração histórica, não a referência atual do cadastro
@@ -158,6 +160,24 @@
             if (registro.removida && !Object.hasOwn(estado[nome], fato[campoId])) falhar('atividade removida');
             // Um retry de fato excluído retorna a origem, mas conserva seu tombstone.
             return inserir(estado[nome], campoId, fato);
+        });
+    }
+    function excluirMissaoExtra(projetoId, missaoId) {
+        return escrever(projetoId, estado => {
+            id(missaoId);
+            if (estado.exclusoes.missoes?.[missaoId]) return { missaoId };
+            const missao = obterMissao(estado, missaoId);
+            if (!missaoId.startsWith('pratica-extra-')) falhar('somente ocorrências extras podem ser excluídas');
+            if (missaoEmCronometro(estado) === missaoId) falhar('registre ou zere o cronômetro desta atividade antes de excluir');
+            if (storage.getItem('cronometroRegistroV1')) falhar('recupere o registro pendente do cronômetro antes de excluir');
+            estado.exclusoes.missoes ||= {};
+            estado.exclusoes.missoes[missaoId] = true;
+            for (const nome of ['conclusoes', 'sessoes', 'avaliacoes']) {
+                for (const [fatoId, fato] of Object.entries(estado[nome])) {
+                    if (fato.missaoId === missaoId) estado.exclusoes[nome][fatoId] = true;
+                }
+            }
+            return missao;
         });
     }
     function excluirFato(projetoId, fatoId, nome) {
@@ -202,7 +222,7 @@
     function projetarEstadoAtividade(estado, atividadeId) {
         const registro = obterAtividade(estado, atividadeId);
         return dominio.projetarAtividade({ atividade: registro.atividade,
-            missoes: Object.values(estado.missoes).filter(m => m.atividadeId === atividadeId),
+            missoes: Object.values(estado.missoes).filter(m => m.atividadeId === atividadeId && !estado.exclusoes.missoes?.[m.missaoId]),
             conclusoes: Object.values(estado.conclusoes).filter(c => c.atividadeId === atividadeId && !Object.hasOwn(estado.exclusoes.conclusoes, c.conclusaoId)),
             sessoes: Object.values(estado.sessoes).filter(s => s.atividadeId === atividadeId && !Object.hasOwn(estado.exclusoes.sessoes, s.sessaoId)) });
     }
@@ -522,6 +542,7 @@
             && !Object.values(estado.atividades).some(r => !r.removida && r.atividade.agendamento));
         const missoesEfetivasPorId = new Map();
         for (const [missaoId, missao] of Object.entries(estado.missoes)) {
+            if (estado.exclusoes.missoes?.[missaoId]) continue;
             const registro = estado.atividades[missao.atividadeId];
             if (!registro || (registro.removida && !comFatosHistoricos.has(missaoId))) continue;
             if (planoVigente && ehMissaoAgendadaAutomatica(missao) && !comFatosHistoricos.has(missaoId)) continue;
@@ -563,6 +584,9 @@
             if (xp) atividades[atividadeId].progressao = xp;
             const xpPorMissao = new Map((xp?.missoes || []).map(m => [m.missaoId, m]));
             const regras = dominio.regrasDoTipo(registro.atividade.tipo);
+            const incluirAtividade = typeof registro.atividade.incluirNaCarga === 'boolean'
+                ? registro.atividade.incluirNaCarga
+                : incluirNaCarga;
             const conclusaoPorMissao = new Map();
             conclusoesDaAtividade.forEach(c => {
                 const anterior = conclusaoPorMissao.get(c.missaoId);
@@ -577,7 +601,7 @@
                     nome: registro.atividade.nome,
                     tipo: registro.atividade.tipo,
                     extraAvulsa: m.missaoId.startsWith('pratica-extra-'),
-                    consomeCargaEstudo: incluirNaCarga && !m.missaoId.startsWith('pratica-extra-') && regras.consomeCargaEstudo,
+                    consomeCargaEstudo: incluirAtividade && !m.missaoId.startsWith('pratica-extra-') && regras.consomeCargaEstudo,
                     usaCronometro: regras.usaCronometro,
                     importanciaProva: clonar(registro.atividade.importanciaProva),
                     dataPrevista: m.dataPrevista,
@@ -646,7 +670,7 @@
         }
         return { [chave(destinoId)]: JSON.stringify(schema.validar(destino, destinoId)) };
     }
-    window.PraticasStore = Object.freeze({ criarAtividade, editarAtividade, removerAtividade, criarMissao, prepararReagendada, prepararAntecipacao,
+    window.PraticasStore = Object.freeze({ criarAtividade, editarAtividade, removerAtividade, criarMissao, excluirMissaoExtra, prepararReagendada, prepararAntecipacao,
         registrarConclusao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'conclusoes'),
         registrarSessao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'sessoes'),
         registrarAvaliacao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'avaliacoes'),

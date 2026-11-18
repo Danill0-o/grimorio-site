@@ -55,6 +55,12 @@
             return raw ? JSON.parse(raw) : padrao;
         } catch (_) { return padrao; }
     }
+    function incluirNaCargaPadraoProjeto() {
+        const rascunho = lerJsonProjeto('wizardProjeto', null);
+        const dados = lerJsonProjeto('dadosExame', null);
+        const carga = rascunho?.cargaDiaria ?? dados?.cargaDiaria;
+        return carga?.incluirPraticas !== false;
+    }
     function obterDiasRotina() {
         const marcados = ordemDias.filter(d => el(`btn-${d}`)?.checked);
         if (marcados.length) return marcados;
@@ -233,8 +239,10 @@
         el('pratica-total').disabled = ocupado || !leituraValida || automatico;
         el('pratica-pontos').required = automatico;
         if (el('pratica-importancia-ajuda')) {
-            el('pratica-importancia-ajuda').hidden = true;
-            el('pratica-importancia-ajuda').textContent = '';
+            el('pratica-importancia-ajuda').hidden = false;
+            el('pratica-importancia-ajuda').textContent = automatico
+                ? 'Obrigatório na frequência automática: informe os pontos desta atividade na prova para calcularmos quantas vezes agendá-la.'
+                : 'Opcional na frequência manual: informe quantos pontos esta atividade vale e o total da prova para receber sugestões de frequência.';
         }
         const agendamentoAtivo = Boolean(periodicidade);
         const modoInicio = el('pratica-inicio-modo')?.value || 'inicio';
@@ -304,6 +312,14 @@
             : el('pratica-tipo').value === 'taf' ? 'Registre o tempo após o treinamento.'
             : semRegra ? 'Informe abaixo a duração da prova que deseja simular.'
             : 'Escolha um tamanho ou modelo de atividade ou informe o tempo estimado.';
+        const rotuloReferencia = el('pratica-duracao-referencia-rotulo');
+        if (rotuloReferencia) {
+            rotuloReferencia.textContent = select.value === 'linhas'
+                ? 'Usar o tempo sugerido para essa quantidade de linhas'
+                : select.value === 'tempo-ideal'
+                    ? 'Usar o tempo de referência informado acima'
+                    : 'Usar o tempo sugerido para este modelo';
+        }
     }
     function perfilDoFormulario() {
         return el('pratica-preset-xp').value === 'linhas'
@@ -312,7 +328,8 @@
     }
     function atualizarTipo() {
         const tipoEscolhido=el('pratica-tipo').value;
-        const mudouTipo = tipoEscolhido !== tipoAnterior;
+        const anterior = tipoAnterior;
+        const mudouTipo = tipoEscolhido !== anterior;
         tipoAnterior = tipoEscolhido;
         const nomeLivre=tipoEscolhido==='outra';
         el('pratica-detalhes').hidden=!tipoEscolhido;
@@ -344,25 +361,26 @@
         el('pratica-duracao-ajuda').textContent = taf
             ? 'O TAF é externo à carga de estudo. A estimativa é opcional e não ativa cronômetro.'
             : 'Informe sua estimativa.';
+        const cargaGrupo = el('pratica-incluir-carga-grupo');
+        const cargaCheck = el('pratica-incluir-carga');
+        if (cargaGrupo && cargaCheck) {
+            cargaGrupo.hidden = taf;
+            cargaCheck.disabled = ocupado || !leituraValida || taf;
+            if (taf) {
+                cargaCheck.checked = false;
+            } else if (mudouTipo && anterior === 'taf') {
+                const a = edicao?.atividade;
+                cargaCheck.checked = a
+                    ? (typeof a.incluirNaCarga === 'boolean' ? a.incluirNaCarga : incluirNaCargaPadraoProjeto())
+                    : true;
+            }
+        }
         const possuiMissoes = edicao && Object.values(estado?.missoes || {}).some(m => m.atividadeId === edicao.atividade.atividadeId);
         el('pratica-tipo').disabled = Boolean(possuiMissoes);
         el('pratica-tipo-ajuda').textContent = possuiMissoes ? 'O tipo é preservado porque esta atividade já possui atividades práticas.' : '';
         atualizarAgendamentoUI();
         atualizarPresetUI();
         atualizarDuracaoReferencia();
-        atualizarTempoProva();
-    }
-    function atualizarTempoProva() {
-        const check = el('pratica-tempo-prova'), grupo = el('pratica-tempo-prova-grupo');
-        const simulado = el('pratica-tipo').value === 'simulado';
-        grupo.hidden = !simulado;
-        const minutos = Number(el('duracao-prova').value);
-        const valido = Number.isSafeInteger(minutos * 60) && minutos > 0 && el('duracao-prova').checkValidity();
-        check.disabled = ocupado || !leituraValida || !valido;
-        check.title = valido ? '' : 'Informe a duração da prova na etapa Projeto para usar esta opção.';
-        if (!simulado || !valido) check.checked = false;
-        if (check.checked) el('pratica-duracao').value = String(minutos);
-        el('pratica-duracao').readOnly = check.checked;
         atualizarSugestaoFrequencia();
     }
     function duracaoTexto(segundos) {
@@ -383,7 +401,10 @@
     }
     function detalhe(atividade) {
         const importancia = atividade.importanciaProva;
-        return `${tipos[atividade.tipo]} · ${duracaoTexto(atividade.duracaoPlanejadaSegundos)}${atividade.tipo === 'taf' ? ' · Externo à carga de estudo' : ''}`
+        const externa = atividade.tipo === 'taf'
+            || atividade.incluirNaCarga === false
+            || (atividade.incluirNaCarga === undefined && !incluirNaCargaPadraoProjeto());
+        return `${tipos[atividade.tipo]} · ${duracaoTexto(atividade.duracaoPlanejadaSegundos)}${externa ? ' · Externo à carga de estudo' : ''}`
             + (importancia ? ` · ${importancia.pontos.toLocaleString('pt-BR')} / ${importancia.total.toLocaleString('pt-BR')} pontos na prova` : '')
             + textoAgendamento(atividade);
     }
@@ -474,7 +495,7 @@
             const etiqueta = texto('span', a.agendamento ? 'Agendada' : 'Sem frequência');
             etiqueta.className = 'pratica-etiqueta';
             const acoes = document.createElement('div'); acoes.className = 'pratica-acoes';
-            for (const [rotulo, acao] of [['Editar', () => abrir(registro)], ['Remover', () => remover(registro)]]) {
+            for (const [rotulo, acao] of [['Editar', () => abrir(registro)], ['Remover', evento => remover(registro, evento.currentTarget)]]) {
                 const botao = texto('button', rotulo); botao.type = 'button'; botao.className = 'btn btn-outline-secondary';
                 botao.setAttribute('aria-label', `${rotulo} atividade ${a.nome}`); botao.addEventListener('click', acao); acoes.append(botao);
             }
@@ -482,11 +503,8 @@
         }));
         el('pratica-status').textContent = registros.length
             ? `${registros.length} ${registros.length === 1 ? 'atividade prática salva.' : 'atividades práticas salvas.'}` : 'Nenhuma atividade prática cadastrada.';
-        el('praticas-resumo').hidden = registros.length === 0;
-        el('praticas-resumo-lista').replaceChildren(...registros.map(r => texto('li', `${r.atividade.nome} — ${detalhe(r.atividade)}`)));
         const previa = calcularPreviaCapacidadeAtual(registros.map(r => r.atividade));
         renderizarBlocoPrevia(el('praticas-previa-capacidade'), previa);
-        renderizarBlocoPrevia(el('praticas-resumo-capacidade'), previa);
         atualizarTipo(); controles();
     }
     function carregar() {
@@ -539,6 +557,11 @@
         modoAnterior = el('pratica-periodicidade').value;
         el('pratica-duracao-referencia').checked = a ? a.duracaoModo === 'referencia' : true;
         referenciaAnterior = el('pratica-duracao-referencia').checked; duracaoManualAnterior = el('pratica-duracao').value;
+        if (el('pratica-incluir-carga')) {
+            el('pratica-incluir-carga').checked = a
+                ? (a.tipo === 'taf' ? false : typeof a.incluirNaCarga === 'boolean' ? a.incluirNaCarga : incluirNaCargaPadraoProjeto())
+                : true;
+        }
         diasSelecionados = new Set(ag?.diasSemana || []);
         const modoInicio = ag?.inicio?.modo || 'inicio';
         el('pratica-inicio-modo').value = modoInicio;
@@ -680,11 +703,13 @@
             try { perfilXp = window.PraticasProgressao.validarPerfil(perfilDoFormulario(),tipo); window.PraticasProgressao.resolverPerfil(perfilXp); }
             catch (erro) { return mensagem(erro.message,el(valorXp === 'linhas' ? 'pratica-xp-linhas' : 'pratica-xp-tempo')); }
         }
+        const incluirNaCarga = tipo !== 'taf' ? Boolean(el('pratica-incluir-carga')?.checked) : false;
         return {
             nome,
             tipo,
             duracaoPlanejadaSegundos,
             importanciaProva,
+            ...(tipo !== 'taf' ? { incluirNaCarga } : (edicao?.atividade?.incluirNaCarga !== undefined ? { incluirNaCarga: false } : {})),
             ...(pontos !== '' ? {pesoProva:Number(pontos)} : edicao?.atividade?.pesoProva !== undefined ? {pesoProva:null} : {}),
             ...(referencia ? {duracaoModo:'referencia'} : edicao?.atividade?.duracaoModo ? {duracaoModo:'manual'} : {}),
             ...(perfilXp ? {perfilXp,...(edicao?.atividade?.presetXpId ? {presetXpId:null} : {})}
@@ -718,10 +743,77 @@
             : window.PraticasStore.criarAtividade({ ...dados, atividadeId, projetoId }),
             dados.agendamento ? 'Atividade salva. Confira abaixo as datas previstas.' : 'Atividade salva. Escolha uma frequência para incluí-la no calendário.');
     }
-    function remover(registro) {
+    function remover(registro, botaoOrigem) {
         if (ocupado || !leituraValida) return;
-        if (!window.confirm(`Remover a atividade ${registro.atividade.nome} do cadastro? Seu histórico será preservado.`)) return;
-        return gravar(() => window.PraticasStore.removerAtividade(projetoId, registro.atividade.atividadeId, registro.revisao), 'Atividade removida do cadastro. Histórico preservado.');
+        const dialog = el('wizard-remover-atividade-dialog');
+        if (!dialog) return;
+        const nomeEl = el('wizard-remover-atividade-nome');
+        const erroEl = el('wizard-remover-atividade-erro');
+        if (nomeEl) nomeEl.textContent = `"${registro.atividade.nome}"`;
+        if (erroEl) erroEl.textContent = '';
+        const btnConfirmar = dialog.querySelector('[data-confirmar]');
+        const btnsCancelar = [...dialog.querySelectorAll('[data-cancelar]')];
+        const restaurarBotoes = disabled => {
+            if (btnConfirmar) btnConfirmar.disabled = disabled;
+            btnsCancelar.forEach(b => { b.disabled = disabled; });
+        };
+        const fecharDialogo = () => {
+            if (ocupado) return;
+            if (dialog.open) dialog.close();
+            limpar();
+            if (erroEl) erroEl.textContent = '';
+            const alvoFoco = botaoOrigem?.isConnected
+                ? botaoOrigem
+                : el('praticas-lista')?.querySelector('button') || el('pratica-adicionar');
+            alvoFoco?.focus();
+        };
+        const onCancel = evento => {
+            evento.preventDefault();
+            fecharDialogo();
+        };
+        const onConfirmar = async () => {
+            if (ocupado) return;
+            if (erroEl) erroEl.textContent = '';
+            ocupado = true; controles(); restaurarBotoes(true);
+            let removida = false;
+            try {
+                await window.PraticasStore.removerAtividade(projetoId, registro.atividade.atividadeId, registro.revisao);
+                removida = true;
+            } catch (erro) {
+                carregar();
+                if (erroEl) {
+                    erroEl.textContent = /conflito de revisão/.test(erro.message)
+                        ? 'Esta atividade foi alterada em outra aba. Feche esta janela e tente remover novamente.'
+                        : 'Não foi possível remover a atividade. Seus dados anteriores foram preservados; tente novamente.';
+                }
+            } finally {
+                restaurarBotoes(false);
+                ocupado = false;
+                controles();
+            }
+            if (removida) {
+                dialog.close();
+                limpar();
+                fechar();
+                if (carregar()) el('pratica-status').textContent = 'Atividade removida do cadastro. Histórico preservado.';
+                focar(el('pratica-adicionar'));
+            } else {
+                const focoCancelar = dialog.querySelector('button[data-cancelar]:not(.pixel-fechar)') || btnsCancelar[0];
+                focoCancelar?.focus();
+            }
+        };
+        function limpar() {
+            btnConfirmar?.removeEventListener('click', onConfirmar);
+            btnsCancelar.forEach(b => b.removeEventListener('click', fecharDialogo));
+            dialog.removeEventListener('cancel', onCancel);
+        }
+        btnConfirmar?.addEventListener('click', onConfirmar);
+        btnsCancelar.forEach(b => b.addEventListener('click', fecharDialogo));
+        dialog.addEventListener('cancel', onCancel);
+        restaurarBotoes(false);
+        dialog.showModal();
+        const focoCancelar = dialog.querySelector('button[data-cancelar]:not(.pixel-fechar)') || btnsCancelar[0];
+        focoCancelar?.focus();
     }
     window.PraticasCadastro = Object.freeze({
         podeAvancar() {
@@ -757,7 +849,6 @@
         el('pratica-cancelar').addEventListener('click', () => { if (!ocupado) { fechar(); limparErro(); focar(el('pratica-adicionar')); } });
         el('pratica-recarregar').addEventListener('click', () => { limparErro(); carregar(); });
         el('pratica-form').addEventListener('submit', salvar);
-        el('duracao-prova').addEventListener('input', atualizarTempoProva);
         el('pratica-estagio-marcar-todas')?.addEventListener('change', evento => {
             limparErro();
             const materias = obterMateriasProjeto();

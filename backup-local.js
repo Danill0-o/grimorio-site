@@ -8,7 +8,7 @@
         'lista_distribuicao_materias', 'totalQuestoes', 'objetosSalvos', 'objetosNormalizados',
         'somaDasQuestoesNormalizadas', 'materiaDoDia', 'revisoesDoDia', 'planosIdentidadeV1',
         'revisoesEstadoV1', 'revisoesTransacaoV1', 'grimorioTemaPixelV1', 'grimorioScanlinesPixelV1',
-        'grimorioPerfilV1', 'grimorioBackupAnteriorV1']);
+        'grimorioPerfilV1', 'grimorioSistemaIaV1', 'grimorioBackupAnteriorV1']);
     const prefixos = ['projetoV1:', 'historicoOperacaoV1:', 'cronometroV1:', 'projetosTransacaoV2:', 'praticasProjetoV1:'];
     const DB_NOME = 'grimorioBackupPastaV1';
     const STORE_NOME = 'diretorio';
@@ -218,6 +218,23 @@
                     && (v.avatarId === undefined || typeof v.avatarId === 'string')
                     && (v.tituloEquipadoId === undefined || v.tituloEquipadoId === null || typeof v.tituloEquipadoId === 'string'),
                     'dados do perfil.');
+            }
+            if (k === 'grimorioSistemaIaV1') {
+                const camposIa = ['versao', 'desbloqueadas', 'telemetria', 'filaAvisos', 'historicoAvisos', 'ultimaFalaDia'];
+                exigir(objeto(v) && v.versao === 1 && Object.keys(v).every(c => camposIa.includes(c)), 'dados de conquistas do sistema.');
+                if (v.desbloqueadas !== undefined) {
+                    exigir(objeto(v.desbloqueadas), 'desbloqueios do sistema.');
+                    for (const [id, reg] of Object.entries(v.desbloqueadas)) {
+                        exigir(texto(id) && objeto(reg) && reg.id === id && instante(reg.em), `conquista inválida ${id}.`);
+                    }
+                }
+                if (v.telemetria !== undefined) exigir(objeto(v.telemetria), 'telemetria do sistema.');
+                for (const listaNome of ['filaAvisos', 'historicoAvisos']) {
+                    if (v[listaNome] !== undefined) {
+                        exigir(Array.isArray(v[listaNome]) && v[listaNome].every(a => objeto(a) && texto(a.id) && instante(a.criadaEm)), `${listaNome} inválida.`);
+                    }
+                }
+                if (v.ultimaFalaDia !== undefined) exigir(objeto(v.ultimaFalaDia), 'estado de falas do sistema.');
             }
             const p = /^projetoV1:([^:]+):(.+)$/.exec(k), nome = p ? p[2] : k, projetoId = p?.[1];
             if (p) exigir(chaves.has(nome) || ['registro', 'pomodoroV1', 'reagendamentoV1'].includes(nome) || /^estudoExtraV1:extra-[\w-]+$/.test(nome), `chave de projeto ${k}.`);
@@ -561,6 +578,12 @@
         }
         const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
         await salvarPastaNoBanco(handle);
+        try {
+            window.SistemaIaStore?.atualizarTelemetria?.(t => {
+                t.backupsExportados = Math.max(3, Number(t.backupsExportados || 0) + 1);
+            });
+            window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+        } catch (_) {}
         return handle;
     }
 
@@ -743,6 +766,17 @@
                     const dados = exportar();
                     dispararDownload(dados);
                     if (status) status.textContent = 'Download do backup iniciado.';
+                    try {
+                        const sessaoAtual = (Number(sessionStorage.getItem('grimorioBackupsSessaoV1')) || 0) + 1;
+                        sessionStorage.setItem('grimorioBackupsSessaoV1', String(sessaoAtual));
+                        const jaSalvos = Number(window.SistemaIaStore?.ler?.()?.telemetria?.backupsExportados || 0);
+                        if (jaSalvos > 0 || sessaoAtual >= 3) {
+                            window.SistemaIaStore?.atualizarTelemetria?.(t => {
+                                t.backupsExportados = Math.max(Number(t.backupsExportados || 0) + 1, sessaoAtual);
+                            });
+                            window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                        }
+                    } catch (_) {}
                 } catch (erro) {
                     if (status) status.textContent = `Não foi possível preparar o backup. ${erro.message || 'Tente novamente.'}`;
                 }
@@ -762,6 +796,10 @@
                             ? `Backup do dia salvo em "${resultado.pasta}" (${resultado.arquivo}).`
                             : 'Download do backup iniciado.';
                     }
+                    try {
+                        window.SistemaIaStore?.incrementarTelemetria?.('backupsExportados', 1);
+                        window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                    } catch (_) {}
                 } catch (erro) {
                     if (erro?.name === 'AbortError') return;
                     if (status) status.textContent = `Não foi possível salvar na pasta. ${erro.message || 'Tente usar o download padrão.'}`;

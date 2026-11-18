@@ -124,6 +124,16 @@
     color: var(--pixel-emerald, #2f9e44);
 }
 
+#pratica-extra-excluir-dialog button {
+    color: var(--pixel-btn-sec-text) !important;
+    background: var(--pixel-btn-sec-bg) !important;
+    text-shadow: none !important;
+}
+#pratica-extra-excluir-dialog button:is(:hover, :focus-visible) {
+    color: var(--pixel-btn-sec-text) !important;
+    background: var(--pixel-btn-sec-hover) !important;
+}
+
 .pratica-dialogo {
     width: min(42rem, calc(100% - 1rem));
     max-height: calc(100dvh - 2rem);

@@ -33,11 +33,13 @@ document.addEventListener('DOMContentLoaded', () => {
 (function iniciarTemasPixelArt() {
     const CHAVE_TEMA = 'grimorioTemaPixelV1';
     const CHAVE_CRT = 'grimorioScanlinesPixelV1';
+    const CHAVE_CRT_FLIPERAMA = 'grimorioScanlinesFliperamaV1';
     const TEMAS = [
         { id: 'taverna', rotulo: '📜 Taverna 16-Bit' },
         { id: 'arcano', rotulo: '🔮 Arcano Noturno' },
         { id: 'floresta', rotulo: '🌿 Bosque Élfico' }
     ];
+    const FLIPERAMA = { id: 'fliperama', rotulo: '🕹️ Fliperama' };
 
     function lerPreferencia(chave, padrao) {
         try { const valor = localStorage.getItem(chave) || padrao; return chave === CHAVE_TEMA && valor === 'reliquia' ? 'floresta' : valor; } catch (_) { return padrao; }
@@ -47,19 +49,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function aplicarTema(temaId) {
-        const valido = TEMAS.some(t => t.id === temaId) ? temaId : 'arcano';
+        const permitido = TEMAS.some(t => t.id === temaId) || (temaId === FLIPERAMA.id && window.fliperamaDesbloqueado?.());
+        const valido = permitido ? temaId : 'arcano';
         document.documentElement.setAttribute('data-tema-pixel', valido);
         if (document.body) document.body.setAttribute('data-tema-pixel', valido);
         salvarPreferencia(CHAVE_TEMA, valido);
         document.querySelectorAll('[data-tema-pixel-btn]').forEach(btn => {
             btn.setAttribute('aria-pressed', String(btn.dataset.temaPixelBtn === valido));
         });
+        aplicarScanlines(lerPreferencia(chaveScanlines(), valido === 'fliperama' ? 'on' : 'off'));
     }
 
-    function aplicarScanlines(estado) {
+    function chaveScanlines() {
+        return document.documentElement.dataset.temaPixel === 'fliperama' ? CHAVE_CRT_FLIPERAMA : CHAVE_CRT;
+    }
+
+    function aplicarScanlines(estado, gravar = false) {
         const ativo = estado === 'on' ? 'on' : 'off';
         if (document.body) document.body.setAttribute('data-scanlines', ativo);
-        salvarPreferencia(CHAVE_CRT, ativo);
+        if (gravar) salvarPreferencia(chaveScanlines(), ativo);
         const btn = document.querySelector('[data-scanlines-btn]');
         if (btn) btn.setAttribute('aria-pressed', String(ativo === 'on'));
     }
@@ -68,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.addEventListener('DOMContentLoaded', () => {
         aplicarTema(lerPreferencia(CHAVE_TEMA, 'arcano'));
-        aplicarScanlines(lerPreferencia(CHAVE_CRT, 'off'));
 
         if (document.querySelector('.pixel-theme-bar')) return;
         const barra = document.createElement('div');
@@ -81,16 +88,38 @@ document.addEventListener('DOMContentLoaded', () => {
         label.textContent = '⚔️ Tema RPG:';
         barra.appendChild(label);
 
-        TEMAS.forEach(tema => {
+        function criarBotaoTema(tema) {
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'pixel-theme-chip';
             btn.dataset.temaPixelBtn = tema.id;
             btn.textContent = tema.rotulo;
             btn.setAttribute('aria-pressed', String(lerPreferencia(CHAVE_TEMA, 'arcano') === tema.id));
-            btn.addEventListener('click', () => aplicarTema(tema.id));
-            barra.appendChild(btn);
-        });
+            btn.addEventListener('click', () => {
+                const anterior = lerPreferencia(CHAVE_TEMA, 'arcano');
+                aplicarTema(tema.id);
+                if (tema.id !== anterior) {
+                    try {
+                        const d = new Date();
+                        const hoje = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                        window.SistemaIaStore?.atualizarTelemetria?.(t => {
+                            const atual = t.trocasTemaHoje || { data: '', contagem: 0 };
+                            t.trocasTemaHoje = atual.data === hoje
+                                ? { data: hoje, contagem: Number(atual.contagem || 0) + 1 }
+                                : { data: hoje, contagem: 1 };
+                            const usados = new Set(Array.isArray(t.temasUsados) ? t.temasUsados : []);
+                            usados.add(anterior);
+                            usados.add(tema.id);
+                            t.temasUsados = [...usados];
+                        });
+                        window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                    } catch (_) {}
+                }
+            });
+            return btn;
+        }
+
+        barra.append(...TEMAS.map(criarBotaoTema));
 
         const crtBtn = document.createElement('button');
         crtBtn.type = 'button';
@@ -98,12 +127,36 @@ document.addEventListener('DOMContentLoaded', () => {
         crtBtn.dataset.scanlinesBtn = 'true';
         crtBtn.textContent = '📺 CRT';
         crtBtn.title = 'Alternar efeito de linhas retrô CRT';
-        crtBtn.setAttribute('aria-pressed', String(lerPreferencia(CHAVE_CRT, 'off') === 'on'));
+        crtBtn.setAttribute('aria-pressed', String(document.body.dataset.scanlines === 'on'));
         crtBtn.addEventListener('click', () => {
             const atual = document.body.getAttribute('data-scanlines') === 'on' ? 'off' : 'on';
-            aplicarScanlines(atual);
+            aplicarScanlines(atual, true);
         });
         barra.appendChild(crtBtn);
+
+        function atualizarFliperama() {
+            const botao = barra.querySelector('[data-tema-pixel-btn="fliperama"]');
+            if (window.fliperamaDesbloqueado?.()) {
+                if (!botao) crtBtn.before(criarBotaoTema(FLIPERAMA));
+                return;
+            }
+            botao?.remove();
+            if (document.documentElement.dataset.temaPixel === FLIPERAMA.id) aplicarTema('arcano');
+        }
+        atualizarFliperama();
+        window.addEventListener('sistema-ia:konami-desbloqueado', () => {
+            aplicarTema(FLIPERAMA.id);
+            if (!window.matchMedia('(prefers-reduced-motion: no-preference)').matches) return;
+            const brilho = document.createElement('div');
+            brilho.className = 'fliperama-transicao';
+            brilho.setAttribute('aria-hidden', 'true');
+            document.body.append(brilho);
+            setTimeout(() => brilho.remove(), 450);
+        });
+        window.addEventListener('sistema-ia:alterado', atualizarFliperama);
+        window.addEventListener('storage', event => {
+            if (!event.key || event.key === window.SistemaIaStore?.CHAVE) atualizarFliperama();
+        });
 
         const destino = document.getElementById('jornada-temas-opcoes');
         if (destino) { destino.append(barra); return; }

@@ -23,7 +23,7 @@
             ['versao', 'projetoId', 'atividades', 'missoes', 'conclusoes', 'sessoes', 'exclusoes']);
         if (estado.versao !== 1 || estado.projetoId !== id(projetoId)) falhar('versão ou projeto inválido');
         for (const nome of ['atividades', 'missoes', 'conclusoes', 'sessoes']) if (!objeto(estado[nome])) falhar(`coleção ${nome} inválida`);
-        campos(estado.exclusoes, ['conclusoes', 'sessoes', 'avaliacoes'], ['conclusoes', 'sessoes']);
+        campos(estado.exclusoes, ['conclusoes', 'sessoes', 'avaliacoes', 'missoes'], ['conclusoes', 'sessoes']);
         const resultado = vazio(projetoId), grupos = new Map();
         for (const [chave, registro] of Object.entries(estado.atividades)) {
             campos(registro, ['atividade', 'revisao', 'removida']);
@@ -40,6 +40,14 @@
             if (missao.missaoId !== id(chave)) falhar('ID da atividade prática divergente');
             resultado.missoes[chave] = missao;
             grupos.get(missao.atividadeId).missoes.push(missao);
+        }
+        if (estado.exclusoes.missoes !== undefined) {
+            if (!objeto(estado.exclusoes.missoes)) falhar('tombstones de ocorrências inválidos');
+            resultado.exclusoes.missoes = Object.create(null);
+            for (const [chave, valor] of Object.entries(estado.exclusoes.missoes)) {
+                if (valor !== true || !resultado.missoes[chave] || !chave.startsWith('pratica-extra-')) falhar('exclusão de ocorrência extra inválida');
+                resultado.exclusoes.missoes[chave] = true;
+            }
         }
         for (const nome of ['conclusoes', 'sessoes', 'avaliacoes']) {
             const campoId = { conclusoes: 'conclusaoId', sessoes: 'sessaoId', avaliacoes: 'avaliacaoId' }[nome];
