@@ -425,7 +425,7 @@
 .wizard-summary dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
 #wizard-erro { color: var(--texto-destaque); margin: 24px 0 0; }
 #wizard-erro:empty { display: none; }
-.wizard-actions { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-top: 36px; padding-top: 22px; border-top: 1px solid #9d7e4f55; }
+.wizard-actions { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 16px; margin-top: 36px; padding-top: 22px; border-top: 1px solid #9d7e4f55; }
 #wizard-avancar { margin-left: auto; }
 @media (max-width: 850px) {
     .routine-layout { grid-template-columns: 1fr; gap: 30px; }

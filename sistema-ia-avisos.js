@@ -59,12 +59,16 @@
         return false;
     }
 
+    function falaRemovida(item) {
+        return typeof item?.id === 'string' && item.id.startsWith('fala:primeiro_dia_sem_estudar:');
+    }
+
     function lerFalaSessao() {
         try {
             const raw = escopo.sessionStorage?.getItem(CHAVE_FALA_SESSAO);
             if (!raw) return null;
             const parsed = JSON.parse(raw);
-            return parsed && typeof parsed === 'object' ? parsed : null;
+            return parsed && typeof parsed === 'object' && !falaRemovida(parsed) ? parsed : null;
         } catch (_) {
             return null;
         }
@@ -82,7 +86,7 @@
             const raw = escopo.sessionStorage?.getItem(CHAVE_HIST_SESSAO);
             if (!raw) return [];
             const parsed = JSON.parse(raw);
-            return Array.isArray(parsed) ? parsed : [];
+            return Array.isArray(parsed) ? parsed.filter(item => !falaRemovida(item)) : [];
         } catch (_) {
             return [];
         }
@@ -749,6 +753,7 @@
         montarDom();
         iniciarTecladoSecreto();
         iniciarGestosSecretos();
+        avaliarAgora();
         avaliarContextualAgora();
         sincronizarDom();
     });

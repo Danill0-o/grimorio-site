@@ -1,0 +1,22 @@
+/* Escala móvel: corpo 16px, detalhes importantes 14px, rótulos compactos 13,1px. */
+@media (max-width: 767px) {
+    body { font-size: 16px; }
+    body .btn:not(.pixel-fechar):not(.info-contextual),
+    body button:not(.pixel-fechar):not(.info-contextual):not(.revisoes-info):not(.nota-botao):not(.perfil-avatar-quadro):not(.ficha-resumo-avatar-btn):not(.perfil-isca-btn):not(.pomodoro-toggle):not(.voltar-topo),
+    body .jornada-menu :is(a,button,summary),
+    body :is(.small,small,.form-text,.projeto-resumo-lista dt,.projeto-resumo-lista dd,.jornada-stat dt),
+    body :is(.perfil-status-pilula,.perfil-titulo,.perfil-dedicacao-rotulo,.perfil-xp-percentual,.perfil-nivel-emblema,.perfil-card-sessoes,.perfil-controle-campo,.perfil-dialogo-campo),
+    body .calendario-dia time.calendario-dia-data,
+    body :is(.calendario-dia-data,.calendario-dia-materias,.calendario-mes-atual-label,.calendario-mes-dica,.calendario-pratica-texto),
+    body :is(.rosca-subtexto,.rosca-centro-rotulo,.wizard-chapter,.affinity-labels,.pratica-etiqueta,.pratica-tipo-meta,.pratica-ocorrencia-status),
+    .jornada-page :is(.dia-bloqueio-aviso,.dia-bloco-item > .bloco-nome,.bloco-tempo-restante,.dia-missao-detalhe,.dia-missao-estado,.dia-progresso-resumo,.materia-indicador small,.nota-revisao,.blocos-tempo-nao-registrado),
+    body :is(.perfil-conquista-status,.perfil-conquista-equipar,.perfil-conquistas-filtro-campo) { font-size: 14px !important; }
+    body :is(.form-control,.form-select,input:not([type=checkbox]):not([type=radio]):not([type=range]),select,textarea) { font-size: 16px; }
+    body :is(.jornada-kicker,.perfil-mini-stat dt,.perfil-dia-semana,.perfil-dia-data,.perfil-conquista-categoria,.dia-card-hoje,.calendario-hoje,.wizard-steps button span) { font-size: 13.1px !important; }
+    .perfil-ritmo-7d { grid-template-columns: repeat(4,minmax(0,1fr)); }
+    .perfil-ritmo-7d .perfil-dia-selo { padding: 10px 6px; }
+    .jornada-page .materia-indicador small { white-space: normal; }
+    .calendario-hoje { color: var(--texto-comum) !important; background: var(--pixel-surface-elevated); }
+    .perfil-mini-stats { grid-template-columns: repeat(auto-fit,minmax(min(100%,130px),1fr)); }
+    .jornada-menu summary { overflow-wrap: anywhere; }
+}

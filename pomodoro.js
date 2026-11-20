@@ -80,7 +80,14 @@
                 rodando = false; bip(eraFoco ? 2 : 1);
                 if (eraFoco) {
                     try {
-                        window.SistemaIaStore?.incrementarTelemetria?.('pomodorosFocoConcluidosSeq', 1);
+                        const agoraLocal = new Date();
+                        const hoje = `${agoraLocal.getFullYear()}-${String(agoraLocal.getMonth() + 1).padStart(2, '0')}-${String(agoraLocal.getDate()).padStart(2, '0')}`;
+                        window.SistemaIaStore?.atualizarTelemetria?.(t => {
+                            const atual = t.pomodorosFocoHoje || { data: '', contagem: 0 };
+                            const prox = atual.data === hoje ? Number(atual.contagem || 0) + 1 : 1;
+                            t.pomodorosFocoHoje = { data: hoje, contagem: prox };
+                            t.pomodorosFocoConcluidosSeq = prox;
+                        });
                         window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
                     } catch (_) {}
                 }
@@ -155,6 +162,7 @@
                         window.SistemaIaStore?.atualizarTelemetria?.(t => {
                             t.pomodoroDesligadoEmFoco = Number(t.pomodoroDesligadoEmFoco || 0) + 1;
                             t.pomodorosFocoConcluidosSeq = 0;
+                            t.pomodorosFocoHoje = { data: t.pomodorosFocoHoje?.data || '', contagem: 0 };
                         });
                         window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
                     } catch (_) {}

@@ -670,6 +670,63 @@
         }
         return { [chave(destinoId)]: JSON.stringify(schema.validar(destino, destinoId)) };
     }
+    async function restaurarSnapshotCadastro(projetoId, snapshotJson = null) {
+        id(projetoId);
+        if (snapshotJson !== null && typeof snapshotJson !== 'string') falhar('snapshot de práticas inválido');
+        if (snapshotJson !== null) schema.validar(JSON.parse(snapshotJson), projetoId);
+        if (!window.navigator?.locks) falhar('use Web Locks em HTTPS ou localhost');
+        if (window.BackupLocal?.pronta) await window.BackupLocal.pronta;
+        let mudou = false;
+        await window.navigator.locks.request('projetos:gestao', () => window.navigator.locks.request(`praticas:${projetoId}`, () => {
+            disponivel(); projeto(projetoId, true);
+            const rawAntes = storage.getItem(chave(projetoId));
+            const atual = ler(projetoId);
+            const base = snapshotJson === null ? schema.vazio(projetoId) : schema.validar(JSON.parse(snapshotJson), projetoId);
+            const missoesProtegidasIds = new Set();
+            for (const nome of ['conclusoes', 'sessoes', 'avaliacoes']) {
+                for (const fato of Object.values(atual[nome] || {})) missoesProtegidasIds.add(fato.missaoId);
+            }
+            for (const mId of Object.keys(atual.exclusoes?.missoes || {})) missoesProtegidasIds.add(mId);
+            const proximo = clonar(atual);
+            proximo.atividades = clonar(base.atividades);
+            for (const missaoId of missoesProtegidasIds) {
+                const missao = atual.missoes[missaoId];
+                if (!missao || Object.hasOwn(proximo.atividades, missao.atividadeId)) continue;
+                const regAtual = atual.atividades[missao.atividadeId];
+                if (regAtual) proximo.atividades[missao.atividadeId] = { ...clonar(regAtual), removida: true };
+            }
+            const missoesProximas = Object.create(null);
+            for (const [k, missao] of Object.entries(base.missoes)) {
+                if (Object.hasOwn(proximo.atividades, missao.atividadeId)) missoesProximas[k] = clonar(missao);
+            }
+            for (const missaoId of missoesProtegidasIds) {
+                if (!Object.hasOwn(missoesProximas, missaoId) && atual.missoes[missaoId]) {
+                    missoesProximas[missaoId] = clonar(atual.missoes[missaoId]);
+                }
+            }
+            proximo.missoes = missoesProximas;
+            const validado = schema.validar(proximo, projetoId);
+            const vazioTotal = !Object.keys(validado.atividades).length
+                && !Object.keys(validado.missoes).length
+                && !Object.keys(validado.conclusoes).length
+                && !Object.keys(validado.sessoes).length
+                && !Object.keys(validado.avaliacoes || {}).length;
+            if (snapshotJson === null && vazioTotal) {
+                storage.removeItem(chave(projetoId));
+                mudou = rawAntes !== null;
+            } else {
+                const rawDepois = JSON.stringify(validado);
+                if (rawDepois !== rawAntes) {
+                    storage.setItem(chave(projetoId), rawDepois);
+                    mudou = true;
+                }
+            }
+        }));
+        if (mudou && typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('praticas:alteradas', { detail: { projetoId } }));
+        }
+        return true;
+    }
     window.PraticasStore = Object.freeze({ criarAtividade, editarAtividade, removerAtividade, criarMissao, excluirMissaoExtra, prepararReagendada, prepararAntecipacao,
         registrarConclusao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'conclusoes'),
         registrarSessao: (projetoId, missaoId, dados) => registrarFato(projetoId, missaoId, dados, 'sessoes'),
@@ -682,5 +739,5 @@
         listarAtividades: (projetoId, opcoes = {}) => clonar(Object.values(ler(projetoId).atividades).filter(r => opcoes.incluirRemovidas || !r.removida)),
         obterMissoesProtegidas(projetoId,atividades) { return clonar(missoesProtegidas(ler(projetoId),atividades)); },
         projetarAtividade, listarProgressao, planejarProjeto, sincronizarMissoes, sincronizarMissoesProjeto, projetarMissoesProjeto,
-        validarIntegridade: projetoId => { ler(projetoId); return true; }, prepararCopia });
+        validarIntegridade: projetoId => { ler(projetoId); return true; }, prepararCopia, restaurarSnapshotCadastro });
 })();

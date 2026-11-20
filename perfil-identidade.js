@@ -9,13 +9,28 @@
     const AVATAR_PADRAO = 'mago';
     const NOMES_SISTEMA = new Set(['sistema', 'o sistema', 'system', 'system ai', 'ia', 'admin']);
 
-    const AVATARES = Object.freeze([
-        { id: 'mago', nome: 'Mago Arcano', arquivo: 'img/avatars/mago.svg', descricao: 'Retrato placeholder em pixel art de um mago com chapéu e cajado.' },
-        { id: 'guardia', nome: 'Guardiã da Ordem', arquivo: 'img/avatars/guardia.svg', descricao: 'Retrato placeholder em pixel art de uma guardiã com elmo e escudo.' },
-        { id: 'escriba', nome: 'Escriba Real', arquivo: 'img/avatars/escriba.svg', descricao: 'Retrato placeholder em pixel art de um escriba com boina e grimório.' },
-        { id: 'alquimista', nome: 'Alquimista', arquivo: 'img/avatars/alquimista.svg', descricao: 'Retrato placeholder em pixel art de um alquimista com óculos e frasco.' },
-        { id: 'explorador', nome: 'Explorador', arquivo: 'img/avatars/explorador.svg', descricao: 'Retrato placeholder em pixel art de um explorador com capa e bússola.' }
+    const SEXOS_AVATAR = Object.freeze([
+        { id: 'masculino', rotulo: 'Avatares masculinos', titulo: 'Masculino', simbolo: '\u2642\uFE0E' },
+        { id: 'feminino', rotulo: 'Avatares femininos', titulo: 'Feminino', simbolo: '\u2640\uFE0E' }
     ]);
+
+    const AVATARES = Object.freeze([
+        { id: 'mago', sexo: 'masculino', nome: 'Mago Arcano', arquivo: 'img/avatars/mago.svg', descricao: 'Retrato placeholder em pixel art de um mago com chapéu e cajado.' },
+        { id: 'guardia', sexo: 'masculino', nome: 'Guardião da Ordem', arquivo: 'img/avatars/guardia.svg', descricao: 'Retrato placeholder em pixel art de um guardião com elmo e escudo.' },
+        { id: 'escriba', sexo: 'masculino', nome: 'Escriba Real', arquivo: 'img/avatars/escriba.svg', descricao: 'Retrato placeholder em pixel art de um escriba com boina e grimório.' },
+        { id: 'alquimista', sexo: 'masculino', nome: 'Alquimista', arquivo: 'img/avatars/alquimista.svg', descricao: 'Retrato placeholder em pixel art de um alquimista com óculos e frasco.' },
+        { id: 'explorador', sexo: 'masculino', nome: 'Explorador', arquivo: 'img/avatars/explorador.svg', descricao: 'Retrato placeholder em pixel art de um explorador com capa e bússola.' },
+        { id: 'maga', sexo: 'feminino', nome: 'Maga Arcana', arquivo: 'img/avatars/maga.svg', descricao: 'Retrato placeholder em pixel art de uma maga com chapéu e cajado.' },
+        { id: 'guardia-f', sexo: 'feminino', nome: 'Guardiã da Ordem', arquivo: 'img/avatars/guardia-f.svg', descricao: 'Retrato placeholder em pixel art de uma guardiã com elmo aberto e escudo.' },
+        { id: 'escriba-f', sexo: 'feminino', nome: 'Escriba Real', arquivo: 'img/avatars/escriba-f.svg', descricao: 'Retrato placeholder em pixel art de uma escriba com boina e grimório.' },
+        { id: 'alquimista-f', sexo: 'feminino', nome: 'Alquimista', arquivo: 'img/avatars/alquimista-f.svg', descricao: 'Retrato placeholder em pixel art de uma alquimista com óculos e frasco.' },
+        { id: 'exploradora', sexo: 'feminino', nome: 'Exploradora', arquivo: 'img/avatars/exploradora.svg', descricao: 'Retrato placeholder em pixel art de uma exploradora com capa e bússola.' }
+    ]);
+
+    function listarAvataresPorSexo(sexo) {
+        const alvo = sexo === 'feminino' ? 'feminino' : 'masculino';
+        return AVATARES.filter(a => a.sexo === alvo);
+    }
 
     function limparNome(valor) {
         if (typeof valor !== 'string') return '';
@@ -112,7 +127,16 @@
                     storeIa.atualizarTelemetria(t => { t.usurpadorAplicado = true; }, st);
                 }
                 if (proximo.nomeExibicao !== nomeAnterior || proximo.avatarId !== avatarAnterior) {
-                    storeIa.incrementarTelemetria('edicoesPerfil', 1, st);
+                    const hoje = typeof storeIa.dataCivilLocal === 'function' ? storeIa.dataCivilLocal(new Date()) : '';
+                    storeIa.atualizarTelemetria(t => {
+                        t.edicoesPerfil = Number(t.edicoesPerfil || 0) + 1;
+                        if (hoje) {
+                            const atualDia = t.edicoesPerfilHoje || { data: '', contagem: 0 };
+                            t.edicoesPerfilHoje = atualDia.data === hoje
+                                ? { data: hoje, contagem: Number(atualDia.contagem || 0) + 1 }
+                                : { data: hoje, contagem: 1 };
+                        }
+                    }, st);
                 }
             }
         } catch (_) {}
@@ -139,10 +163,12 @@
         CHAVE,
         NOME_PADRAO,
         LIMITE_NOME,
+        SEXOS_AVATAR,
         AVATARES,
         obter,
         salvar,
         resolverAvatar,
+        listarAvataresPorSexo,
         tituloGlobalPorNivel
     };
 

@@ -27,12 +27,14 @@
             visitasMuralHoje: { data: '', contagem: 0, ultimoTotal: 0 },
             aberturasSemEstudo: 0,
             edicoesPerfil: 0,
+            edicoesPerfilHoje: { data: '', contagem: 0 },
             edicoesRotinaHoje: { data: '', contagem: 0 },
             trocasTemaHoje: { data: '', contagem: 0 },
             temasUsados: [],
             projetosRestaurados: 0,
             backupsExportados: 0,
             pomodorosFocoConcluidosSeq: 0,
+            pomodorosFocoHoje: { data: '', contagem: 0 },
             pomodoroDesligadoEmFoco: 0,
             segundosScanlines: 0,
             disparosToastRapidos: 0,
@@ -120,8 +122,10 @@
                 d.temasUsados = [...new Set(t.temasUsados.filter(x => typeof x === 'string' && x.trim()).map(x => x.trim().slice(0, 30)))];
             }
             d.visitasMuralHoje = normalizarVisitaMural(t.visitasMuralHoje);
+            d.edicoesPerfilHoje = normalizarContadorDia(t.edicoesPerfilHoje);
             d.edicoesRotinaHoje = normalizarContadorDia(t.edicoesRotinaHoje);
             d.trocasTemaHoje = normalizarContadorDia(t.trocasTemaHoje);
+            d.pomodorosFocoHoje = normalizarContadorDia(t.pomodorosFocoHoje);
         }
 
         if (Array.isArray(bruto.filaAvisos)) {

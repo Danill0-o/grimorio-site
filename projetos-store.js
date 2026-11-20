@@ -50,10 +50,24 @@
         selecionar(id);
         return id;
     }
+    function notificarAlteracaoProjetos(id) {
+        if (typeof window.dispatchEvent === 'function' && typeof CustomEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('projetos:alterados', { detail: { id } }));
+        }
+    }
+    function limparSelecaoSeAtual(id) {
+        if (id && id === selecionado) {
+            selecionado = null;
+            sessionStorage.removeItem('projetoSelecionadoV1');
+            storage.removeItem('projetoSelecionadoV1');
+        }
+        notificarAlteracaoProjetos(id);
+    }
     function selecionar(id) {
         if (!registro(id) || registro(id).removido || registro(id).arquivado) throw new Error('Restaure o projeto arquivado antes de abri-lo.');
         sessionStorage.setItem('projetoSelecionadoV1', id);
         storage.setItem('projetoSelecionadoV1', id);
+        notificarAlteracaoProjetos(id);
         // A página atual mantém seu contexto; a próxima navegação abre o selecionado.
     }
     if (!selecionado && wizard) {
@@ -98,6 +112,7 @@
         const valores = { [prefixo(id) + 'registro']: JSON.stringify({...r, nome: dados.nomeExame || ler(prefixo(id) + 'wizardProjeto', {})?.valores?.nome_exame || r.nome || 'Projeto', removido:true}) };
         [...CHAVES, 'reagendamentoV1'].forEach(k => { valores[prefixo(id) + k] = null; });
         gravar(valores,`projetosTransacaoV2:${id}`);
+        limparSelecaoSeAtual(id);
     }
     async function duplicar(id, destino) {
         existente(id);
@@ -215,13 +230,17 @@
             }, true);
         },
         criar, selecionar, validarAtual: validar, temAtual: () => Boolean(selecionado), idAtual: () => selecionado,
-        arquivar: id=>gerenciar(id,()=>storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:true})),true),
+        arquivar: id=>gerenciar(id,()=>{
+            storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:true}));
+            limparSelecaoSeAtual(id);
+        },true),
         restaurar: id=>gerenciar(id,()=>{
             storage.setItem(prefixo(id)+'registro',JSON.stringify({...existente(id),arquivado:false}));
             try {
                 window.SistemaIaStore?.incrementarTelemetria?.('projetosRestaurados', 1, storage);
                 window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
             } catch (_) {}
+            notificarAlteracaoProjetos(id);
         }),
         excluir: id=>gerenciar(id,()=>excluir(id),true),
         duplicar: (id,destino=uuid())=>gerenciar(id,()=>duplicar(id,destino)),

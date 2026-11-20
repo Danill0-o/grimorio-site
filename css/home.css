@@ -84,6 +84,34 @@ main > nav[aria-label="Navegação principal"] a {
     overflow-wrap: anywhere;
 }
 
+.home-projeto-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+}
+
+.home-projeto-ativo {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    background: var(--pixel-btn-bg);
+    color: var(--pixel-btn-text);
+    border: 2px solid var(--pixel-border-outer);
+    box-shadow: 2px 2px 0 var(--pixel-shadow);
+    font-family: var(--font-pixel-ui);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
+#lista-projetos article.is-projeto-ativo {
+    border-color: var(--pixel-gold);
+}
+
 .home-filtros, .home-acoes {
     display: flex;
     flex-wrap: wrap;
@@ -144,3 +172,8 @@ dialog input {
 }
 
 .home-filtros { margin-bottom: 24px; }
+
+/* A escala de leitura exige contraste também nos estados interativos. */
+html body .home-filtros.home-filtros button { color: var(--texto-comum) !important; background: var(--pixel-surface) !important; text-shadow: none !important; }
+html body .home-filtros.home-filtros button:is(:hover,:focus-visible,[aria-pressed="true"]) { color: var(--texto-comum) !important; background: var(--pixel-surface-alt) !important; }
+html body .home-acoes button.acao-perigosa, html body .home-acoes button.acao-perigosa:is(:hover,:focus-visible) { color: var(--pixel-btn-text) !important; background: var(--pixel-crimson) !important; }

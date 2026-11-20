@@ -578,12 +578,6 @@
         }
         const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
         await salvarPastaNoBanco(handle);
-        try {
-            window.SistemaIaStore?.atualizarTelemetria?.(t => {
-                t.backupsExportados = Math.max(3, Number(t.backupsExportados || 0) + 1);
-            });
-            window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
-        } catch (_) {}
         return handle;
     }
 
@@ -767,15 +761,8 @@
                     dispararDownload(dados);
                     if (status) status.textContent = 'Download do backup iniciado.';
                     try {
-                        const sessaoAtual = (Number(sessionStorage.getItem('grimorioBackupsSessaoV1')) || 0) + 1;
-                        sessionStorage.setItem('grimorioBackupsSessaoV1', String(sessaoAtual));
-                        const jaSalvos = Number(window.SistemaIaStore?.ler?.()?.telemetria?.backupsExportados || 0);
-                        if (jaSalvos > 0 || sessaoAtual >= 3) {
-                            window.SistemaIaStore?.atualizarTelemetria?.(t => {
-                                t.backupsExportados = Math.max(Number(t.backupsExportados || 0) + 1, sessaoAtual);
-                            });
-                            window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
-                        }
+                        window.SistemaIaStore?.incrementarTelemetria?.('backupsExportados', 1);
+                        window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
                     } catch (_) {}
                 } catch (erro) {
                     if (status) status.textContent = `Não foi possível preparar o backup. ${erro.message || 'Tente novamente.'}`;
@@ -813,6 +800,10 @@
                 try {
                     const handle = await configurarPastaFixa();
                     const res = await gravarEmPasta(handle, exportar());
+                    try {
+                        window.SistemaIaStore?.incrementarTelemetria?.('backupsExportados', 1);
+                        window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+                    } catch (_) {}
                     if (status) status.textContent = `Pasta fixa definida para "${res.pasta}" e backup de hoje atualizado (${res.arquivo}).`;
                 } catch (erro) {
                     if (erro?.name === 'AbortError') return;

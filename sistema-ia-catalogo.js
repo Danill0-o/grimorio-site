@@ -48,6 +48,40 @@
         return Number.isFinite(d.getTime()) ? d : null;
     }
 
+    function ehSessaoRetroativa(s, iso) {
+        if (!s || !iso) return false;
+        if (s.precisaoInicio === 'dia') {
+            if (s.registradoEm) {
+                const isoReg = dataCivilLocal(s.registradoEm);
+                return Boolean(isoReg && isoReg !== iso);
+            }
+            return false;
+        }
+        if (s.registradoEm && s.inicio) {
+            const regMs = Date.parse(s.registradoEm);
+            const iniMs = Date.parse(s.inicio);
+            if (Number.isFinite(regMs) && Number.isFinite(iniMs) && (regMs - iniMs) >= 86400000) return true;
+        }
+        return false;
+    }
+
+    function dataRegistroNoDia(s, hojeIso) {
+        const iso = /^\d{4}-\d{2}-\d{2}$/.test(String(s?.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s?.inicio);
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return '';
+        if (s?.precisaoInicio === 'dia') {
+            if (s.registradoEm) return dataCivilLocal(s.registradoEm) === iso ? iso : '';
+            return iso === hojeIso ? iso : '';
+        }
+        if (s?.registradoEm && s?.inicio) {
+            const regMs = Date.parse(s.registradoEm);
+            const iniMs = Date.parse(s.inicio);
+            if (Number.isFinite(regMs) && Number.isFinite(iniMs)) {
+                if (dataCivilLocal(s.registradoEm) !== iso && ((regMs - iniMs) >= 86400000 || regMs < iniMs)) return '';
+            }
+        }
+        return iso;
+    }
+
     function listarChavesStorage(storage) {
         if (!storage) return [];
         if (typeof storage.key === 'function' && Number.isFinite(storage.length)) {
@@ -83,7 +117,8 @@
                 if (k.startsWith('praticasProjetoV1:')) {
                     const est = lerJsonSeguro(storage, k);
                     if (est && typeof est === 'object') {
-                        praticasBrutas.push(est);
+                        const pid = est.projetoId || k.slice('praticasProjetoV1:'.length);
+                        praticasBrutas.push({ ...est, projetoId: pid });
                         const exclS = est.exclusoes?.sessoes || {};
                         for (const [idS, s] of Object.entries(est.sessoes || {})) {
                             if (Object.hasOwn(exclS, idS) || !s) continue;
@@ -95,9 +130,10 @@
                     if (est?.entidades && typeof est.entidades === 'object') {
                         revisoesEntidades.push(...Object.values(est.entidades).filter(Boolean));
                     }
-                } else if (/^projetoV1:[^:]+:reagendamentoV1$/.test(k)) {
+                } else if (/^projetoV1:([^:]+):reagendamentoV1$/.test(k)) {
+                    const mReag = /^projetoV1:([^:]+):reagendamentoV1$/.exec(k);
                     const est = lerJsonSeguro(storage, k);
-                    if (est && Array.isArray(est.operacoes)) reagendamentos.push(est);
+                    if (est && Array.isArray(est.operacoes)) reagendamentos.push({ projetoId: mReag[1], est });
                 } else if (/^projetoV1:[^:]+:registro$/.test(k)) {
                     const reg = lerJsonSeguro(storage, k);
                     if (reg && reg.id) {
@@ -150,10 +186,24 @@
         }
 
         // Agregações diárias de sessões e matérias distintas no dia
+        const regPorProjeto = new Map(projetosRegistros.map(pr => [pr.reg.id, pr.reg]));
         const sessoesPorId = new Map(sessoes.map(s => [s.id, s]));
         const materiasNoDia = new Map();
         const segPorParticipacao = new Map();
         const segPorDiaProjeto = new Map();
+        const segEstudoPorDiaProjeto = new Map();
+        const diasPorProjeto = new Map();
+        const registrarDiaProjeto = (projetoId, iso, dur) => {
+            if (!projetoId || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return;
+            const reg = regPorProjeto.get(projetoId);
+            if (reg && (reg.removido || reg.arquivado)) return;
+            const criadoIso = reg?.criadoEm ? dataCivilLocal(reg.criadoEm) : '';
+            if (criadoIso && iso < criadoIso) return;
+            if (!diasPorProjeto.has(projetoId)) diasPorProjeto.set(projetoId, new Map());
+            const mp = diasPorProjeto.get(projetoId);
+            mp.set(iso, (mp.get(iso) || 0) + Math.max(0, Math.round(Number(dur) || 0)));
+        };
+
         for (const s of sessoes) {
             const iso = /^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio);
             const dur = Math.max(0, Math.round(Number(s.duracaoSegundos) || 0));
@@ -170,20 +220,21 @@
             if (s.projetoId && iso) {
                 const kDia = `${s.projetoId}:${iso}`;
                 segPorDiaProjeto.set(kDia, (segPorDiaProjeto.get(kDia) || 0) + dur);
+                const ehRev = s.tipo === 'revisao' || ['cronometro-revisao', 'conclusao-revisao'].includes(s.origem);
+                if (!ehRev) segEstudoPorDiaProjeto.set(kDia, (segEstudoPorDiaProjeto.get(kDia) || 0) + dur);
+            }
+            if (iso && !ehSessaoRetroativa(s, iso)) {
+                registrarDiaProjeto(s.projetoId || '__sem_projeto__', iso, dur);
             }
         }
 
-        // Gaps entre dias ativos
-        let maiorGap = 0;
-        let teveRetornoTriunfal = false;
+        // Constância global (luto_sequencia) e gaps por projeto ativo (abismo / retorno triunfal)
         let quebrouSequencia7d = false;
         let corrida = 0;
         let ant = '';
         let perdeu7d = false;
         for (const iso of diasOrdenados) {
             const gap = ant ? diasEntreIsos(ant, iso) : 0;
-            if (gap > maiorGap) maiorGap = gap;
-            if (gap >= 14 && (diasMap.get(iso)?.segundos || 0) >= 7200) teveRetornoTriunfal = true;
             if (ant && gap === 1) {
                 corrida++;
             } else {
@@ -193,6 +244,9 @@
             }
             if (perdeu7d) quebrouSequencia7d = true;
             ant = iso;
+        }
+        if (ant && corrida >= 7 && diasEntreIsos(ant, hojeIso) >= 2) {
+            quebrouSequencia7d = true;
         }
 
         // Avaliações e práticas
@@ -204,15 +258,17 @@
         let simuladosConcluidos = 0;
         let tafSessao1h = false;
         let simuladoSessao4h = false;
+        let praticaSessao6hCronometro = false;
 
         for (const est of praticasBrutas) {
             const atividades = est.atividades || {};
             const exclC = est.exclusoes?.conclusoes || {};
             const exclS = est.exclusoes?.sessoes || {};
+            const exclA = est.exclusoes?.avaliacoes || {};
             const avalPorMissao = new Set();
-            for (const av of Object.values(est.avaliacoes || {})) {
-                if (!av) continue;
-                avaliacoes.push(av);
+            for (const [avId, av] of Object.entries(est.avaliacoes || {})) {
+                if (Object.hasOwn(exclA, avId) || !av) continue;
+                avaliacoes.push({ ...av, projetoId: est.projetoId || '' });
                 if (av.missaoId) avalPorMissao.add(av.missaoId);
             }
             for (const [cId, c] of Object.entries(est.conclusoes || {})) {
@@ -222,10 +278,14 @@
                     continue;
                 }
                 praticasConclusoes++;
-                if (!avalPorMissao.has(c.missaoId)) praticasSemAvaliacao++;
                 const tipo = atividades[c.atividadeId]?.atividade?.tipo;
+                if (tipo === 'simulado' && !avalPorMissao.has(c.missaoId)) praticasSemAvaliacao++;
                 if (tipo === 'redacao') redacoesConcluidas++;
                 if (tipo === 'simulado') simuladosConcluidos++;
+                const isoC = /^\d{4}-\d{2}-\d{2}$/.test(String(c.dataRealizacao || '')) ? c.dataRealizacao : dataCivilLocal(c.registradoEm);
+                if (est.projetoId && isoC && (!c.registradoEm || dataCivilLocal(c.registradoEm) === isoC)) {
+                    registrarDiaProjeto(est.projetoId, isoC, 0);
+                }
             }
             for (const [sId, s] of Object.entries(est.sessoes || {})) {
                 if (Object.hasOwn(exclS, sId) || !s) continue;
@@ -233,9 +293,27 @@
                 const dur = Number(s.duracaoSegundos) || 0;
                 if (tipo === 'taf' && dur >= 3600) tafSessao1h = true;
                 if (tipo === 'simulado' && dur >= 14400) simuladoSessao4h = true;
+                if (s.origem === 'cronometro' && dur >= 21600) praticaSessao6hCronometro = true;
+                const isoS = /^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio);
+                if (est.projetoId && isoS && !ehSessaoRetroativa(s, isoS)) {
+                    registrarDiaProjeto(est.projetoId, isoS, dur);
+                }
             }
         }
         avaliacoes.sort((a, b) => Date.parse(a.registradoEm || 0) - Date.parse(b.registradoEm || 0));
+
+        let maiorGap = 0;
+        let teveRetornoTriunfal = false;
+        for (const mapaProj of diasPorProjeto.values()) {
+            const diasProj = [...mapaProj.keys()].sort();
+            let antProj = '';
+            for (const iso of diasProj) {
+                const gap = antProj ? diasEntreIsos(antProj, iso) : 0;
+                if (gap > maiorGap) maiorGap = gap;
+                if (gap >= 14 && (mapaProj.get(iso) || 0) >= 7200) teveRetornoTriunfal = true;
+                antProj = iso;
+            }
+        }
 
         // Metas diárias cumpridas (cirurgiao / dobro / sabatica)
         let bateuCirurgiao = false;
@@ -249,16 +327,20 @@
             const mapa = civil?.mapear ? civil.mapear(dados, totalDias) : null;
             if (!mapa?.porDia) continue;
 
+            const diasProj = diasPorProjeto.get(reg.id);
+            const primeiroDiaProj = diasProj && diasProj.size ? [...diasProj.keys()].sort()[0] : '';
+            const criadoIso = reg.criadoEm ? dataCivilLocal(reg.criadoEm) : '';
             const semanas = new Map();
             for (const [diaChave, info] of Object.entries(mapa.porDia)) {
                 const blocos = plano[diaChave];
                 if (!Array.isArray(blocos) || !blocos.length) continue;
                 const metaSeg = blocos.reduce((acc, b) => acc + (Number(b.metaSegundos) || Math.round((Number(dados.minutosPorDia) || 0) * 60 / Math.max(1, Number(dados.blocosPorDia) || 1))), 0);
-                const iso = info?.data;
+                const iso = typeof info === 'string' ? info : info?.data;
                 if (!iso) continue;
-                const estudado = segPorDiaProjeto.get(`${reg.id}:${iso}`) || 0;
-                if (metaSeg > 0 && estudado >= metaSeg && estudado <= metaSeg + 60) bateuCirurgiao = true;
-                if (metaSeg > 0 && estudado >= 2 * metaSeg) bateuDobroMeta = true;
+                const estudadoEstudo = segEstudoPorDiaProjeto.get(`${reg.id}:${iso}`) || 0;
+                if (metaSeg > 0 && estudadoEstudo >= metaSeg && estudadoEstudo <= metaSeg + 60) bateuCirurgiao = true;
+                const metaDobro = Math.max(metaSeg, (Number(dados.minutosPorDia) || 0) * 60);
+                if (metaSeg >= 1800 && estudadoEstudo >= 2 * metaDobro) bateuDobroMeta = true;
 
                 if (iso < hojeIso) {
                     const [an, me, di] = iso.split('-').map(Number);
@@ -266,16 +348,20 @@
                     const diffSeg = (dt.getDay() + 6) % 7;
                     const seg = new Date(an, me - 1, di - diffSeg, 12, 0, 0, 0);
                     const chSem = dataCivilLocal(seg);
-                    if (!semanas.has(chSem)) semanas.set(chSem, { datas: [], segTotal: 0 });
-                    const w = semanas.get(chSem);
-                    w.datas.push(iso);
-                    w.segTotal += diasMap.get(iso)?.segundos || 0;
+                    if (!semanas.has(chSem)) semanas.set(chSem, { datas: [] });
+                    semanas.get(chSem).datas.push(iso);
                 }
             }
             for (const [segIso, info] of semanas.entries()) {
-                const domIso = dataCivilLocal(new Date(Number(segIso.slice(0, 4)), Number(segIso.slice(5, 7)) - 1, Number(segIso.slice(8, 10)) + 6, 12, 0, 0, 0));
-                if (domIso < hojeIso && info.datas.length >= 1 && info.segTotal === 0) {
-                    teveSemanaSabatica = true;
+                const [anoS, mesS, diaS] = segIso.split('-').map(Number);
+                const domIso = dataCivilLocal(new Date(anoS, mesS - 1, diaS + 6, 12, 0, 0, 0));
+                if (domIso < hojeIso && info.datas.length >= 1 && primeiroDiaProj && primeiroDiaProj < segIso && (!criadoIso || criadoIso <= segIso)) {
+                    let segSemana = 0;
+                    for (let d = 0; d < 7; d++) {
+                        const isoDia = dataCivilLocal(new Date(anoS, mesS - 1, diaS + d, 12, 0, 0, 0));
+                        segSemana += diasMap.get(isoDia)?.segundos || 0;
+                    }
+                    if (segSemana === 0) teveSemanaSabatica = true;
                 }
             }
         }
@@ -309,14 +395,18 @@
         const blocoElefante = [...blocosRev.values()].some(lista => lista.length >= 2 && lista.every(r => r.estado === 'concluida'));
         const quitou10Atrasadas = [...atrasadasPorDia.values()].some(n => n >= 10);
 
-        // Reagendamentos
+        // Reagendamentos (Arquiteto da Fuga conta separadamente por projeto ativo)
         let opsReagendamentoMax = 0;
         let teveReiAmanha = false;
         let tevePendulo = false;
         let teveViajante = false;
         let antecipacoesTotal = 0;
-        for (const led of reagendamentos) {
-            opsReagendamentoMax = Math.max(opsReagendamentoMax, led.operacoes.length);
+        for (const itemReag of reagendamentos) {
+            const led = itemReag.est;
+            const regReag = regPorProjeto.get(itemReag.projetoId);
+            if (!regReag || (!regReag.removido && !regReag.arquivado)) {
+                opsReagendamentoMax = Math.max(opsReagendamentoMax, led.operacoes.length);
+            }
             const movsItem = new Map();
             for (const op of led.operacoes) {
                 if (Object.hasOwn(op, 'antecipacao')) antecipacoesTotal++;
@@ -347,6 +437,7 @@
         const partPorProjeto = new Map();
         for (const p of participacoes) {
             if (!p?.projetoId || p.removida) continue;
+            if (regPorProjeto.get(p.projetoId)?.removido) continue;
             if (!partPorProjeto.has(p.projetoId)) partPorProjeto.set(p.projetoId, []);
             partPorProjeto.get(p.projetoId).push(p);
         }
@@ -381,6 +472,7 @@
             simuladosConcluidos,
             tafSessao1h,
             simuladoSessao4h,
+            praticaSessao6hCronometro,
             revisoes: {
                 dispensadasManual: revDispensadasManual,
                 pontuais: revPontuais,
@@ -423,7 +515,7 @@
             ctx => ctx.dias24h.length >= 2),
         oculta('micro_sessao_panico', 'Paradoxo', 'Isso Conta Como Estudo?!', 'Velocista de 1 Minuto',
             'Você apertou Play, olhou para o PDF, o PDF olhou de volta, e você parou o cronômetro em menos de um minuto. Tecnicamente, consta no histórico. Moralmente, nós dois sabemos o que acabou de acontecer aqui...',
-            ctx => ctx.sessoes.some(s => (s.origem || 'cronometro') === 'cronometro' && Number(s.duracaoSegundos) > 0 && Number(s.duracaoSegundos) < 60)),
+            ctx => ctx.sessoes.some(s => s.origem === 'cronometro' && Number(s.duracaoSegundos) > 0 && Number(s.duracaoSegundos) < 60)),
         oculta('exatamente_um_segundo', 'Paradoxo', 'O Grão de Areia', 'Minimalista Extremo',
             'Um segundo. 1.000 milissegundos. Nem um espirro dura tão pouco, mas aqui está você, reivindicando 0,0167 minutos de conhecimento. O Sistema respeita esse nível de mesquinharia estatística e já acrescentou à barra de progresso 1 pixel de XP',
             ctx => ctx.sessoes.some(s => Number(s.duracaoSegundos) === 1)),
@@ -483,7 +575,13 @@
             }),
         oculta('monogamia_edital', 'Domínio', 'Amor Não Correspondido', 'Monogâmico de Edital',
             'Você tem outras matérias no cronograma, sabia? Elas estão paradas na porta, ensaiando como pedir atenção. Parece que você achou um assunto quentinho para se esconder e agora trata as demais como NPCs sem diálogo.',
-            ctx => ctx.materias.length >= 2 && Number(ctx.global.segundos) >= 72000 && ctx.materias.some(m => Number(m.segundos) / Math.max(1, ctx.materias.reduce((a, b) => a + Number(b.segundos || 0), 0)) > 0.8)),
+            ctx => ctx.projetosRegistros.some(pr => {
+                if (pr.reg.removido || pr.reg.arquivado) return false;
+                const lista = ctx.partPorProjeto.get(pr.reg.id) || [];
+                if (lista.length < 2) return false;
+                const totalProj = lista.reduce((a, p) => a + (ctx.segPorParticipacao.get(p.projetoMateriaId) || 0), 0);
+                return totalProj >= 72000 && lista.some(p => (ctx.segPorParticipacao.get(p.projetoMateriaId) || 0) / totalProj > 0.8);
+            })),
         oculta('cemiterio_projetos', 'Projeto', 'Serial Recomeçador', 'Colecionador de Recomeços',
             'Três projetos no porão e mais um novinho em folha na mesa! \'Dessa vez vai\', disse o estudante pela quarta vez. O Sistema não julga: recomeçar também é estratégia — desde que um dia chegue ao fim.',
             ctx => ctx.projetosRegistros.filter(p => p.reg.arquivado || p.reg.removido).length >= 3 && ctx.projetosRegistros.some(p => !p.reg.arquivado && !p.reg.removido)),
@@ -506,12 +604,13 @@
         oculta('redencao_100', 'Práticas', 'Arco de Redenção Aprovado', 'Ave Fênix de Prova',
             'De apanhar do gabarito a cravar 100%. É esse tipo de virada dramática que o Sistema adora — e eu nem precisei soltar um chefão de fase no meio da sua sala!',
             ctx => {
-                let teveBaixa = false;
+                const baixaPorProjeto = new Set();
                 for (const a of ctx.avaliacoes) {
                     if (!a.nota || !(a.nota.maxima > 0)) continue;
+                    const chaveProj = a.projetoId || '__sem_projeto__';
                     const p = a.nota.obtida / a.nota.maxima;
-                    if (p < 0.6) teveBaixa = true;
-                    else if (teveBaixa && Math.abs(p - 1) < 1e-6) return true;
+                    if (p < 0.6) baixaPorProjeto.add(chaveProj);
+                    else if (baixaPorProjeto.has(chaveProj) && Math.abs(p - 1) < 1e-6) return true;
                 }
                 return false;
             }),
@@ -536,7 +635,7 @@
         // 2.8 Datas especiais e colecionador
         oculta('primeiro_de_abril', 'Datas', 'Dia da Mentira', 'Vítima de Pegadinha',
             'Hoje o Sistema só diz a verdade. Verdade: a prova é facílima. Verdade: o edital cabe numa página. Verdade: sua letra é a mais bonita do mundo. Verdade: eu não tenho o menor interesse em fazer você duvidar de tudo.',
-            ctx => ctx.sessoes.some(s => { const iso = /^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio); return iso.endsWith('-04-01'); })),
+            ctx => ctx.sessoes.some(s => dataRegistroNoDia(s, ctx.hojeIso).endsWith('-04-01'))),
 
         // 2.9 Números e coincidências
         oculta('resposta_42', 'Números', 'A Resposta', 'Resposta Definitiva',
@@ -564,7 +663,7 @@
         oculta('sexta_13', 'Datas', 'Sexta-Feira 13 com Apostila', 'Amaldiçoado de Apostila',
             'Dizem que dá azar. Você ignorou o gato preto, o espelho quebrado e a escada — e abriu a apostila, o verdadeiro objeto amaldiçoado. O Sistema bate três vezes na madeira, por precaução.',
             ctx => ctx.sessoes.some(s => {
-                const iso = /^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio);
+                const iso = dataRegistroNoDia(s, ctx.hojeIso);
                 if (!iso.endsWith('-13')) return false;
                 const [a, m, d] = iso.split('-').map(Number);
                 return new Date(a, m - 1, d, 12, 0, 0, 0).getDay() === 5;
@@ -573,25 +672,25 @@
             'Enquanto o mundo conta de dez a zero, você conta artigos. O Sistema oferece, em sua homenagem, fogos de artifício imaginários e uma taça de água com gás. Feliz Ano Novo, estudante — e fique à vontade para dormir depois.',
             ctx => ctx.sessoes.some(s => {
                 const d = sessaoComHorarioExato(s);
-                if (!d) return false;
+                if (!d || ehSessaoRetroativa(s, dataCivilLocal(d))) return false;
                 const mmdd = `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
                 return (mmdd === '12-31' && d.getHours() >= 22) || (mmdd === '01-01' && d.getHours() < 5);
             })),
         oculta('natal_edital', 'Datas', 'Noite Feliz, Prova Infeliz?', 'Rena de Resumo',
             'Papai Noel entregou presentes em bilhões de casas. Na sua, deixou duas dicas: revisão espaçada e fôlego. O Sistema pede que você coma a ceia. O PDF espera, tem paciência de santo.',
             ctx => ctx.sessoes.some(s => {
-                const iso = /^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio);
+                const iso = dataRegistroNoDia(s, ctx.hojeIso);
                 return iso.endsWith('-12-24') || iso.endsWith('-12-25');
             })),
         oculta('dia_servidor', 'Datas', 'Dia do Servidor Público (Ensaio Geral)', 'Pré-Servidor Público',
             'Hoje é o dia de quem já está lá. Você estudou hoje, o que significa que está treinando para estar lá amanhã. O Sistema bate palmas em câmera lenta, estilo burocrático: carimbo, carimbo, carimbo.',
-            ctx => ctx.sessoes.some(s => (/^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio)).endsWith('-10-28'))),
+            ctx => ctx.sessoes.some(s => dataRegistroNoDia(s, ctx.hojeIso).endsWith('-10-28'))),
         oculta('dia_estudante', 'Datas', 'Seu Dia Chegou (e Você Está Aqui)', 'Aniversariante do Edital',
             'Hoje é o Dia do Estudante. Uma pessoa normal ganharia folga; você ganhou uma conquista oculta e uma sessão de estudos. O Sistema reconhece: foi mal planejado, mas é muito a sua cara.',
-            ctx => ctx.sessoes.some(s => (/^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio)).endsWith('-08-11'))),
+            ctx => ctx.sessoes.some(s => dataRegistroNoDia(s, ctx.hojeIso).endsWith('-08-11'))),
         oculta('doce_ou_questao', 'Datas', 'Doce ou Questão?', 'Fantasma de Gabarito',
             'Alguém bateu à sua porta pedindo doce. Você respondeu com uma questão de múltipla escolha. A criança saiu correndo e nunca mais voltou. O Sistema fez questão de anotar o gabarito dela.',
-            ctx => ctx.sessoes.some(s => (/^\d{4}-\d{2}-\d{2}$/.test(String(s.dataEstudo || '')) ? s.dataEstudo : dataCivilLocal(s.inicio)).endsWith('-10-31'))),
+            ctx => ctx.sessoes.some(s => dataRegistroNoDia(s, ctx.hojeIso).endsWith('-10-31'))),
         oculta('bodas_de_papel', 'Projeto', 'Bodas de Papel', 'Bodas de Papel',
             'Um ano inteiro com o mesmo projeto. Dizem que o primeiro aniversário de casamento é de papel; no seu caso, é de apostila, resumo e post-it. O Sistema deseja felicidades ao casal e pede que não amasse a lombada.',
             ctx => ctx.projetosRegistros.some(p => !p.reg.arquivado && !p.reg.removido && p.reg.criadoEm && (Date.parse(ctx.hojeIso + 'T12:00:00') - Date.parse(p.reg.criadoEm)) >= 365 * 86400000)),
@@ -653,15 +752,22 @@
             ctx => ctx.teveRetornoTriunfal),
         oculta('esqueci_ligado', 'Maratona', 'Esqueci Ligado', 'Esquecido Profissional',
             'Seis horas de cronômetro correndo. Ou você é uma máquina, ou foi almoçar, tomar banho, dormir e acordou com o relógio ainda rodando. Edite a sessão, se for o caso; o Sistema não vai contar a ninguém. (Ou talvez sim.)',
-            ctx => ctx.sessoes.some(s => (s.origem || 'cronometro') === 'cronometro' && Number(s.duracaoSegundos) >= 21600)),
+            ctx => ctx.praticaSessao6hCronometro || ctx.sessoes.some(s => s.origem === 'cronometro' && Number(s.duracaoSegundos) >= 21600)),
 
         // 2.11 Matérias e planejamento
         oculta('edital_infinito', 'Projeto', 'Edital do Tamanho do Mundo', 'Cartógrafo de Editais',
             'Vinte matérias em um único projeto. Isso é um edital ou a lista de compras do almoço de domingo? O Sistema respeita a coragem e acende uma vela para a sua agenda.',
             ctx => [...ctx.partPorProjeto.values()].some(lista => lista.length >= 20)),
         oculta('marca_texto', 'Projeto', 'Marca-Texto Humano', 'Marca-Texto Humano',
-            'Peso máximo em todas as matérias. Tudo é prioridade, logo nada é prioridade. É como destacar o livro inteiro de amarelo: bonito, mas inútil na hora do aperto. O Sistema torce para que você escolha, ao menos, uma para amar um pouco mais.',
-            ctx => [...ctx.partPorProjeto.values()].some(lista => lista.filter(p => Number(p.peso) >= 50).length >= 5)),
+            'Cinco matérias com o mesmo peso acima de 1. Tudo é prioridade, logo nada é prioridade. É como destacar o livro inteiro de amarelo: bonito, mas inútil na hora do aperto. O Sistema torce para que você escolha, ao menos, uma para amar um pouco mais.',
+            ctx => [...ctx.partPorProjeto.values()].some(lista => {
+                const porPeso = new Map();
+                for (const p of lista) {
+                    const w = Number(p.peso);
+                    if (Number.isFinite(w) && w > 1) porPeso.set(w, (porPeso.get(w) || 0) + 1);
+                }
+                return [...porPeso.values()].some(qtd => qtd >= 5);
+            })),
         oculta('odio_produtivo', 'Domínio', 'Ódio Produtivo', 'Domador de Inimigos',
             'Dez horas na matéria que você declarou detestar. O Sistema chora de orgulho e de pena. Pesquisa interna indica: a matéria também estava com medo de você.',
             ctx => [...ctx.partPorProjeto.values()].some(lista => lista.length >= 3 && lista.some(p => Number(p.afinidade) === 0.5 && (ctx.segPorParticipacao.get(p.projetoMateriaId) || 0) >= 36000))),
@@ -778,7 +884,7 @@
             { etapa: 2 }),
         oculta('crise_identidade', 'Identidade', 'Crise de Identidade', 'Camaleão do Grimório',
             'Mago, Guardiã, Escriba, Alquimista... Decida quem você quer ser quando crescer! Se mudar de avatar mais uma vez hoje, o Sistema começa a cobrar taxa de cartório.',
-            ctx => Number(ctx.telemetria?.edicoesPerfil || 0) >= 5,
+            ctx => ctx.telemetria?.edicoesPerfilHoje?.data === ctx.hojeIso && Number(ctx.telemetria?.edicoesPerfilHoje?.contagem || 0) >= 5,
             { etapa: 2 }),
         oculta('console_curioso', 'Meta', 'Bisbilhoteiro de Código', 'Hacker de Apostila',
             'Você realmente achou que eu ia te dar o Nível 100 de graça só porque você abriu o F12? Nice try. Pelo menos seu senso de curiosidade funciona melhor que o seu foco nos estudos. Fique com essa conquista de consolação.',
@@ -809,7 +915,7 @@
             { etapa: 3 }),
         oculta('colheita_tomates', 'Pomodoro', 'Colheita de Tomates', 'Feirante de Foco',
             'Quatro tomates colhidos em sequência! Hora do descanso longo — ou de fazer um molho. O Sistema não indica receita, apenas aplaude de longe, de avental.',
-            ctx => Number(ctx.telemetria?.pomodorosFocoConcluidosSeq || 0) >= 4,
+            ctx => ctx.telemetria?.pomodorosFocoHoje?.data === ctx.hojeIso && Number(ctx.telemetria?.pomodorosFocoHoje?.contagem || 0) >= 4,
             { etapa: 3 }),
         oculta('rebeliao_tomate', 'Pomodoro', 'Rebelião do Tomate', 'Anarquista do Tempo',
             'O Pomodoro estava ali, concentrado, e você apertou o botão de desligar no meio do foco. O tomate foi esmagado. O Sistema segue o protocolo: um minuto de silêncio, depois sugestão de molho.',
@@ -862,7 +968,7 @@
         ...CATALOGO_OCULTAS_ETAPA1,
         ...CATALOGO_OCULTAS_ETAPA2,
         ...CATALOGO_OCULTAS_ETAPA3,
-        ...['konami_code', 'combo_street_fighter'].map(id => {
+        ...['konami_code', 'combo_street_fighter', 'modo_deus_iddqd'].map(id => {
             const meta = CODIGOS_SECRETOS_META[id];
             return oculta(id, 'Meta', meta.nome, meta.tituloRecompensa, meta.fala, () => false, { etapa: 4 });
         })
@@ -1087,15 +1193,12 @@
                 return formatarFalaContextual('fala:domingo_noite', hojeIso, 'Domingo à Noite', 'Domingo à noite: a hora em que a segunda-feira envia a primeira notificação.');
             }
         }
-        // 8. 3 dias em silêncio vs 1º dia sem estudar vs Bloco pulado vs 3 aberturas sem estudar
+        // 8. 3 dias em silêncio, bloco pulado ou 3 aberturas sem estudar
         if (diasOrdenados.length > 0 && segHoje === 0) {
             const ultimoDia = diasOrdenados.at(-1);
             const diasSemEstudo = diasEntreIsos(ultimoDia, hojeIso);
             if (diasSemEstudo >= 3) {
                 return formatarFalaContextual('fala:tres_dias_silencio', hojeIso, 'Três Dias de Silêncio', 'Três dias de silêncio. A apostila está tão quieta que parece estar de castigo.');
-            }
-            if (diasSemEstudo === 2) {
-                return formatarFalaContextual('fala:primeiro_dia_sem_estudar', hojeIso, 'Dia de Folga', 'Hoje o cronômetro tirou folga. Pediu para avisar que sentiu sua falta, mas que está bem.');
             }
         }
         if (Boolean(entrada.blocoPulado)) {

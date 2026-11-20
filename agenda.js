@@ -8,6 +8,7 @@
     let projetoSelecionado = null;
     let restaurandoFoco = false;
     let todasMetasConcluidas = false;
+    let contextoProgresso = null;
     const materiasExpandidas = new Set();
 
     document.addEventListener('DOMContentLoaded', iniciarJornada);
@@ -118,9 +119,7 @@
             revisoes = window.RevisoesStore.sincronizar({ dados: dadosExame, materiaDoDia, revisoesDoDia, dias: estadoDias, sessoes: sessoesProjeto, missoes });
             cargaPorData = window.CargaDiaria?.consultar({ dados: dadosExame, materiaDoDia, sessoes: sessoesProjeto, missoes });
             mostrarRevisoes = window.RevisoesStore.habilitadas();
-            document.getElementById('revisoes-status').textContent = mostrarRevisoes
-                ? 'As revisões são opcionais e contam à parte da meta do dia. Registre o tempo sugerido para concluir uma revisão.'
-                : 'Sugestões ocultas. Histórico, notas e estados das revisões foram preservados.';
+            document.getElementById('revisoes-status').textContent = '';
         } catch (erro) {
             document.getElementById('revisoes-status').textContent = 'Não foi possível carregar as revisões. Seus dados foram preservados; tente recarregar.';
             console.error(erro);
@@ -180,7 +179,7 @@
     function renderizarProgresso(dadosExame, percentualGeral, estadoDias) {
         const totalDias = estadoDias.length;
         const atual = limitarPercentual(percentualGeral);
-        const ideal = limitarPercentual((calcularDiasIdeais(dadosExame) / Math.max(1, totalDias)) * 100);
+        contextoProgresso = { dadosExame, totalDias, atual };
         const barra = document.getElementById('progresso-atual');
         barra.setAttribute('aria-valuenow', atual.toFixed(2));
         document.getElementById('progresso-atual-label').textContent = `${Number(atual.toFixed(2)).toLocaleString('pt-BR')}%`;
@@ -197,6 +196,13 @@
             marco.addEventListener('click', () => centralizarCarta(dia.indice));
             return marco;
         }));
+        atualizarProgressoIdeal();
+    }
+
+    function atualizarProgressoIdeal() {
+        if (!contextoProgresso) return;
+        const { dadosExame, totalDias, atual } = contextoProgresso;
+        const ideal = limitarPercentual((calcularDiasIdeais(dadosExame) / Math.max(1, totalDias)) * 100);
         definirBarra('progresso-ideal', 'progresso-ideal-label', ideal);
 
         const diferenca = atual - ideal;
@@ -464,6 +470,7 @@
         });
         const atualizarData = () => {
             if (dataRenderizada && dataRenderizada !== new Date().toDateString()) iniciarJornada();
+            else atualizarProgressoIdeal();
         };
         window.addEventListener('focus', atualizarData);
         document.addEventListener('visibilitychange', atualizarData);
@@ -959,7 +966,7 @@
         try {
             await window.RevisoesStore[acao](revisao.id);
             const linha = [...document.querySelectorAll('[data-revisao-id]')].find(el => el.dataset.revisaoId === revisao.id);
-            (linha?.querySelector('button') || document.querySelector('.revisoes-info')).focus({preventScroll:true});
+            (linha?.querySelector('button') || document.getElementById('carta-seletor'))?.focus({preventScroll:true});
         } catch (_) { document.getElementById('revisoes-status').textContent = 'Não foi possível salvar a revisão. Tente novamente.'; }
     }
 
@@ -1136,13 +1143,16 @@
         const inicio = dataBrasileira(dadosExame.dataInicioF);
         const fim = dataBrasileira(dadosExame.dataFinalF);
         if (!inicio || !fim) return 0;
-        const limite = new Date(Math.min(new Date().setHours(23, 59, 59, 999), fim.getTime()));
+        const agora = new Date();
+        const hoje = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate());
+        const fracaoHoje = (agora.getHours() * 3600 + agora.getMinutes() * 60 + agora.getSeconds()) / 86400;
+        const limite = new Date(Math.min(hoje.getTime(), fim.getTime()));
         if (limite < inicio) return 0;
         const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'];
         const selecionados = new Set(dadosExame.listaDiaDaSemana || []);
         let total = 0;
         for (const data = new Date(inicio); data <= limite; data.setDate(data.getDate() + 1)) {
-            if (selecionados.has(diasSemana[data.getDay()])) total++;
+            if (selecionados.has(diasSemana[data.getDay()])) total += data.getTime() === hoje.getTime() ? fracaoHoje : 1;
         }
         return total;
     }
@@ -1160,6 +1170,7 @@
     }
 
     function mostrarJornadaVazia() {
+        contextoProgresso = null;
         document.getElementById('jornada-vazia').classList.remove('d-none');
         document.getElementById('painel-progresso').classList.add('d-none');
         document.getElementById('jornada-status').textContent = 'Complete as configurações para gerar os cards.';

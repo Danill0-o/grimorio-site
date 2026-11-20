@@ -1,5 +1,32 @@
 /* Espaçamento explícito: esta página não depende das utilidades do Bootstrap. */
 .materias-page .jornada-pagina > .container { box-sizing: border-box; width: 100%; max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+.materias-page .materias-hero-acoes { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
+.materias-page .materias-voltar-wizard[hidden] { display: none !important; }
+.materias-page .materias-voltar-wizard {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 10px 18px;
+    font-family: var(--font-pixel-ui);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    background: var(--pixel-btn-bg);
+    color: var(--pixel-btn-text);
+    border: 3px solid var(--pixel-border-outer);
+    box-shadow: 3px 3px 0 var(--pixel-shadow);
+}
+.materias-page .materias-voltar-wizard:hover {
+    background: var(--pixel-btn-hover);
+    color: var(--pixel-btn-text);
+}
+.materias-page .materias-voltar-wizard:focus-visible {
+    outline: 3px solid var(--pixel-gold);
+    outline-offset: 2px;
+    background: var(--pixel-btn-hover);
+    color: var(--pixel-btn-text);
+}
 .materias-page main > .jornada-panel { box-sizing: border-box; min-width: 0; padding: clamp(16px, 3vw, 28px); margin-bottom: 24px; }
 .materias-page .jornada-panel > *, .materias-page .perfil-grid > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
 .materias-page :is(h1,h2,h3,p,label,summary,li) { overflow-wrap: anywhere; }

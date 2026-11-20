@@ -21,6 +21,14 @@
         8px 8px 0 var(--pixel-shadow);
 }
 
+.planejamento-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
+}
+
 .site-divisor {
     width: 100%;
     height: 24px;

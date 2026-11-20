@@ -1,0 +1,508 @@
+/* Card resumido do avatar, nível global, título e barra de XP (item 3.5).
+   Autocontido (sem Bootstrap) e com superfícies opacas explícitas para contraste em todos os temas. */
+.ficha-resumo-card {
+    box-sizing: border-box;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(240px, 1.15fr);
+    gap: 16px 22px;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: var(--pixel-surface);
+    color: var(--pixel-ink);
+    border: 4px solid var(--pixel-bronze);
+    border-radius: 0;
+    box-shadow:
+        0 0 0 3px var(--pixel-border-outer),
+        inset 0 0 0 2px var(--pixel-gold),
+        6px 6px 0 var(--pixel-shadow);
+    text-align: left;
+}
+
+.ficha-resumo-card *,
+.ficha-resumo-card *::before,
+.ficha-resumo-card *::after {
+    box-sizing: border-box;
+}
+
+main > .ficha-resumo-card {
+    margin: 0 0 24px;
+}
+
+header .ficha-resumo-card {
+    margin: 20px 0 0;
+}
+
+/* Avatar clicável com destaque 16-bit */
+.ficha-resumo-card button.ficha-resumo-avatar-btn,
+.ficha-resumo-card button.ficha-resumo-avatar-btn:hover:not(:disabled),
+.ficha-resumo-card button.ficha-resumo-avatar-btn:focus-visible,
+.ficha-resumo-card button.ficha-resumo-avatar-btn:active:not(:disabled) {
+    position: relative;
+    display: block;
+    width: 76px;
+    height: 76px;
+    min-height: 44px;
+    margin: 0 0 10px;
+    padding: 4px;
+    overflow: visible;
+    flex-shrink: 0;
+    cursor: pointer;
+    font-family: var(--font-body);
+    font-weight: 400;
+    letter-spacing: normal;
+    text-transform: none;
+    color: #f7e4b2 !important;
+    background: var(--pixel-nav-bg) !important;
+    background-color: var(--pixel-nav-bg) !important;
+    border: 3px solid var(--pixel-bronze) !important;
+    border-radius: 0 !important;
+    text-shadow: none !important;
+    box-shadow:
+        0 0 0 2px var(--pixel-border-outer),
+        inset 0 0 0 2px var(--pixel-gold),
+        4px 4px 0 var(--pixel-shadow) !important;
+}
+
+.ficha-resumo-card button.ficha-resumo-avatar-btn:hover:not(:disabled),
+.ficha-resumo-card button.ficha-resumo-avatar-btn:focus-visible {
+    border-color: var(--pixel-gold-bright) !important;
+    transform: translate(-1px, -1px);
+}
+
+.ficha-resumo-card button.ficha-resumo-avatar-btn:focus-visible {
+    outline: 3px solid var(--pixel-gold);
+    outline-offset: 4px;
+}
+
+.ficha-resumo-card button.ficha-resumo-avatar-btn:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow:
+        0 0 0 2px var(--pixel-border-outer),
+        inset 0 0 0 2px var(--pixel-gold),
+        2px 2px 0 var(--pixel-shadow) !important;
+}
+
+.ficha-resumo-avatar-btn img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    image-rendering: pixelated;
+}
+
+.ficha-resumo-nivel {
+    position: absolute;
+    left: 50%;
+    bottom: -11px;
+    transform: translateX(-50%);
+    padding: 2px 8px;
+    font-family: var(--font-pixel-title);
+    font-size: 0.68rem;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    background-color: var(--pixel-nav-bg);
+    color: #f7e4b2;
+    border: 2px solid var(--pixel-gold);
+    box-shadow: 2px 2px 0 var(--pixel-border-outer);
+}
+
+/* Identidade (nome e título equipado) */
+.ficha-resumo-identidade {
+    min-width: 0;
+    display: grid;
+    gap: 8px;
+    justify-items: start;
+}
+
+.ficha-resumo-nome {
+    margin: 0;
+    font-family: var(--font-pixel-title);
+    font-size: clamp(0.88rem, 1.4vw, 1.04rem);
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--pixel-ink);
+    background-color: var(--pixel-surface);
+    text-shadow: none !important;
+    overflow-wrap: anywhere;
+}
+
+.ficha-resumo-titulo {
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0;
+    padding: 4px 10px;
+    background-color: var(--pixel-surface-elevated);
+    color: var(--pixel-ink);
+    border: 2px solid var(--pixel-bronze);
+    box-shadow: 2px 2px 0 var(--pixel-shadow);
+    font-family: var(--font-pixel-ui);
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1.3;
+    text-shadow: none !important;
+    overflow-wrap: anywhere;
+}
+
+/* Progresso de XP global */
+.ficha-resumo-xp {
+    min-width: 0;
+    padding: 10px 12px;
+    background-color: var(--pixel-card-bg);
+    color: var(--pixel-ink);
+    border: 2px solid var(--pixel-bronze);
+    box-shadow: inset 0 0 0 1px rgba(212, 162, 76, 0.25);
+}
+
+.ficha-resumo-xp-topo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4px 10px;
+    margin-bottom: 6px;
+}
+
+.ficha-resumo-xp-total,
+.ficha-resumo-xp-pct {
+    font-family: var(--font-pixel-ui);
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--pixel-ink);
+    background-color: var(--pixel-card-bg);
+    text-shadow: none !important;
+}
+
+progress.ficha-resumo-barra {
+    display: block;
+    appearance: none;
+    -webkit-appearance: none;
+    accent-color: unset;
+    width: 100%;
+    height: 18px;
+    border: 3px solid var(--pixel-border-outer) !important;
+    border-radius: 0 !important;
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.18) 0px,
+            rgba(0, 0, 0, 0.18) 2px,
+            transparent 2px,
+            transparent 14px
+        ),
+        var(--pixel-surface-alt) !important;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+progress.ficha-resumo-barra::-webkit-progress-bar {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            rgba(0, 0, 0, 0.18) 0px,
+            rgba(0, 0, 0, 0.18) 2px,
+            transparent 2px,
+            transparent 14px
+        ),
+        var(--pixel-surface-alt);
+}
+
+progress.ficha-resumo-barra::-webkit-progress-value {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 12px,
+            rgba(0, 0, 0, 0.24) 12px,
+            rgba(0, 0, 0, 0.24) 14px
+        ),
+        linear-gradient(180deg, var(--pixel-gold-bright), var(--pixel-xp));
+}
+
+progress.ficha-resumo-barra::-moz-progress-bar {
+    background:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0px,
+            transparent 12px,
+            rgba(0, 0, 0, 0.24) 12px,
+            rgba(0, 0, 0, 0.24) 14px
+        ),
+        linear-gradient(180deg, var(--pixel-gold-bright), var(--pixel-xp));
+}
+
+.ficha-resumo-xp-falta {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: var(--pixel-ink);
+    background-color: var(--pixel-card-bg);
+    text-shadow: none !important;
+    overflow-wrap: anywhere;
+}
+
+/* Cromagem Fliperama */
+:root[data-tema-pixel="fliperama"] .ficha-resumo-card {
+    border-color: var(--pixel-arcade-cyan, #00f5ff);
+    box-shadow:
+        inset 0 0 0 2px var(--pixel-border-outer),
+        inset 0 0 0 4px rgba(255, 46, 166, 0.48),
+        6px 6px 0 var(--pixel-border-outer),
+        0 0 22px rgba(0, 245, 255, 0.14);
+}
+
+:root[data-tema-pixel="fliperama"] .ficha-resumo-nivel {
+    background-color: #0d051a;
+    color: var(--pixel-gold);
+    border-color: var(--pixel-arcade-cyan, #00f5ff);
+}
+
+:root[data-tema-pixel="fliperama"] .ficha-resumo-titulo {
+    border-color: var(--pixel-arcade-cyan, #00f5ff);
+}
+
+/* Modal Personalizar ficha (espelhado de perfil.css, autocontido) */
+dialog.ficha-resumo-dialogo {
+    box-sizing: border-box;
+    width: min(600px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    overflow: auto;
+    border: 4px solid var(--pixel-bronze);
+    border-radius: 0;
+    padding: 24px;
+    background-color: var(--pixel-surface-elevated);
+    color: var(--pixel-ink);
+    box-shadow: 0 0 0 4px var(--pixel-border-outer), inset 0 0 0 3px var(--pixel-gold), 12px 12px 0 rgba(0, 0, 0, 0.75);
+}
+
+dialog.ficha-resumo-dialogo::backdrop {
+    background: rgba(10, 6, 4, 0.8);
+}
+
+.ficha-resumo-dialogo * {
+    box-sizing: border-box;
+}
+
+.ficha-resumo-dialogo h2 {
+    font-size: 1.2rem;
+    margin: 0 0 8px;
+    color: var(--pixel-ink);
+    text-shadow: none !important;
+}
+
+.ficha-resumo-dialogo-ajuda {
+    margin: 0 0 16px;
+    color: var(--pixel-ink-muted);
+}
+
+.ficha-resumo-dialogo-campo {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 18px;
+    color: var(--pixel-ink);
+}
+
+.ficha-resumo-dialogo-campo-espaco {
+    margin-top: 16px;
+    margin-bottom: 4px;
+}
+
+.ficha-resumo-dialogo-campo input,
+.ficha-resumo-dialogo-campo select {
+    width: 100%;
+    min-height: 44px;
+    padding: 8px 12px;
+    font: inherit;
+    color: var(--pixel-ink);
+    background-color: var(--pixel-surface);
+    border: 2px solid var(--pixel-bronze);
+}
+
+.ficha-resumo-avatares-grupo {
+    border: 2px solid var(--pixel-bronze);
+    padding: 14px;
+    margin: 0;
+    background-color: var(--pixel-surface);
+}
+
+.ficha-resumo-avatares-grupo legend {
+    padding: 0 6px;
+    font-family: var(--font-pixel-ui);
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--pixel-ink);
+    background-color: var(--pixel-surface);
+}
+
+.ficha-resumo-avatares-sexo {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-sexo-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 48px;
+    min-height: 44px;
+    padding: 6px 14px;
+    font-family: var(--font-body), "Segoe UI Symbol", sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--pixel-ink) !important;
+    background: var(--pixel-surface-elevated) !important;
+    background-color: var(--pixel-surface-elevated) !important;
+    border: 2px solid var(--pixel-bronze) !important;
+    border-radius: 0 !important;
+    box-shadow: 3px 3px 0 var(--pixel-shadow) !important;
+    text-shadow: none !important;
+    cursor: pointer;
+}
+
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-sexo-btn:hover:not(:disabled),
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-sexo-btn:focus-visible {
+    background: var(--pixel-surface-alt) !important;
+    background-color: var(--pixel-surface-alt) !important;
+    color: var(--pixel-ink) !important;
+}
+
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-sexo-btn[aria-pressed="true"],
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-sexo-btn[aria-pressed="true"]:hover:not(:disabled),
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-sexo-btn[aria-pressed="true"]:focus-visible {
+    background: var(--pixel-card-done) !important;
+    background-color: var(--pixel-card-done) !important;
+    color: var(--pixel-ink) !important;
+    border: 3px solid var(--pixel-gold) !important;
+    box-shadow: inset 0 0 0 2px var(--pixel-emerald), 3px 3px 0 var(--pixel-shadow) !important;
+}
+
+.ficha-resumo-avatares-opcoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: 10px;
+}
+
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-opcao {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 10px 8px;
+    font-family: var(--font-pixel-ui);
+    font-size: 0.74rem;
+    text-transform: none;
+    color: var(--pixel-ink) !important;
+    background: var(--pixel-surface-elevated) !important;
+    background-color: var(--pixel-surface-elevated) !important;
+    border: 2px solid var(--pixel-bronze) !important;
+    box-shadow: 3px 3px 0 var(--pixel-shadow) !important;
+    text-shadow: none !important;
+}
+
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-opcao:hover:not(:disabled),
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-opcao:focus-visible {
+    background: var(--pixel-surface-alt) !important;
+    background-color: var(--pixel-surface-alt) !important;
+    color: var(--pixel-ink) !important;
+}
+
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-opcao[aria-pressed="true"],
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-opcao[aria-pressed="true"]:hover:not(:disabled),
+dialog.ficha-resumo-dialogo button.ficha-resumo-avatar-opcao[aria-pressed="true"]:focus-visible {
+    background: var(--pixel-card-done) !important;
+    background-color: var(--pixel-card-done) !important;
+    color: var(--pixel-ink) !important;
+    border: 3px solid var(--pixel-gold) !important;
+    box-shadow: inset 0 0 0 2px var(--pixel-emerald), 3px 3px 0 var(--pixel-shadow) !important;
+}
+
+.ficha-resumo-avatar-opcao img {
+    display: block;
+    width: 56px;
+    height: 56px;
+    border: 2px solid var(--pixel-border-outer);
+    image-rendering: pixelated;
+}
+
+.ficha-resumo-dialogo-erro {
+    min-height: 1.2em;
+    margin: 12px 0 0;
+    font-weight: 600;
+    color: var(--pixel-ink);
+}
+
+.ficha-resumo-dialogo-erro:empty {
+    display: none;
+}
+
+.ficha-resumo-dialogo-acoes {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 16px;
+}
+
+dialog.ficha-resumo-dialogo button.btn.btn-outline-secondary {
+    color: var(--pixel-btn-sec-text) !important;
+    background-color: var(--pixel-btn-sec-bg) !important;
+    text-shadow: none !important;
+}
+
+dialog.ficha-resumo-dialogo button.btn.btn-outline-secondary:hover:not(:disabled),
+dialog.ficha-resumo-dialogo button.btn.btn-outline-secondary:focus-visible {
+    color: var(--pixel-btn-sec-text) !important;
+    background-color: var(--pixel-btn-sec-hover) !important;
+}
+
+:root[data-tema-pixel="fliperama"] dialog.ficha-resumo-dialogo {
+    border-color: var(--pixel-arcade-cyan, #00f5ff);
+    box-shadow:
+        inset 0 0 0 2px var(--pixel-border-outer),
+        inset 0 0 0 4px rgba(255, 46, 166, 0.48),
+        8px 8px 0 var(--pixel-border-outer),
+        0 0 22px rgba(0, 245, 255, 0.14);
+}
+
+@media (max-width: 860px) {
+    .ficha-resumo-card {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .ficha-resumo-xp {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 767px) {
+    .ficha-resumo-card button.ficha-resumo-avatar-btn,
+    .ficha-resumo-card button.ficha-resumo-avatar-btn:hover:not(:disabled),
+    .ficha-resumo-card button.ficha-resumo-avatar-btn:focus-visible,
+    .ficha-resumo-card button.ficha-resumo-avatar-btn:active:not(:disabled) {
+        width: 72px;
+        height: 72px;
+    }
+
+    .ficha-resumo-nivel {
+        font-size: 13.1px;
+    }
+
+    .ficha-resumo-titulo,
+    .ficha-resumo-xp-total,
+    .ficha-resumo-xp-pct,
+    .ficha-resumo-xp-falta {
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 420px) {
+    .ficha-resumo-card {
+        padding: 14px 12px;
+        gap: 12px 14px;
+    }
+}

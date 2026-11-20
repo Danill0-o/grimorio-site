@@ -14,6 +14,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Calendário de estudos — Grimório</title>
     <link rel="stylesheet" href="css/grimorio.css?v=interface-20261118">
+    <link rel="stylesheet" href="css/assets.css?v=temas3-20261022">
     <link rel="stylesheet" href="css/calendario.css?v=escudo-20261101">
     <link rel="stylesheet" href="css/acessibilidade.css?v=temas3-20261022">
     <script type="application/grimorio" src="projetos-store.js?v=interface-20261118"></script><script type="application/grimorio" src="praticas-store.js?v=pratica-excluir-20261118"></script>
@@ -33,15 +34,15 @@
     <script type="application/grimorio" src="calendario.js?v=carga-diaria-5" defer></script>
 
 <link rel="stylesheet" href="css/jornada-interface.css?v=carga-diaria-5">
-<script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
+<script type="application/grimorio" src="sidebar.js?v=conquistas-20261118"></script>
 <link rel="stylesheet" href="css/quest-marcadores.css?v=quest-20261101"><script type="application/grimorio" src="quest-marcadores.js?v=quest-20261101"></script><link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101"><link rel="stylesheet" href="css/sistema-ia.css?v=interface-20261118">
     <script type="application/grimorio" src="carga-diaria.js?v=carga-diaria-5"></script>
     <script type="application/grimorio" src="sistema-ia-store.js?v=avisos-20261116" defer></script>
-    <script type="application/grimorio" src="sistema-ia-catalogo.js?v=etapa4-20261116" defer></script>
-    <script type="application/grimorio" src="sistema-ia-avisos.js?v=interface-20261118" defer></script>
-</head>
+    <script type="application/grimorio" src="sistema-ia-catalogo.js?v=falas-20261120" defer></script>
+    <script type="application/grimorio" src="sistema-ia-avisos.js?v=falas-20261120" defer></script>
+<link rel="stylesheet" href="css/tipografia-mobile.css?v=20261118"></head>
 <body class="calendario-page">
-<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Catálogo de matérias</a><a data-menu-projeto href="agenda.html">Jornada</a><a id="atalho-praticas" data-menu-projeto href="agenda.html?praticas=1">Atividades práticas</a><a data-menu-projeto href="pesomateria.html">Ver planejamento</a><a data-menu-projeto href="calendario.html">Calendário</a><a data-menu-projeto href="index.html?editar=1">Editar projeto</a><a href="historico.html">Histórico de estudos</a><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
+<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="conquistas.html">Conquistas</a><a href="materias.html">Catálogo de matérias</a><a data-menu-projeto href="agenda.html">Jornada</a><a id="atalho-praticas" data-menu-projeto href="agenda.html?praticas=1">Atividades práticas</a><a id="atalho-reorganizar" data-menu-projeto href="agenda.html?reorganizar=1">Reorganizar blocos de estudos</a><a data-menu-projeto href="pesomateria.html">Ver planejamento</a><a data-menu-projeto href="calendario.html">Calendário</a><a data-menu-projeto href="index.html?editar=1">Editar projeto</a><a href="historico.html">Histórico de estudos</a><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
     <header class="calendario-container">
 
         <section class="jornada-hero calendario-intro" aria-labelledby="calendario-titulo">
@@ -72,6 +73,10 @@
         <p class="calendario-popup-rodape">Abra o dia na Jornada para estudar ou registrar tempo.</p>
     </dialog>
 </div></div>
+<footer class="site-rodape">
+    <p><strong>GRIMÓRIO</strong></p>
+    <p><small>Cada dia de estudo escreve um novo capítulo.</small></p>
+</footer>
 <button type="button" id="calendario-topo" aria-label="Voltar ao topo" title="Voltar ao topo" hidden><img class="icone-pixel" src="img/icons/seta-cima.png" alt="" aria-hidden="true" width="24" height="24"></button>
 </body>
 </html>

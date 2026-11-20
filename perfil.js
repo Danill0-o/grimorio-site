@@ -33,7 +33,12 @@
         guardia: [[9, 12, 2, 1], [13, 12, 2, 1]],
         escriba: [[8, 12, 3, 2], [13, 12, 3, 2]],
         alquimista: [[8, 10, 3, 3], [13, 10, 3, 3]],
-        explorador: [[9, 12, 2, 2], [13, 12, 2, 2]]
+        explorador: [[9, 12, 2, 2], [13, 12, 2, 2]],
+        maga: [[9, 13, 2, 2], [13, 13, 2, 2]],
+        'guardia-f': [[9, 12, 2, 1], [13, 12, 2, 1]],
+        'escriba-f': [[8, 12, 3, 2], [13, 12, 3, 2]],
+        'alquimista-f': [[8, 10, 3, 3], [13, 10, 3, 3]],
+        exploradora: [[9, 12, 2, 2], [13, 12, 2, 2]]
     });
 
     const FALAS_CUTUCADA = Object.freeze({
@@ -126,7 +131,7 @@
         return identidade;
     }
 
-    function renderizarRetencao(retencao, identidade) {
+    function renderizarRetencao(retencao) {
         const constanciaStatus = el('perfil-constancia-status');
         const streakAtual = el('perfil-streak-atual');
         const streakMelhor = el('perfil-streak-melhor');
@@ -137,10 +142,7 @@
         const maestriaDetalhe = el('perfil-maestria-detalhe');
         const barraDedicacao = el('perfil-dedicacao-barra');
         const legendaDedicacao = el('perfil-dedicacao-legenda');
-        const resumoConquistas = el('perfil-conquistas-resumo');
-        const listaConquistas = el('perfil-conquistas-lista');
-
-        if (!retencao || !streakAtual || !lista7d || !listaConquistas) return;
+        if (!retencao || !streakAtual || !lista7d) return;
 
         const c = retencao.constancia;
         if (constanciaStatus) {
@@ -226,134 +228,6 @@
             legendaDedicacao.replaceChildren(...legendas);
         }
 
-        const totalConquistas = retencao.conquistas.length;
-        const qtdDesbloqueadas = retencao.conquistasDesbloqueadas.length;
-        if (resumoConquistas) {
-            resumoConquistas.textContent = `${qtdDesbloqueadas} de ${totalConquistas} desbloqueadas`;
-        }
-
-        const filtroConquistas = el('perfil-conquistas-filtro')?.value || 'todas';
-        const conquistasVisiveis = retencao.conquistas.filter(item => {
-            if (filtroConquistas === 'desbloqueadas') return item.desbloqueada;
-            if (filtroConquistas === 'bloqueadas') return !item.desbloqueada;
-            if (filtroConquistas !== 'todas') return item.categoria === filtroConquistas;
-            return true;
-        });
-
-        const vazioConquistas = el('perfil-conquistas-vazio');
-        if (vazioConquistas) {
-            if (conquistasVisiveis.length === 0) {
-                vazioConquistas.hidden = false;
-                vazioConquistas.textContent = filtroConquistas === 'desbloqueadas'
-                    ? 'Nenhuma conquista desbloqueada ainda. Continue estudando para conquistar seu primeiro título.'
-                    : 'Nenhuma conquista neste filtro.';
-            } else {
-                vazioConquistas.hidden = true;
-                vazioConquistas.textContent = '';
-            }
-        }
-
-        function criarBotaoEquipar(item) {
-            if (!item.desbloqueada || !window.PerfilIdentidade) return null;
-            const equipado = identidade.tituloEquipadoId === item.id;
-            const btn = elemento('button', equipado ? 'Título equipado' : `Equipar "${item.tituloRecompensa}"`, 'btn btn-outline-secondary perfil-conquista-equipar');
-            btn.type = 'button';
-            btn.setAttribute('aria-pressed', equipado ? 'true' : 'false');
-            btn.addEventListener('click', () => {
-                window.PerfilIdentidade.salvar({ tituloEquipadoId: equipado ? null : item.id });
-            });
-            return btn;
-        }
-
-        const cardsConquistas = conquistasVisiveis.map(item => {
-            const card = elemento('li', undefined, `perfil-conquista-card ${item.desbloqueada ? 'is-desbloqueada' : 'is-bloqueada'}`);
-            card.dataset.conquistaId = item.id;
-
-            const topo = elemento('div', undefined, 'perfil-conquista-topo');
-            const emblema = elemento('span', item.emblema, 'perfil-conquista-emblema');
-            emblema.setAttribute('aria-hidden', 'true');
-            const meta = elemento('div', undefined, 'perfil-conquista-meta');
-            meta.append(
-                elemento('span', item.categoria, 'perfil-conquista-categoria'),
-                elemento('h3', item.nome, 'perfil-conquista-nome')
-            );
-            topo.append(emblema, meta);
-
-            const criterio = elemento('p', item.criterio, 'perfil-conquista-criterio');
-            const status = elemento(
-                'p',
-                item.desbloqueada ? `Desbloqueada · Título: ${item.tituloRecompensa}` : `Bloqueada · ${item.progresso}`,
-                'perfil-conquista-status'
-            );
-            card.append(topo, criterio, status);
-
-            const btn = criarBotaoEquipar(item);
-            if (btn) card.append(btn);
-            return card;
-        });
-        listaConquistas.replaceChildren(...cardsConquistas);
-
-        const listaOcultas = el('perfil-ocultas-lista');
-        const resumoOcultas = el('perfil-ocultas-resumo');
-        const vazioOcultas = el('perfil-ocultas-vazio');
-        if (listaOcultas && Array.isArray(retencao.conquistasOcultas)) {
-            const todasOcultas = retencao.conquistasOcultas;
-            const descobertas = retencao.ocultasDesbloqueadas || [];
-            if (resumoOcultas) {
-                resumoOcultas.textContent = `${descobertas.length} de ${todasOcultas.length} descobertas`;
-            }
-
-            const filtroOcultas = el('perfil-ocultas-filtro')?.value || 'todas';
-            const mostrarSegredos = filtroOcultas !== 'desbloqueadas' && todasOcultas.some(item => !item.desbloqueada);
-            const ocultasOrdenadas = filtroOcultas === 'bloqueadas' ? [] : todasOcultas.filter(item => item.desbloqueada);
-
-            if (vazioOcultas) {
-                if (ocultasOrdenadas.length === 0 && !mostrarSegredos) {
-                    vazioOcultas.hidden = false;
-                    vazioOcultas.textContent = filtroOcultas === 'desbloqueadas'
-                        ? 'Nenhuma conquista oculta descoberta ainda.'
-                        : 'Parabéns: você já revelou todas as conquistas ocultas!';
-                } else {
-                    vazioOcultas.hidden = true;
-                    vazioOcultas.textContent = '';
-                }
-            }
-
-            const cardsOcultas = ocultasOrdenadas.map(item => {
-                const card = elemento('li', undefined, 'perfil-conquista-card is-desbloqueada is-oculta-desbloqueada');
-                card.dataset.conquistaId = item.id;
-
-                const topo = elemento('div', undefined, 'perfil-conquista-topo');
-                const emblema = elemento('span', 'IA', 'perfil-conquista-emblema');
-                emblema.setAttribute('aria-hidden', 'true');
-                const meta = elemento('div', undefined, 'perfil-conquista-meta');
-                meta.append(
-                    elemento('span', `${item.categoria} · Sistema IA`, 'perfil-conquista-categoria'),
-                    elemento('h3', item.nome, 'perfil-conquista-nome')
-                );
-                topo.append(emblema, meta);
-
-                const fala = elemento('blockquote', item.fala, 'perfil-oculta-fala');
-                const status = elemento('p', `Descoberta · Título: ${item.tituloRecompensa}`, 'perfil-conquista-status');
-                card.append(topo, fala, status);
-                const btn = criarBotaoEquipar(item);
-                if (btn) card.append(btn);
-                return card;
-            });
-            if (mostrarSegredos) {
-                const card = elemento('li', undefined, 'perfil-conquista-card is-bloqueada is-oculta-bloqueada');
-                const topo = elemento('div', undefined, 'perfil-conquista-topo');
-                const emblema = elemento('span', '???', 'perfil-conquista-emblema');
-                emblema.setAttribute('aria-hidden', 'true');
-                const meta = elemento('div', undefined, 'perfil-conquista-meta');
-                meta.append(elemento('span', 'Conquista Oculta', 'perfil-conquista-categoria'),
-                    elemento('h3', '???', 'perfil-conquista-nome'));
-                topo.append(emblema, meta);
-                card.append(topo, elemento('p', 'Segredos por descobrir', 'perfil-conquista-status'));
-                cardsOcultas.push(card);
-            }
-            listaOcultas.replaceChildren(...cardsOcultas);
-        }
     }
 
     const PATENTES_BRASAO = Object.freeze({
@@ -440,23 +314,6 @@
         return { materias, sessoes, global, total, projetos, praticas, identidadeAtual, retencao };
     }
 
-    function registrarVisitaMural() {
-        if (!window.SistemaIaStore || !window.PerfilRetencao) return;
-        try {
-            const { retencao } = carregarDadosPerfil();
-            const hojeIso = retencao?.hojeIso || window.PerfilRetencao.dataCivilLocal(new Date());
-            const totalSemFiscal = (retencao?.todasDesbloqueadas || []).filter(c => c.id !== 'fiscal_trofeus').length;
-            window.SistemaIaStore.atualizarTelemetria(t => {
-                const atual = t.visitasMuralHoje || { data: '', contagem: 0, ultimoTotal: 0 };
-                if (atual.data !== hojeIso || totalSemFiscal > atual.ultimoTotal) {
-                    t.visitasMuralHoje = { data: hojeIso, contagem: 1, ultimoTotal: totalSemFiscal };
-                } else {
-                    t.visitasMuralHoje = { data: hojeIso, contagem: atual.contagem + 1, ultimoTotal: totalSemFiscal };
-                }
-            });
-        } catch (_) {}
-    }
-
     function renderizar() {
         if (renderizando) return;
         const lista = el('perfil-dominio');
@@ -468,8 +325,8 @@
 
             ultimoNivelGlobal = global.nivel;
             ultimasDesbloqueadas = retencao ? (retencao.todasDesbloqueadas || retencao.conquistasDesbloqueadas) : [];
-            const identidade = renderizarIdentidade(global.nivel, ultimasDesbloqueadas);
-            renderizarRetencao(retencao, identidade);
+            renderizarIdentidade(global.nivel, ultimasDesbloqueadas);
+            renderizarRetencao(retencao);
 
             const criterioOrdem = el('perfil-dominio-ordem')?.value || 'tempo';
             const filtroPatente = el('perfil-dominio-filtro')?.value || 'todas';
@@ -522,10 +379,6 @@
             }
             const resumoDominio = el('perfil-dominio-resumo');
             if (resumoDominio) resumoDominio.textContent = '—';
-            const listaConquistas = el('perfil-conquistas-lista');
-            if (listaConquistas) listaConquistas.replaceChildren();
-            const listaOcultas = el('perfil-ocultas-lista');
-            if (listaOcultas) listaOcultas.replaceChildren();
             const lista7d = el('perfil-ritmo-7d');
             if (lista7d) lista7d.replaceChildren();
             status.textContent = 'Não foi possível carregar seu perfil. Os dados foram preservados. Verifique o armazenamento e recarregue para tentar novamente.';
@@ -540,6 +393,7 @@
         const abrir = el('perfil-personalizar-btn');
         const form = el('perfil-identidade-form');
         const inputNome = el('perfil-nome-input');
+        const barraSexo = el('perfil-avatares-sexo');
         const gradeAvatares = el('perfil-avatares-opcoes');
         const selectTitulo = el('perfil-titulo-select');
         const cancelar = el('perfil-identidade-cancelar');
@@ -547,6 +401,7 @@
         if (!dialogo || !abrir || !form || !inputNome || !gradeAvatares || !cancelar || !window.PerfilIdentidade) return;
 
         let avatarSelecionado = 'mago';
+        let sexoFiltro = 'masculino';
 
         function atualizarSelecaoAvatares() {
             for (const botao of gradeAvatares.querySelectorAll('[data-avatar-id]')) {
@@ -554,8 +409,44 @@
             }
         }
 
+        function atualizarBotoesSexo() {
+            if (!barraSexo) return;
+            for (const botao of barraSexo.querySelectorAll('[data-avatar-sexo]')) {
+                botao.setAttribute('aria-pressed', botao.dataset.avatarSexo === sexoFiltro ? 'true' : 'false');
+            }
+        }
+
+        function montarBotoesSexo() {
+            if (!barraSexo) return;
+            const sexos = window.PerfilIdentidade.SEXOS_AVATAR || [
+                { id: 'masculino', rotulo: 'Avatares masculinos', titulo: 'Masculino', simbolo: '\u2642\uFE0E' },
+                { id: 'feminino', rotulo: 'Avatares femininos', titulo: 'Feminino', simbolo: '\u2640\uFE0E' }
+            ];
+            const botoes = sexos.map(sx => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'perfil-avatar-sexo-btn';
+                btn.dataset.avatarSexo = sx.id;
+                btn.setAttribute('aria-label', sx.rotulo);
+                btn.title = sx.titulo;
+                btn.setAttribute('aria-pressed', sx.id === sexoFiltro ? 'true' : 'false');
+                btn.textContent = sx.simbolo;
+                btn.addEventListener('click', () => {
+                    if (sexoFiltro === sx.id) return;
+                    sexoFiltro = sx.id;
+                    atualizarBotoesSexo();
+                    montarOpcoes();
+                });
+                return btn;
+            });
+            barraSexo.replaceChildren(...botoes);
+        }
+
         function montarOpcoes() {
-            const botoes = window.PerfilIdentidade.AVATARES.map(av => {
+            const lista = window.PerfilIdentidade.listarAvataresPorSexo
+                ? window.PerfilIdentidade.listarAvataresPorSexo(sexoFiltro)
+                : window.PerfilIdentidade.AVATARES;
+            const botoes = lista.map(av => {
                 const btn = document.createElement('button');
                 btn.type = 'button';
                 btn.className = 'perfil-avatar-opcao';
@@ -593,8 +484,10 @@
         abrir.addEventListener('click', () => {
             const atual = window.PerfilIdentidade.obter();
             avatarSelecionado = atual.avatarId;
+            sexoFiltro = atual.avatar?.sexo === 'feminino' ? 'feminino' : 'masculino';
             inputNome.value = atual.nomePersonalizado || '';
             if (statusDialogo) statusDialogo.textContent = '';
+            montarBotoesSexo();
             montarOpcoes();
             montarTitulos(atual.tituloEquipadoId);
             dialogo.showModal();
@@ -666,25 +559,6 @@
             }
             if (Object.hasOwn(FALAS_CUTUCADA, n)) {
                 mostrarFalaAvatar(FALAS_CUTUCADA[n]);
-            }
-        });
-
-        const reclamacaoBtn = el('perfil-reclamacao-xp-btn');
-        const reclamacaoStatus = el('perfil-reclamacao-status');
-        reclamacaoBtn?.addEventListener('click', () => {
-            const res = window.SistemaIaStore?.incrementarTelemetria?.('cliquesReclamacaoXp', 1);
-            const total = Number(res?.telemetria?.cliquesReclamacaoXp || 0);
-            const desbloqueada = window.SistemaIaStore?.estaDesbloqueada?.('reclamacao_xp');
-            const atingiuMeta = total >= window.SistemaIaCatalogo.CLIQUES_RECLAMACAO_XP;
-            if (reclamacaoStatus) {
-                reclamacaoStatus.hidden = false;
-                reclamacaoStatus.textContent = !atingiuMeta && !desbloqueada
-                    ? `Protocolo nº ${total}: o Departamento de Reclamações foi extinto em 2019 (0 XP).`
-                    : `Protocolo nº ${total} atendido! Conquista "Departamento de Reclamações" desbloqueada (continua valendo 0 XP).`;
-            }
-            if (atingiuMeta && !desbloqueada) {
-                renderizar();
-                window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
             }
         });
 
@@ -837,18 +711,14 @@
     document.addEventListener('DOMContentLoaded', () => {
         iniciarDialogoIdentidade();
         iniciarEasterEggs();
-        el('perfil-conquistas-filtro')?.addEventListener('change', renderizar);
-        el('perfil-ocultas-filtro')?.addEventListener('change', renderizar);
         el('perfil-dominio-ordem')?.addEventListener('change', renderizar);
         el('perfil-dominio-filtro')?.addEventListener('change', renderizar);
-        registrarVisitaMural();
         renderizar();
     });
     for (const evento of ['estudo:registrado', 'estudo:excluido', 'dominio:reiniciado', 'materias:excluida', 'praticas:alteradas', 'revisoes:alteradas', 'perfil:identidade-alterada', 'sistema-ia:atualizado']) {
         window.addEventListener(evento, renderizar);
     }
     window.addEventListener('pageshow', e => {
-        if (e.persisted) registrarVisitaMural();
         renderizar();
     });
     window.addEventListener('storage', e => {

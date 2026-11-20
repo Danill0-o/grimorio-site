@@ -465,10 +465,15 @@
 
     function notificarRegistro(sessoes) {
         try {
+            const temaAtivo = localStorage.getItem('grimorioTemaPixelV1');
+            const chaveCrt = temaAtivo === 'fliperama' ? 'grimorioScanlinesFliperamaV1' : 'grimorioScanlinesPixelV1';
             const scanlinesAtivo = (typeof document !== 'undefined' && document.body?.getAttribute('data-scanlines') === 'on')
-                || localStorage.getItem('grimorioScanlinesPixelV1') === 'on';
+                || localStorage.getItem(chaveCrt) === 'on';
             if (scanlinesAtivo && Array.isArray(sessoes) && sessoes.length) {
-                const segs = sessoes.reduce((acc, s) => acc + Math.max(0, Math.round(Number(s?.duracaoSegundos) || 0)), 0);
+                const segs = sessoes.reduce((acc, s) => {
+                    if (s?.precisaoInicio === 'dia' && s?.registradoEm && s?.dataEstudo && dataCivilLocal(new Date(s.registradoEm)) !== s.dataEstudo) return acc;
+                    return acc + Math.max(0, Math.round(Number(s?.duracaoSegundos) || 0));
+                }, 0);
                 if (segs > 0) window.SistemaIaStore?.incrementarTelemetria?.('segundosScanlines', segs);
             }
         } catch (_) {}

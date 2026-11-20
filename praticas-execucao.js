@@ -65,9 +65,21 @@
         const contexto = await preparar(missaoId);
         if (!contexto.missao.usaCronometro) throw new Error('TAF permite somente registro posterior de tempo.');
         verificarRealizacao(contexto, window.CalendarioJornada.dataLocal(dados.inicio));
-        return store().registrarSessao(contexto.missao.projetoId, missaoId, {
+        const registrado = await store().registrarSessao(contexto.missao.projetoId, missaoId, {
             sessaoId: dados.sessaoId, inicio: dados.inicio, duracaoSegundos: dados.duracaoSegundos, origem: 'cronometro'
         });
+        try {
+            const temaAtivo = localStorage.getItem('grimorioTemaPixelV1');
+            const chaveCrt = temaAtivo === 'fliperama' ? 'grimorioScanlinesFliperamaV1' : 'grimorioScanlinesPixelV1';
+            const scanlinesAtivo = (typeof document !== 'undefined' && document.body?.getAttribute('data-scanlines') === 'on')
+                || localStorage.getItem(chaveCrt) === 'on';
+            const segs = Math.max(0, Math.round(Number(dados.duracaoSegundos) || 0));
+            if (scanlinesAtivo && segs > 0) {
+                window.SistemaIaStore?.incrementarTelemetria?.('segundosScanlines', segs);
+                window.dispatchEvent(new CustomEvent('sistema-ia:telemetria'));
+            }
+        } catch (_) {}
+        return registrado;
     }
     async function avaliar(missaoId, dados) {
         dados = { ...dados, nota: dados.nota == null ? null : { ...dados.nota } };

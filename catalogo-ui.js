@@ -34,8 +34,19 @@
 
     document.addEventListener('DOMContentLoaded', () => {
         const voltarWizard = document.getElementById('materias-voltar-wizard');
-        if (voltarWizard && window.ProjetosStore?.temAtual?.()) {
+        const origemWizard = new URLSearchParams(window.location.search).get('origem') === 'wizard';
+        if (voltarWizard && origemWizard && window.ProjetosStore?.temAtual?.() && window.ProjetoStorage?.getItem('wizardProjeto')) {
             voltarWizard.hidden = false;
+            voltarWizard.addEventListener('click', () => {
+                try {
+                    const storage = window.ProjetoStorage || localStorage;
+                    const rascunho = JSON.parse(storage.getItem('wizardProjeto') || 'null');
+                    if (rascunho && typeof rascunho === 'object') {
+                        rascunho.etapa = 2;
+                        storage.setItem('wizardProjeto', JSON.stringify(rascunho));
+                    }
+                } catch (_) {}
+            });
         }
 
         iniciarLivroWizard();

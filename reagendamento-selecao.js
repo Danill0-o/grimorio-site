@@ -158,5 +158,15 @@
             trilha.replaceChildren();
             if (!abrindoEditor) abrir.focus();
         });
+        const url = new URL(window.location.href);
+        if (url.searchParams.get('reorganizar') === '1') {
+            url.searchParams.delete('reorganizar');
+            history.replaceState(null, '', url);
+            queueMicrotask(() => {
+                if (!dialog.open && document.querySelector('#jornada-cards > .dia-card[data-data-prevista]')) {
+                    abrir.click();
+                }
+            });
+        }
     });
 })();

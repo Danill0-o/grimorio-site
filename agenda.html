@@ -27,21 +27,21 @@
     <link rel="stylesheet" href="css/praticas-execucao.css?v=pratica-excluir-20261118">
 <link rel="stylesheet" href="css/jornada-interface.css?v=carga-diaria-6">
 <link rel="stylesheet" href="css/pomodoro.css?v=cabecalho-20261112">
-<script type="application/grimorio" src="sidebar.js?v=reorganizacao-menu"></script>
-<link rel="stylesheet" href="css/quest-marcadores.css?v=quest-20261101"><script type="application/grimorio" src="quest-marcadores.js?v=quest-20261101"></script><link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101"><link rel="stylesheet" href="css/sistema-ia.css?v=interface-20261118">
+<script type="application/grimorio" src="sidebar.js?v=conquistas-20261118"></script>
+<link rel="stylesheet" href="css/quest-marcadores.css?v=quest-20261101"><script type="application/grimorio" src="quest-marcadores.js?v=quest-20261101"></script><link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102"><link rel="stylesheet" href="css/replanejamento.css?v=d061-20261101"><link rel="stylesheet" href="css/sistema-ia.css?v=interface-20261118"><link rel="stylesheet" href="css/ficha-resumo.css?v=20261119">
     <script type="application/grimorio" src="carga-diaria.js?v=carga-diaria-5"></script>
-</head>
+<link rel="stylesheet" href="css/tipografia-mobile.css?v=20261118"></head>
 <body class="jornada-page">
 <div class="jornada-shell">
-<aside class="jornada-menu" aria-label="Menu da Jornada">
-<details id="jornada-menu-aberto"><summary>Menu da Jornada</summary>
+<aside class="jornada-menu" aria-label="Menu do Grimório">
+<details id="jornada-menu-aberto"><summary>Menu do Grimório</summary>
 <nav aria-label="Navegação da Jornada">
 <p class="jornada-menu-titulo">Seu Grimório</p>
-<a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Catálogo de matérias</a><a href="pesomateria.html">Ver planejamento</a><a href="calendario.html">Calendário</a>
-<a href="index.html?editar=1">Editar projeto</a>
+<a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="conquistas.html">Conquistas</a><a href="materias.html">Catálogo de matérias</a><a data-menu-projeto href="agenda.html">Jornada</a><a data-menu-projeto href="pesomateria.html">Ver planejamento</a><a data-menu-projeto href="calendario.html">Calendário</a>
+<a data-menu-projeto href="index.html?editar=1">Editar projeto</a>
 <a href="historico.html">Histórico de estudos</a>
-<button type="button" id="abrir-praticas" aria-haspopup="dialog" aria-controls="praticas-painel-dialog">Atividades práticas</button>
-<button type="button" id="reagendamento-jornada-abrir" aria-haspopup="dialog" aria-controls="reagendamento-jornada">Reorganizar estudos</button>
+<button type="button" id="abrir-praticas" data-menu-projeto aria-haspopup="dialog" aria-controls="praticas-painel-dialog">Atividades práticas</button>
+<button type="button" id="reagendamento-jornada-abrir" data-menu-projeto aria-haspopup="dialog" aria-controls="reagendamento-jornada">Reorganizar blocos de estudos</button>
 <details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details>
 </nav><p id="reagendamento-status" role="status" class="small mb-0"></p></details></aside>
 <div class="jornada-pagina">
@@ -65,6 +65,7 @@
                 </div>
             </div>
         </section>
+        <section id="ficha-resumo" class="ficha-resumo-card" aria-label="Resumo da ficha do estudante"></section>
     </header>
 
     <main class="container pb-5">
@@ -160,11 +161,11 @@
 
                 <section class="mb-4">
                     <div class="d-flex flex-wrap justify-content-between gap-2 align-items-end mb-3">
-                        <div><p class="jornada-kicker mb-1">Seu planejamento</p><h2 class="h3 mb-0 dias-estudo-titulo">Dias de estudo</h2></div>
+                        <div><h2 class="h3 mb-0 dias-estudo-titulo">Dias de estudo</h2></div>
                         <p class="text-secondary small mb-0">Acompanhe as metas e registre o que estudou em cada dia.</p>
                     </div>
                     <input type="checkbox" id="revisoes-habilitadas" hidden disabled aria-hidden="true">
-                    <button type="button" class="revisoes-info" popovertarget="revisoes-status" aria-label="Sobre as sugestões de revisão">i</button><p id="revisoes-status" popover role="status" class="cartas-ajuda"></p>
+                    <p id="revisoes-status" role="status" class="cartas-ajuda"></p>
                     <details id="revisoes-atrasadas" class="revisao-grupo">
                         <summary id="revisoes-atrasadas-titulo">Revisões atrasadas</summary>
                         <div id="revisoes-atrasadas-lista"></div>
@@ -288,8 +289,11 @@
     <script type="application/grimorio" src="relatorios-ui.js"></script>
     <script type="application/grimorio" src="relatorio-projeto.js"></script>
     <script type="application/grimorio" src="sistema-ia-store.js?v=avisos-20261116" defer></script>
-    <script type="application/grimorio" src="sistema-ia-catalogo.js?v=etapa4-20261116" defer></script>
-    <script type="application/grimorio" src="sistema-ia-avisos.js?v=interface-20261118" defer></script>
+    <script type="application/grimorio" src="sistema-ia-catalogo.js?v=falas-20261120" defer></script>
+    <script type="application/grimorio" src="sistema-ia-avisos.js?v=falas-20261120" defer></script>
+    <script type="application/grimorio" src="perfil-identidade.js?v=etapa3-20261116" defer></script>
+    <script type="application/grimorio" src="perfil-retencao.js?v=etapa1-ia-20261116" defer></script>
+    <script type="application/grimorio" src="ficha-resumo.js?v=20261119" defer></script>
 <dialog id="pomodoro-dialog" aria-labelledby="pomodoro-titulo" aria-describedby="pomodoro-ajuda">
     <form id="pomodoro-form">
         <h2 id="pomodoro-titulo">Pomodoro</h2>

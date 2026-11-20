@@ -9,6 +9,8 @@
     let backupPendente = false;
     let sincronizarPraticasAposConfirmacao = false;
     let origemReplanejamento = null;
+    let snapshotEdicao = null;
+    let cancelandoEdicao = false;
     let revisoes;
     let inicioWizardMs = Date.now();
     let incluirPraticasLegado = true;
@@ -74,11 +76,34 @@
             incluirPraticas: resolverIncluirPraticas()
         };
     }
+    function capturingJsonStorage(storage, chave) {
+        return storage.getItem(chave);
+    }
+    function capturarSnapshotEdicao(projetoId, planoFonteId) {
+        const storage = window.ProjetoStorage || localStorage;
+        const objetosSalvos = typeof lerArrayLocalStorage === 'function'
+            ? lerArrayLocalStorage('objetosSalvos')
+            : lerArrayArmazenado('objetosSalvos');
+        return {
+            projetoId: projetoId || null,
+            planoFonteId: planoFonteId || null,
+            objetosSalvos,
+            objetosSalvosRaw: capturingJsonStorage(storage, 'objetosSalvos'),
+            totalQuestoes: capturingJsonStorage(storage, 'totalQuestoes'),
+            objetosNormalizados: capturingJsonStorage(storage, 'objetosNormalizados'),
+            somaDasQuestoesNormalizadas: capturingJsonStorage(storage, 'somaDasQuestoesNormalizadas'),
+            lista_distribuicao_materias: capturingJsonStorage(storage, 'lista_distribuicao_materias'),
+            materiaDoDia: capturingJsonStorage(storage, 'materiaDoDia'),
+            revisoesDoDia: capturingJsonStorage(storage, 'revisoesDoDia'),
+            praticasJson: projetoId ? window.localStorage.getItem(`praticasProjetoV1:${projetoId}`) : null
+        };
+    }
     function guardarRascunho() {
         const valores = Object.fromEntries(campos.map((id) => [id, el(id).value]));
         valores['blocos-por-dia'] = blocosEscolhidos === null ? '' : String(blocosEscolhidos);
         (window.ProjetoStorage || localStorage).setItem(CHAVE, JSON.stringify({
-            etapa, valores, dias: selecionados(), origemReplanejamento, cargaDiaria: escolhasDeCarga(), ...revisoes.rascunho()
+            etapa, valores, dias: selecionados(), origemReplanejamento, snapshotEdicao, cargaDiaria: escolhasDeCarga(),
+            iniciadoEmMs: inicioWizardMs, ...revisoes.rascunho()
         }));
     }
     function erro(texto, campo) {
@@ -365,7 +390,7 @@
                 (window.ProjetoStorage || localStorage).removeItem(CHAVE);
             });
             try {
-                if (!editando && (Date.now() - inicioWizardMs) < 60000) {
+                if (!editando && inicioWizardMs > 0 && (Date.now() - inicioWizardMs) < 60000) {
                     if (window.SistemaIaCatalogo?.desbloquearComAviso) {
                         window.SistemaIaCatalogo.desbloquearComAviso('assinou_sem_ler');
                     } else {
@@ -399,11 +424,25 @@
         const preparandoProjeto = origemSalva === null && !dados?.planoVersaoId && !dados?.revisoesPolitica;
         origemReplanejamento = preparandoProjeto || (origemSalva && (origemSalva.planoFonteId || null) === (dados?.planoVersaoId || null))
             ? origemSalva : window.Replanejamento.capturar();
+        const projetoIdAtual = window.ProjetosStore?.idAtual?.() || dados?.projetoId || null;
+        if (origemReplanejamento) {
+            const planoFonteId = origemReplanejamento.planoFonteId || null;
+            const salva = rascunho?.snapshotEdicao;
+            snapshotEdicao = salva && (salva.projetoId || null) === projetoIdAtual && (salva.planoFonteId || null) === planoFonteId
+                ? salva
+                : capturarSnapshotEdicao(projetoIdAtual, planoFonteId);
+        } else {
+            snapshotEdicao = null;
+        }
+        if (el('wizard-cancelar')) el('wizard-cancelar').hidden = !origemReplanejamento;
         const cargaDiaria = rascunho?.cargaDiaria ?? dados?.cargaDiaria;
         el('contar-revisoes-na-carga').checked = cargaDiaria?.incluirRevisoes ?? !origemReplanejamento;
         incluirPraticasLegado = cargaDiaria?.incluirPraticas ?? true;
         blocosEscolhidos = Number(rascunho?.valores?.['blocos-por-dia']) || Number(dados?.blocosPorDia ?? dados?.materiasPorDia) || null;
         if (rascunho) {
+            inicioWizardMs = Number.isFinite(Number(rascunho.iniciadoEmMs)) && Number(rascunho.iniciadoEmMs) > 0
+                ? Number(rascunho.iniciadoEmMs)
+                : 0;
             campos.forEach(id => { if (typeof rascunho.valores?.[id] === 'string') el(id).value = rascunho.valores[id]; });
             dias.forEach(d => { el(`btn-${d}`).checked = Array.isArray(rascunho.dias) && rascunho.dias.includes(d); });
             etapa = Math.min(3, Math.max(0, Math.floor(Number(rascunho.etapa) || 0)));
@@ -477,7 +516,86 @@
             const focoCancelar = dialog.querySelector('button[data-cancelar]:not(.pixel-fechar)') || btnsCancelar[0];
             focoCancelar?.focus();
         }
+        async function cancelarEdicao() {
+            if (cancelandoEdicao || backupPendente || el('cadastroForm')?.dataset.salvando || window.cadastroSalvando) return;
+            cancelandoEdicao = true;
+            const btnCancelar = el('wizard-cancelar');
+            const btnAvancar = el('wizard-avancar');
+            const btnVoltar = el('wizard-voltar');
+            if (btnCancelar) btnCancelar.disabled = true;
+            if (btnAvancar) btnAvancar.disabled = true;
+            if (btnVoltar) btnVoltar.disabled = true;
+            limparErros();
+            try {
+                const storage = window.ProjetoStorage || localStorage;
+                const dados = lerObjetoArmazenado('dadosExame');
+                if (snapshotEdicao) {
+                    const projetoId = snapshotEdicao.projetoId || window.ProjetosStore?.idAtual?.() || dados?.projetoId;
+                    const originais = Array.isArray(snapshotEdicao.objetosSalvos) ? snapshotEdicao.objetosSalvos : [];
+                    if (window.MateriasStore && projetoId) {
+                        const participacoes = window.MateriasStore.listarProjetosMaterias(projetoId);
+                        const porId = new Map(participacoes.map(p => [p.projetoMateriaId, p]));
+                        const idsOriginais = new Set(originais.map(m => m.projetoMateriaId));
+                        const globaisAtivasExtras = new Set(
+                            participacoes
+                                .filter(p => !p.removida && !idsOriginais.has(p.projetoMateriaId))
+                                .map(p => window.MateriasStore.resolverMateriaGlobal(p.materiaGlobalId).materiaGlobalId)
+                        );
+                        const colisaoDuplicata = originais.some(m => {
+                            const p = porId.get(m.projetoMateriaId);
+                            if (!p?.removida) return false;
+                            const globalId = window.MateriasStore.resolverMateriaGlobal(p.materiaGlobalId).materiaGlobalId;
+                            return globaisAtivasExtras.has(globalId);
+                        });
+                        if (colisaoDuplicata) {
+                            const ativasAntes = participacoes.filter(p => !p.removida).map(p => ({
+                                Materia: p.nomeExibicao ?? window.MateriasStore.resolverMateriaGlobal(p.materiaGlobalId).nomeCanonico,
+                                projetoMateriaId: p.projetoMateriaId,
+                                Nquestoes: p.Nquestoes,
+                                peso: p.peso,
+                                afinidade: p.afinidade
+                            }));
+                            await window.MateriasStore.salvarCadastro(projetoId, []);
+                            try {
+                                await window.MateriasStore.salvarCadastro(projetoId, originais);
+                            } catch (erroRestauracao) {
+                                try { await window.MateriasStore.salvarCadastro(projetoId, ativasAntes); } catch (_) {}
+                                throw erroRestauracao;
+                            }
+                        } else {
+                            await window.MateriasStore.salvarCadastro(projetoId, originais);
+                        }
+                    }
+                    const restaurarChaves = [
+                        ['objetosSalvos', snapshotEdicao.objetosSalvosRaw],
+                        ['totalQuestoes', snapshotEdicao.totalQuestoes],
+                        ['objetosNormalizados', snapshotEdicao.objetosNormalizados],
+                        ['somaDasQuestoesNormalizadas', snapshotEdicao.somaDasQuestoesNormalizadas],
+                        ['lista_distribuicao_materias', snapshotEdicao.lista_distribuicao_materias],
+                        ['materiaDoDia', snapshotEdicao.materiaDoDia],
+                        ['revisoesDoDia', snapshotEdicao.revisoesDoDia]
+                    ];
+                    for (const [chave, valor] of restaurarChaves) {
+                        if (valor === null || valor === undefined) storage.removeItem(chave);
+                        else storage.setItem(chave, valor);
+                    }
+                    if (window.PraticasStore?.restaurarSnapshotCadastro && projetoId) {
+                        await window.PraticasStore.restaurarSnapshotCadastro(projetoId, snapshotEdicao.praticasJson ?? null);
+                    }
+                }
+                storage.removeItem(CHAVE);
+                location.assign('home.html');
+            } catch (e) {
+                erro('Não foi possível cancelar a edição. ' + (e?.message || ''));
+                console.error(e);
+                cancelandoEdicao = false;
+                if (btnCancelar) btnCancelar.disabled = false;
+                if (btnAvancar) btnAvancar.disabled = false;
+                if (btnVoltar) btnVoltar.disabled = false;
+            }
+        }
         el('atalho-gerenciar-materias')?.addEventListener('click', abrirAlertaGerenciarMaterias);
+        el('wizard-cancelar')?.addEventListener('click', cancelarEdicao);
         el('wizard-avancar').addEventListener('click', avancar);
         el('wizard-backup-repetir').addEventListener('click', () => backupDaJornada());
         el('wizard-backup-baixar').addEventListener('click', () => backupDaJornada(true));

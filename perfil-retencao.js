@@ -446,6 +446,20 @@
                 ok: s.praticasConcluidas >= 30,
                 progresso: `${Math.min(s.praticasConcluidas, 30)}/30 concluídas`
             })
+        },
+        {
+            id: 'platina_marcos',
+            emblema: 'PLAT',
+            categoria: 'Platina',
+            nome: 'Platina do Grimório',
+            tituloRecompensa: 'Mestre Absoluto',
+            criterio: 'Desbloqueie todos os outros 32 marcos de estudo.',
+            avaliar: s => ({
+                ok: s.totalMarcosBase > 0 && s.marcosBaseConcluidos >= s.totalMarcosBase,
+                progresso: s.marcosBaseConcluidos >= s.totalMarcosBase
+                    ? 'Todos os marcos desbloqueados'
+                    : `${s.marcosBaseConcluidos}/${s.totalMarcosBase} marcos`
+            })
         }
     ]);
 
@@ -564,15 +578,23 @@
             melhorSequencia,
             segundosTotais: totalDedicadoSegundos,
             revisoesCount,
-            materiasEstudadas: materias.length,
+            materiasEstudadas: materias.filter(m => Number(m.segundos) > 0).length,
             maxNivelMateria,
             maxPontosMateria,
             nivelGlobal: Number(global.nivel) || 1,
-            praticasConcluidas
+            praticasConcluidas,
+            marcosBaseConcluidos: 0,
+            totalMarcosBase: 0
         };
 
+        const marcosBase = CATALOGO_CONQUISTAS.filter(item => item.id !== 'platina_marcos');
+        const resultadosBase = marcosBase.map(item => [item.id, item.avaliar(contexto)]);
+        contexto.totalMarcosBase = marcosBase.length;
+        contexto.marcosBaseConcluidos = resultadosBase.filter(([, res]) => Boolean(res.ok)).length;
+        const mapaBase = new Map(resultadosBase);
+
         const conquistas = CATALOGO_CONQUISTAS.map(item => {
-            const res = item.avaliar(contexto);
+            const res = mapaBase.get(item.id) || item.avaliar(contexto);
             return {
                 id: item.id,
                 emblema: item.emblema,

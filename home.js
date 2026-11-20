@@ -29,13 +29,25 @@
             botao.setAttribute('aria-pressed',String(arquivados===valor));
         }
         const visiveis = projetos.filter(p=>Boolean(p.arquivado)===arquivados);
+        const ativoId = window.ProjetosStore?.temAtual?.() ? window.ProjetosStore.idAtual() : null;
         document.getElementById('lista-projetos').replaceChildren(...visiveis.map(projeto => {
             const card = document.createElement('article'); card.dataset.projetoId = projeto.id;
             const titulo = document.createElement('h2'); titulo.textContent = nome(projeto);
             const preparando = Boolean(projeto.rascunho) || !projeto.materias.length || !projeto.dados.minutosPorDia;
+            const temPlanoConfirmado = Boolean(projeto.plano && Object.keys(projeto.plano).length > 0) || !preparando;
+            const ehAtivo = !projeto.arquivado && Boolean(ativoId) && projeto.id === ativoId && temPlanoConfirmado;
+            const topo = document.createElement('div'); topo.className = 'home-projeto-topo';
+            topo.append(titulo);
+            if (ehAtivo) {
+                card.classList.add('is-projeto-ativo');
+                const selo = document.createElement('span');
+                selo.className = 'home-projeto-ativo';
+                selo.textContent = 'Ativo';
+                topo.append(selo);
+            }
             const detalhe = document.createElement('p');
             detalhe.textContent = preparando ? 'Preparação em andamento' : `${projeto.dados.dataInicioF} — ${projeto.dados.dataFinalF}`;
-            card.append(titulo, detalhe);
+            card.append(topo, detalhe);
             if (!preparando) {
                 const progresso = window.EstudoStore.calcularProgressoPlano({ dados: projeto.dados, materiaDoDia: projeto.plano,
                     sessoesProjeto: sessoes.filter(s => s.projetoId === projeto.dados.projetoId), distribuicaoMaterias: projeto.distribuicao });

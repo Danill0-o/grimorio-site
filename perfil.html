@@ -26,17 +26,17 @@
     <script type="application/grimorio" src="estudo-store.js?v=carga-diaria-4-20261114"></script>
     <script type="application/grimorio" src="sistema-ia-store.js?v=avisos-20261116" defer></script>
     <script type="application/grimorio" src="perfil-identidade.js?v=etapa3-20261116" defer></script>
-    <script type="application/grimorio" src="sistema-ia-catalogo.js?v=etapa4-20261116" defer></script>
-    <script type="application/grimorio" src="sistema-ia-avisos.js?v=interface-20261118" defer></script>
+    <script type="application/grimorio" src="sistema-ia-catalogo.js?v=falas-20261120" defer></script>
+    <script type="application/grimorio" src="sistema-ia-avisos.js?v=falas-20261120" defer></script>
     <script type="application/grimorio" src="perfil-retencao.js?v=etapa1-ia-20261116" defer></script>
-    <script type="application/grimorio" src="perfil.js?v=ajustes-20261116" defer></script>
-    <script type="application/grimorio" src="praticas-perfil.js?v=etapa3-20261115" defer></script>
+    <script type="application/grimorio" src="perfil.js?v=conquistas-20261118" defer></script>
+    <script type="application/grimorio" src="praticas-perfil.js?v=conquistas-20261118" defer></script>
 
 <link rel="stylesheet" href="css/jornada-interface.css?v=acoes-cards-20261101">
-<script type="application/grimorio" src="sidebar.js?v=artes-20261101"></script>
-<link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102"></head>
+<script type="application/grimorio" src="sidebar.js?v=conquistas-20261118"></script>
+<link rel="stylesheet" href="css/icones-pixel.css?v=ajuda-separada-20261102"><link rel="stylesheet" href="css/tipografia-mobile.css?v=20261118"></head>
 <body class="perfil-page">
-<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="materias.html">Catálogo de matérias</a><a href="historico.html">Histórico de estudos</a><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
+<div class="jornada-shell"><aside class="jornada-menu" aria-label="Menu do Grimório"><details id="jornada-menu-aberto"><summary>Menu do Grimório</summary><nav aria-label="Navegação principal"><p class="jornada-menu-titulo">Seu Grimório</p><a href="home.html">Meus projetos</a><a href="perfil.html">Perfil</a><a href="conquistas.html">Conquistas</a><a href="materias.html">Catálogo de matérias</a><a href="historico.html">Histórico de estudos</a><details id="jornada-temas"><summary>Temas</summary><div id="jornada-temas-opcoes"></div></details></nav></details></aside><div class="jornada-pagina">
     <header class="container">
         <section class="jornada-hero perfil-hero perfil-ficha" aria-labelledby="perfil-titulo"><div class="perfil-hero-conteudo">
             <div class="perfil-ficha-cabecalho">
@@ -125,60 +125,6 @@
                 </div>
             </div>
         </section>
-        <section id="perfil-conquistas" class="jornada-panel perfil-conquistas-painel" aria-labelledby="conquistas-titulo">
-            <div class="perfil-conquistas-cabecalho">
-                <div>
-                    <p class="jornada-kicker">MARCOS DA JORNADA</p>
-                    <h2 id="conquistas-titulo">Mural de conquistas</h2>
-                </div>
-                <div class="perfil-conquistas-topo-acoes">
-                    <label class="perfil-conquistas-filtro-campo" for="perfil-conquistas-filtro">
-                        <span>Exibir</span>
-                        <select id="perfil-conquistas-filtro">
-                            <option value="todas">Todas as conquistas</option>
-                            <option value="desbloqueadas">Desbloqueadas</option>
-                            <option value="bloqueadas">A conquistar</option>
-                            <option value="Nível Global">Nível Global</option>
-                            <option value="Domínio">Domínio de Matéria</option>
-                            <option value="Constância">Constância</option>
-                            <option value="Dedicação">Dedicação</option>
-                            <option value="Revisão">Revisão</option>
-                            <option value="Práticas">Práticas</option>
-                        </select>
-                    </label>
-                    <p id="perfil-conquistas-resumo" class="perfil-nivel-emblema">0 de 32 desbloqueadas</p>
-                </div>
-            </div>
-            <p class="perfil-xp-regra">Marcos calculados automaticamente pelo seu histórico. Conquistas desbloqueadas liberam títulos para equipar na sua ficha.</p>
-            <p id="perfil-conquistas-vazio" class="perfil-conquistas-vazio" role="status" hidden></p>
-            <ul id="perfil-conquistas-lista" class="perfil-conquistas-grade"></ul>
-            <div id="perfil-conquistas-ocultas" class="perfil-ocultas-subsecao">
-                <div class="perfil-conquistas-cabecalho">
-                    <div>
-                        <p class="jornada-kicker">SISTEMA IA · DESAFIO SECRETO</p>
-                        <h3 id="ocultas-titulo" class="perfil-ocultas-titulo">Conquistas ocultas</h3>
-                    </div>
-                    <div class="perfil-conquistas-topo-acoes">
-                        <label class="perfil-conquistas-filtro-campo" for="perfil-ocultas-filtro">
-                            <span>Exibir</span>
-                            <select id="perfil-ocultas-filtro">
-                                <option value="todas">Todas as ocultas</option>
-                                <option value="desbloqueadas">Descobertas</option>
-                                <option value="bloqueadas">Secretas (???)</option>
-                            </select>
-                        </label>
-                        <p id="perfil-ocultas-resumo" class="perfil-nivel-emblema">0 de 93 descobertas</p>
-                    </div>
-                </div>
-                <p class="perfil-xp-regra perfil-ocultas-regra">
-                    <span>Todas ficam ocultas (???) até você acionar o gatilho surpresa.</span>
-                    <button type="button" id="perfil-reclamacao-xp-btn" class="perfil-reclamacao-xp-btn">Nenhuma conquista oculta concede bônus de XP — apenas comentários do Sistema e títulos equipáveis.</button>
-                </p>
-                <p id="perfil-reclamacao-status" class="perfil-reclamacao-status" role="status" aria-live="polite" hidden></p>
-                <p id="perfil-ocultas-vazio" class="perfil-conquistas-vazio" role="status" hidden></p>
-                <ul id="perfil-ocultas-lista" class="perfil-conquistas-grade" aria-labelledby="ocultas-titulo"></ul>
-            </div>
-        </section>
         <section class="perfil-vitrine-secao" aria-labelledby="dominio-titulo">
             <div class="perfil-vitrine-cabecalho">
                 <div>
@@ -242,6 +188,7 @@
             </label>
             <fieldset class="perfil-avatares-grupo">
                 <legend>Escolha seu retrato</legend>
+                <div id="perfil-avatares-sexo" class="perfil-avatares-sexo" role="group" aria-label="Filtrar avatares por sexo"></div>
                 <div id="perfil-avatares-opcoes" class="perfil-avatares-opcoes"></div>
             </fieldset>
             <label class="perfil-dialogo-campo perfil-dialogo-campo-espaco" for="perfil-titulo-select">

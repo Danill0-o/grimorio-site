@@ -1,0 +1,38 @@
+/* Mural próprio; cores, artes e medidas compartilhadas com o Grimório. */
+.conquistas-page .conquistas-hero { display: flex; align-items: center; gap: clamp(20px, 4vw, 40px); padding: clamp(24px, 4vw, 40px); background: var(--pixel-surface); color: var(--texto-comum); border-top: 6px solid var(--pixel-gold); }
+.conquistas-trofeu { flex: 0 0 88px; color: var(--pixel-kicker); filter: drop-shadow(4px 4px 0 var(--pixel-shadow)); }
+.conquistas-page h1 { color: var(--texto-destaque); text-shadow: none !important; }
+.conquistas-abas { display: flex; gap: 12px; margin: 24px 0 20px; }
+html body.conquistas-page .conquistas-abas button { flex: 1; min-height: 52px; white-space: normal; color: var(--texto-comum) !important; background: var(--pixel-surface) !important; text-shadow: none !important; border: 2px solid var(--pixel-bronze) !important; }
+html body.conquistas-page .conquistas-abas button[aria-selected="true"] { background: var(--pixel-surface-alt) !important; border-bottom: 5px solid var(--pixel-ink) !important; font-weight: 700; }
+html body.conquistas-page .conquistas-abas button:is(:hover,:focus-visible) { color: var(--texto-comum) !important; background: var(--pixel-surface-alt) !important; }
+.conquistas-painel { padding: clamp(18px, 3vw, 30px); border-top: 4px solid var(--pixel-gold); }
+.conquistas-contagem { margin: 0; font-size: 1rem; font-weight: 700; color: var(--texto-destaque); }
+.conquistas-page .perfil-conquistas-filtro-campo { font-size: .875rem; color: var(--texto-secundario); }
+.conquistas-page .perfil-conquistas-filtro-campo select { font-size: 1rem; }
+.conquistas-page .perfil-conquistas-grade { grid-template-columns: repeat(auto-fit,minmax(min(100%,290px),1fr)); gap: 20px; }
+.conquistas-page .perfil-conquista-card { padding: 20px; gap: 14px; box-shadow: 4px 4px 0 var(--pixel-shadow); }
+.conquistas-page .perfil-conquista-card :is(h3,p,blockquote) { text-shadow: none !important; }
+.conquistas-page .perfil-conquista-card :is(h3,p) { color: var(--texto-comum); }
+.conquistas-page .perfil-conquista-criterio { font-size: 1rem; line-height: 1.6; }
+.conquistas-page .perfil-conquista-status { font-size: .875rem; color: var(--texto-secundario) !important; }
+.conquistas-page .perfil-conquista-categoria { font-size: .81875rem; color: var(--texto-secundario); }
+.conquistas-page .perfil-conquista-emblema { background: var(--pixel-surface-elevated) !important; color: var(--texto-comum) !important; min-width: 56px; height: 56px; font-size: .875rem; }
+.conquistas-page .perfil-conquista-card.is-desbloqueada { border-style: solid; border-top-width: 6px; }
+.conquistas-page .perfil-conquista-card.is-bloqueada { box-shadow: none; }
+.conquistas-page .perfil-conquista-card.is-oculta-bloqueada { justify-content: center; align-items: center; min-height: 150px; border-style: dashed; }
+.conquistas-page .perfil-conquista-card.is-oculta-bloqueada .perfil-conquista-emblema { min-width: 80px; height: 72px; font-size: 20px; }
+.conquistas-page .perfil-conquista-equipar { font-size: .875rem !important; }
+.conquistas-page .perfil-oculta-fala { font-size: 1rem; color: var(--texto-comum); }
+.conquistas-page .perfil-reclamacao-xp-btn { margin-top: 16px; }
+#conquistas-status:empty { display: none; }
+@media(max-width:767px) {
+    .conquistas-trofeu { width: 56px; height: 56px; flex-basis: 56px; }
+    .conquistas-page .conquistas-hero { gap: 18px; }
+    .conquistas-page h1 { font-size: 1.15rem; }
+    .conquistas-page .perfil-conquistas-cabecalho { align-items: stretch; gap: 16px; }
+    .conquistas-page .perfil-conquistas-filtro-campo { width: 100%; }
+    .conquistas-page .perfil-conquista-card { padding: 16px; }
+}
+
+.conquistas-page .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
